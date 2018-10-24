@@ -1,0 +1,29 @@
+{
+  "name": "@mgcrea/mongozest",
+  "private": true,
+  "version": "1.0.0",
+  "description": "",
+  "main": "lib/index.js",
+  "module": "src/index.ts",
+  "typings": "typings/module.d.ts",
+  "scripts": {
+    "build": "babel --source-maps --extensions .js,.ts --out-dir lib/ --ignore **/__tests__ src/",
+    "typecheck": "tsc --pretty --noEmit",
+    "test": "CI=true jest --runInBand --colors"
+  },
+  "author": "Olivier Louvignes <olivier@mgcrea.io>",
+  "license": "UNLICENSED",
+  "dependencies": {
+    "lodash": "^4.17.11",
+    "mongodb": "^3.1.8",
+    "pluralize": "^7.0.0",
+    "shortid": "^2.2.13"
+  },
+  "devDependencies": {
+    "@babel/cli": "7.1.2",
+    "@babel/core": "7.1.2",
+    "@types/bunyan": "^1.8.4",
+    "@types/pluralize": "^0.0.29",
+    "typescript": "^3.1.1"
+  }
+}

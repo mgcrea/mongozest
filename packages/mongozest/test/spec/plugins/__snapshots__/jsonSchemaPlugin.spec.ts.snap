@@ -1,0 +1,56 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`jsonSchemaPlugin should properly add \`validator.$jsonSchema\` to both schema and collection 1`] = `
+Object {
+  "additionalProperties": false,
+  "bsonType": "object",
+  "properties": Object {
+    "_id": Object {
+      "bsonType": "objectId",
+    },
+    "avatar": Object {
+      "additionalProperties": false,
+      "bsonType": "object",
+      "properties": Object {
+        "fileName": Object {
+          "bsonType": "string",
+        },
+        "size": Object {
+          "bsonType": "long",
+        },
+      },
+    },
+    "list": Object {
+      "bsonType": "array",
+      "items": Object {
+        "oneOf": Array [
+          Object {
+            "bsonType": "string",
+          },
+          Object {
+            "bsonType": "int",
+          },
+        ],
+      },
+    },
+    "name": Object {
+      "bsonType": "string",
+    },
+    "nestedObject": Object {
+      "additionalProperties": false,
+      "bsonType": "object",
+      "properties": Object {
+        "latitude": Object {
+          "bsonType": "decimal",
+        },
+        "longitude": Object {
+          "bsonType": "decimal",
+        },
+      },
+    },
+  },
+  "required": Array [
+    "name",
+  ],
+}
+`;
