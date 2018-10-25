@@ -1,9 +1,4 @@
-import {inspect as defaultInspect} from 'util';
-
-const inspect = (maybeObject: object) =>
-  defaultInspect(maybeObject, {compact: true, colors: true, depth: Infinity, breakLength: Infinity});
-
-const log = (maybeString: string) => console.log(`🏛  mongodb: ${maybeString}`);
+import {log, inspect} from './../utils/logger';
 
 export default function debugPlugin(model, options) {
   const {collectionName} = model;

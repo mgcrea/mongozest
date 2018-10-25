@@ -71,10 +71,10 @@ export default class Model {
     // Setup collection
     this.collection = await this.setupCollection();
     // PostHooks handling
-    await this.hooks.execPost('initialize', []);
     if (this.hooks.hasPost('initialize:property')) {
       this.execPostPropertyHooks(this.schema);
     }
+    await this.hooks.execPost('initialize', []);
   }
 
   // Helper recursively parsing schema to find path where values should be casted

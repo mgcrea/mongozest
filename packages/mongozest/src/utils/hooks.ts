@@ -14,11 +14,7 @@ export default class Hooks {
     postHooks: new Map()
   };
 
-  register(
-    hookMap: Map<string, Array<T>>,
-    hookName: string,
-    callback: () => Promise<any> | void
-  ): Hooks {
+  register(hookMap: Map<string, Array<T>>, hookName: string, callback: () => Promise<any> | void): Hooks {
     if (!hookName) {
       return this;
     }
@@ -40,12 +36,12 @@ export default class Hooks {
     return this.register(hookMap, hookName, callback);
   }
 
-  hasPre(hookName: string, args: Array<any>) {
+  hasPre(hookName: string) {
     const {preHooks: hookMap} = this.state;
     return hookMap.has(hookName);
   }
 
-  hasPost(hookName: string, args: Array<any>) {
+  hasPost(hookName: string) {
     const {postHooks: hookMap} = this.state;
     return hookMap.has(hookName);
   }

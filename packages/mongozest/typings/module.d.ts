@@ -24,6 +24,7 @@ declare namespace mongozest {
     updateOne(filter: FilterQuery<TSchema>, update: UpdateQuery<TSchema> | TSchema, options?: ReplaceOneOptions): Promise<UpdateWriteOpResult>;
   }
 
+  function schemaIndexesPlugin(model: Model, options: any);
   function lastModifiedPlugin(model: Model, options: any);
   function shortIdPlugin(model: Model, options: any);
 }
