@@ -23,7 +23,7 @@ declare namespace mongozest {
     updateMany(filter: FilterQuery<TSchema>, update: UpdateQuery<TSchema> | TSchema, options?: CommonOptions & { upsert?: boolean }): Promise<UpdateWriteOpResult>;
     updateOne(filter: FilterQuery<TSchema>, update: UpdateQuery<TSchema> | TSchema, options?: ReplaceOneOptions): Promise<UpdateWriteOpResult>;
   }
-
+  function collectionDefaultsPlugin(model: Model, options: any);
   function schemaIndexesPlugin(model: Model, options: any);
   function lastModifiedPlugin(model: Model, options: any);
   function shortIdPlugin(model: Model, options: any);
