@@ -7,7 +7,7 @@ import Model from './model';
 // @types
 import {Db as MongoDb, MongoClientOptions} from 'mongodb';
 
-const DEFAULT_MONGODB_URI = 'mongodb://localhost:27017';
+const DEFAULT_MONGODB_URI = 'mongodb://mongo:27017';
 
 export default class MongoInterface {
   static defaultClientUri = DEFAULT_MONGODB_URI;
