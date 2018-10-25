@@ -18,8 +18,6 @@
 // });
 import Hooks from './../../../src/utils/hooks';
 
-require('debug-utils').default();
-
 describe('Hooks', () => {
   let hooks: Hooks;
   it('should properly be constructed', async () => {

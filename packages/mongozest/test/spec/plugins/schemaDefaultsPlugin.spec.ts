@@ -1,12 +1,11 @@
-import createMongoLeaf, {Model, jsonSchemaPlugin, schemaDefaultsPlugin} from './../../../src';
+import createMongo, {Model, jsonSchemaPlugin, schemaDefaultsPlugin} from './../../../src';
 import {Decimal128 as Decimal} from 'mongodb';
 import {basename} from 'path';
 import {kebabCase} from 'lodash';
 
-require('debug-utils').default();
-const DB_NAME = kebabCase(basename(__filename, '.ts'));
+const DB_NAME = getDbName(__filename);
 
-const mongo = createMongoLeaf();
+const mongo = createMongo();
 
 class Test extends Model {
   static schema = {

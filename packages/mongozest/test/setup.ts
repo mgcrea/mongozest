@@ -1,1 +1,1 @@
-require('debug-utils').default();
+import './../../../test/setup';

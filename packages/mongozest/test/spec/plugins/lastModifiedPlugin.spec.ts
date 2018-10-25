@@ -1,11 +1,10 @@
-import createMongoLeaf, {Model, lastModifiedPlugin} from './../../../';
+import createMongo, {Model, lastModifiedPlugin} from './../../../src';
 import {basename} from 'path';
 import {kebabCase} from 'lodash';
 
-require('debug-utils').default();
-const DB_NAME = kebabCase(basename(__filename, '.ts'));
+const DB_NAME = getDbName(__filename);
 
-const mongo = createMongoLeaf();
+const mongo = createMongo();
 
 class Test extends Model {
   static schema = {
