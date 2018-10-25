@@ -19,8 +19,10 @@ export default class MongoInterface {
     return new MongoInterface(uri, options);
   }
   client: MongoClient;
-  models: {[modelName: string]: Model} = {};
+  // models: {[modelName: string]: Model} = {};
+  private models: Map<string, Model> = new Map();
   db: MongoDb;
+
   private constructor(uri: string, options?: MongoClientOptions) {
     this.client = new MongoClient(uri, {...MongoInterface.defaultClientOptions, ...options});
   }
@@ -43,9 +45,10 @@ export default class MongoInterface {
     }, Promise.resolve({}));
   }
   public async loadModel(Model: ModelConstructor): Promise<Model> {
-    const {name: modelName} = Model;
-    if (this.models[modelName]) {
-      return this.models[modelName];
+    const {name: className, modelName: classModelName} = Model;
+    const modelName = classModelName || className;
+    if (this.models.has(modelName)) {
+      return Promise.resolve(this.models.get(modelName) as Model);
     }
     // const model = Model.create();
     const model = new Model(this.db);
@@ -66,20 +69,14 @@ export default class MongoInterface {
     // Publish model getter for easier traversing
     modelProxy.otherModel = this.model.bind(this);
     modelProxy.allModels = () => this.models;
-    this.models[modelName] = modelProxy;
+    this.models.set(modelName, modelProxy);
     await modelProxy.initialize();
     return modelProxy;
   }
   public model(modelName: string) {
-    if (!this.models[modelName]) {
+    if (!this.models.has(modelName)) {
       throw new Error(`model ${modelName} not loaded`);
     }
-    return this.models[modelName];
-  }
-  public collection(modelName: string) {
-    if (!this.models[modelName]) {
-      throw new Error(`model ${modelName} not loaded`);
-    }
-    return this.models[modelName];
+    return this.models.get(modelName);
   }
 }
