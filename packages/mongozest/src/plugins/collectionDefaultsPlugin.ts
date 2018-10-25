@@ -1,7 +1,7 @@
 // @types
 import {Model} from '..';
 
-export default function collectionDefaultsPlugin(model: Model, {maxTimeMS = 50} = {}) {
+export default function collectionDefaultsPlugin(model: Model, {maxTimeMS = 5000} = {}) {
   model.post('initialize', async () => {
     const {defaults} = model.constructor;
     // Only if the collection is empty!
