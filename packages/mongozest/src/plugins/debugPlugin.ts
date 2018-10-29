@@ -1,6 +1,7 @@
 import {log, inspect} from './../utils/logger';
+import {Model} from '..';
 
-export default function debugPlugin(model, options) {
+export default function debugPlugin(model: Model, options) {
   const {collectionName} = model;
   model.pre('insertOne', (doc: TSchema) => {
     log(`db.${collectionName}.insertOne(${inspect(doc)})`);
