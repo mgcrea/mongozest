@@ -25,6 +25,7 @@ declare namespace mongozest {
   }
   function collectionDefaultsPlugin(model: Model, options: any);
   function schemaIndexesPlugin(model: Model, options: any);
+  function schemaDefaultsPlugin(model: Model, options: any);
   function lastModifiedPlugin(model: Model, options: any);
   function shortIdPlugin(model: Model, options: any);
 }

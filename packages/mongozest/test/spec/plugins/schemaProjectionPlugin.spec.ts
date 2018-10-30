@@ -24,7 +24,7 @@ afterAll(async () => {
   await mongo.disconnect();
 });
 
-describe.only('schemaProjectionPlugin', () => {
+describe('schemaProjectionPlugin', () => {
   let TestModel: Model;
   it('should properly loadModel', async () => {
     TestModel = await mongo.loadModel(Test);
