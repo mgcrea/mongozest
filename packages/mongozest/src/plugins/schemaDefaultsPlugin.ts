@@ -1,6 +1,6 @@
 // @docs https://docs.mongodb.com/manual/reference/operator/query/type/#document-type-available-types
 
-import {get, has, set, isString, isFunction} from 'lodash';
+import {isUndefined, has, set, isString, isFunction} from 'lodash';
 // @types
 import {Model} from '..';
 
@@ -8,7 +8,7 @@ import {Model} from '..';
 export default function schemaDefaultsPlugin(model: Model, {ignoredKeys = ['_id']} = {}) {
   const propsWithDefaults: Map<string, any> = new Map();
   model.post('initialize:property', (prop: {[s: string]: any} | string, path: string) => {
-    if (isString(prop) || !prop.default) {
+    if (isString(prop) || isUndefined(prop.default)) {
       return;
     }
     propsWithDefaults.set(path, prop.default);

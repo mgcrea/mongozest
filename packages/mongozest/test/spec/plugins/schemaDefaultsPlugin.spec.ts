@@ -12,6 +12,7 @@ class Test extends Model {
     name: {bsonType: 'string'},
     stringValue: {bsonType: 'string', default: 'bar'},
     dateValue: {bsonType: 'date', default: Date.now},
+    boolValue: {bsonType: 'bool', default: false},
     nestedObject: {
       bsonType: 'object',
       properties: {latitude: 'decimal', longitude: 'decimal'},
@@ -46,12 +47,14 @@ describe('schemaCastingPlugin', () => {
       expect(insertedDoc.stringValue).toEqual('bar');
       expect(insertedDoc.dateValue instanceof Date).toBeTruthy();
       expect(insertedDoc.dateValue.getTime() > 0).toBeTruthy();
+      expect(insertedDoc.boolValue).toEqual(false);
       expect(insertedDoc.nestedObject).toEqual({latitude: Decimal.fromString('0'), longitude: Decimal.fromString('0')});
       // Check findOne result
       const foundDoc = await TestModel.findOne({_id: insertedId});
       expect(foundDoc.stringValue).toEqual('bar');
       expect(foundDoc.dateValue instanceof Date).toBeTruthy();
       expect(foundDoc.dateValue.getTime() > 0).toBeTruthy();
+      expect(foundDoc.boolValue).toEqual(false);
       expect(foundDoc.nestedObject).toEqual({latitude: Decimal.fromString('0'), longitude: Decimal.fromString('0')});
     });
   });
