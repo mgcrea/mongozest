@@ -14,33 +14,33 @@ export default function debugPlugin(model: Model, options) {
   });
   model.pre(
     'findOneAndUpdate',
-    (filter: FilterQuery<TSchema>, update: UpdateQuery<TSchema> | TSchema, options?: FindOneOptions, opMap: Map) => {
+    (filter: FilterQuery<TSchema>, update: UpdateQuery<TSchema> | TSchema, options: FindOneOptions, opMap: Map) => {
       log(`db.${collectionName}.findOneAndUpdate(${inspect(filter)}, ${inspect(update)}, ${inspect(options)})`);
     }
   );
-  model.pre('findOne', (query: FilterQuery<TSchema>, options?: FindOneOptions, opMap: Map) => {
+  model.pre('findOne', (query: FilterQuery<TSchema>, options: FindOneOptions, opMap: Map) => {
     log(`db.${collectionName}.findOne(${inspect(query)}, ${inspect(options)})`);
   });
-  model.pre('findMany', (query: FilterQuery<TSchema>) => {
-    log(`db.${collectionName}.find(${inspect(query)})`);
+  model.pre('findMany', (query: FilterQuery<TSchema>, options: FindOneOptions) => {
+    log(`db.${collectionName}.find(${inspect(query)}, ${inspect(options)})`);
   });
   model.pre(
     'deleteOne',
-    (filter: FilterQuery<TSchema>, options?: CommonOptions & {bypassDocumentValidation?: boolean}, opMap: Map) => {
+    (filter: FilterQuery<TSchema>, options: CommonOptions & {bypassDocumentValidation?: boolean}, opMap: Map) => {
       log(`db.${collectionName}.deleteOne(${inspect(filter)}, ${inspect(options)})`);
     }
   );
-  model.pre('deleteMany', (filter: FilterQuery<TSchema>, options?: CommonOptions) => {
+  model.pre('deleteMany', (filter: FilterQuery<TSchema>, options: CommonOptions) => {
     log(`db.${collectionName}.deleteMany(${inspect(filter)}, ${inspect(options)})`);
   });
 
   // ms-perf
   /*
   const timeSymbol = Symbol('time');
-  model.pre('findOne', (query: FilterQuery<TSchema>, options?: FindOneOptions, opMap: Map) => {
+  model.pre('findOne', (query: FilterQuery<TSchema>, options: FindOneOptions, opMap: Map) => {
     opMap.set(timeSymbol, Date.now());
   });
-  model.post('findOne', (doc: T, query: FilterQuery<TSchema>, options?: FindOneOptions, opMap: Map) => {
+  model.post('findOne', (doc: T, query: FilterQuery<TSchema>, options: FindOneOptions, opMap: Map) => {
     const elapsed = Date.now() - opMap.get(timeSymbol);
     log(`${inspect(doc)} returned in ${inspect(elapsed)}ms`);
   });
@@ -49,10 +49,10 @@ export default function debugPlugin(model: Model, options) {
   // ns-perf
   const NS_PER_SEC = 1e9;
   const hrtimeSymbol = Symbol('hrtime');
-  model.pre('findOne', (query: FilterQuery<TSchema>, options?: FindOneOptions, opMap: Map) => {
+  model.pre('findOne', (query: FilterQuery<TSchema>, options: FindOneOptions, opMap: Map) => {
     opMap.set(hrtimeSymbol, process.hrtime());
   });
-  model.post('findOne', (doc: T, query: FilterQuery<TSchema>, options?: FindOneOptions, opMap: Map) => {
+  model.post('findOne', (doc: T, query: FilterQuery<TSchema>, options: FindOneOptions, opMap: Map) => {
     const diff = process.hrtime(opMap.get(hrtimeSymbol));
     const elapsed = (diff[0] * NS_PER_SEC + diff[1]) / 1e6;
     log(`${inspect(doc)} returned in ${inspect(elapsed.toPrecision(3) * 1)}ms`);

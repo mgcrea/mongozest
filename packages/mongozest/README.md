@@ -13,3 +13,5 @@ Transfer/sec:      1.98MB
 ```
 
 - https://github.com/json-schema-faker/json-schema-faker
+
+- https://github.com/Automattic/mongoose/issues/3683

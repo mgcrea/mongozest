@@ -79,7 +79,7 @@ export default class Model {
 
   // Helper recursively parsing schema to find path where values should be casted
   private execPostPropertyHooks(properties: {[s: string]: any}, prevPath: string = ''): void {
-    return Object.keys(properties).forEach(key => {
+    return Object.keys(properties).forEach((key) => {
       const currentPath = prevPath ? `${prevPath}.${key}` : key;
       const {bsonType, properties: childProperties} = properties[key];
       // Nested object case
@@ -137,7 +137,7 @@ export default class Model {
   private async loadPlugins() {
     const {plugins} = this;
     const allPlugins = uniq([...Model.internalPrePlugins, ...plugins, ...Model.internalPostPlugins]);
-    allPlugins.forEach(pluginConfig => {
+    allPlugins.forEach((pluginConfig) => {
       if (Array.isArray(pluginConfig)) {
         pluginConfig[0](this, pluginConfig[1]);
       } else {
@@ -147,7 +147,7 @@ export default class Model {
   }
 
   addStatics(staticsMap: {[s: string]: () => void}): void {
-    Object.keys(staticsMap).forEach(key => this.statics.set(key, staticsMap[key]));
+    Object.keys(staticsMap).forEach((key) => this.statics.set(key, staticsMap[key]));
   }
   addSchemaProperties(additionalProperties) {
     const {schema} = this;
@@ -161,7 +161,7 @@ export default class Model {
   }
 
   // @docs http://mongodb.github.io/node-mongodb-native/3.1/api/Collection.html#insertOne
-  async insertOne(document: TSchema, options?: CollectionInsertOneOptions): Promise<InsertOneWriteOpResult> {
+  async insertOne(document: TSchema, options: CollectionInsertOneOptions = {}): Promise<InsertOneWriteOpResult> {
     await this.hooks.execManyPre(['insert', 'insertOne'], [document, options]);
     const response = await this.collection.insertOne(document, options);
     /* [ 'result', 'connection', 'message', 'ops', 'insertedCount', 'insertedId' ] */
@@ -171,7 +171,7 @@ export default class Model {
   }
 
   // @docs http://mongodb.github.io/node-mongodb-native/3.1/api/Collection.html#insertMany
-  async insertMany(documents: TSchema[], options?: CollectionInsertManyOptions): Promise<InsertWriteOpResult> {
+  async insertMany(documents: TSchema[], options: CollectionInsertManyOptions = {}): Promise<InsertWriteOpResult> {
     // PreHooks handling
     const eachPreArgs = documents.reduce((soFar, document) => soFar.concat([[document]]), []);
     await this.hooks.execEachPre('insert', eachPreArgs);
@@ -194,7 +194,7 @@ export default class Model {
   async updateOne(
     filter: FilterQuery<TSchema>,
     update: UpdateQuery<TSchema> | TSchema,
-    options?: ReplaceOneOptions
+    options: ReplaceOneOptions = {}
   ): Promise<UpdateWriteOpResult> {
     // PreHooks handling
     await this.hooks.execManyPre(['update', 'updateOne'], [filter, update]);
@@ -213,7 +213,7 @@ export default class Model {
   async findOneAndUpdate(
     filter: FilterQuery<TSchema>,
     update: Object,
-    options?: FindOneAndReplaceOption
+    options: FindOneAndReplaceOption = {}
   ): Promise<FindAndModifyWriteOpResultObject<TSchema>> {
     // PreHooks handling
     const opMap = new Map();
@@ -230,7 +230,7 @@ export default class Model {
   }
 
   // @docs http://mongodb.github.io/node-mongodb-native/3.1/api/Collection.html#findOne
-  async findOne(query: FilterQuery<TSchema>, options?: FindOneOptions): Promise<TSchema | null> {
+  async findOne(query: FilterQuery<TSchema>, options: FindOneOptions = {}): Promise<TSchema | null> {
     // PreHooks handling
     const opMap = new Map();
     await this.hooks.execManyPre(['find', 'findOne'], [query, options, opMap]);
@@ -242,7 +242,7 @@ export default class Model {
   }
 
   // @docs http://mongodb.github.io/node-mongodb-native/3.1/api/Collection.html#find
-  async find(query: FilterQuery<TSchema>, options?: FindOneOptions): Promise<Array<TSchema | null>> {
+  async find(query: FilterQuery<TSchema>, options: FindOneOptions = {}): Promise<Array<TSchema | null>> {
     // PreHooks handling
     const opMap = new Map();
     await this.hooks.execManyPre(['find', 'findMany'], [query, options, opMap]);
@@ -258,7 +258,7 @@ export default class Model {
   // @docs http://mongodb.github.io/node-mongodb-native/3.1/api/Collection.html#deleteOne
   async deleteOne(
     filter: FilterQuery<TSchema>,
-    options?: CommonOptions & {bypassDocumentValidation?: boolean}
+    options: CommonOptions & {bypassDocumentValidation?: boolean} = {}
   ): Promise<DeleteWriteOpResultObject> {
     // PreHooks handling
     const opMap = new Map();
@@ -271,7 +271,7 @@ export default class Model {
   }
 
   // @docs http://mongodb.github.io/node-mongodb-native/3.1/api/Collection.html#deleteMany
-  async deleteMany(filter: FilterQuery<TSchema>, options?: CommonOptions): Promise<DeleteWriteOpResultObject> {
+  async deleteMany(filter: FilterQuery<TSchema>, options: CommonOptions = {}): Promise<DeleteWriteOpResultObject> {
     // PreHooks handling
     const opMap = new Map();
     await this.hooks.execManyPre(['delete', 'deleteMany'], [filter, options, opMap]);
