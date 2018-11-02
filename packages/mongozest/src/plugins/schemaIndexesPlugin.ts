@@ -1,4 +1,4 @@
-import {isString} from 'lodash';
+import {isString, isUndefined} from 'lodash';
 import {log, inspect} from './../utils/logger';
 // @types
 import {Model} from '..';
@@ -8,7 +8,7 @@ export default function schemaDefaultsPlugin(model: Model, {suffix = '_'} = {}) 
   const {collectionName} = model;
   const propsWithIndexes: Map<string, any> = new Map();
   model.post('initialize:property', (prop: {[s: string]: any} | string, path: string) => {
-    if (isString(prop) || !prop.index) {
+    if (isString(prop) || isUndefined(prop.index)) {
       return;
     }
     propsWithIndexes.set(path, prop.index);

@@ -74,12 +74,15 @@ export default class Model {
     if (this.hooks.hasPost('initialize:property')) {
       this.execPostPropertyHooks(this.schema);
     }
-    await this.hooks.execPost('initialize', []);
+    // @NOTE somehow hook below got
+    setImmediate(async () => {
+      await this.hooks.execPost('initialize', []);
+    });
   }
 
   // Helper recursively parsing schema to find path where values should be casted
   private execPostPropertyHooks(properties: {[s: string]: any}, prevPath: string = ''): void {
-    return Object.keys(properties).forEach((key) => {
+    return Object.keys(properties).forEach(key => {
       const currentPath = prevPath ? `${prevPath}.${key}` : key;
       const {bsonType, properties: childProperties} = properties[key];
       // Nested object case
@@ -137,7 +140,7 @@ export default class Model {
   private async loadPlugins() {
     const {plugins} = this;
     const allPlugins = uniq([...Model.internalPrePlugins, ...plugins, ...Model.internalPostPlugins]);
-    allPlugins.forEach((pluginConfig) => {
+    allPlugins.forEach(pluginConfig => {
       if (Array.isArray(pluginConfig)) {
         pluginConfig[0](this, pluginConfig[1]);
       } else {
@@ -146,8 +149,8 @@ export default class Model {
     });
   }
 
-  addStatics(staticsMap: {[s: string]: () => void}): void {
-    Object.keys(staticsMap).forEach((key) => this.statics.set(key, staticsMap[key]));
+  addStatics(staticsMap: {[s: string]: any}): void {
+    Object.keys(staticsMap).forEach(key => this.statics.set(key, staticsMap[key]));
   }
   addSchemaProperties(additionalProperties) {
     const {schema} = this;
