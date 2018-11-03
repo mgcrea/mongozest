@@ -72,27 +72,26 @@ export default class Model {
     this.collection = await this.setupCollection();
     // PostHooks handling
     if (this.hooks.hasPost('initialize:property')) {
-      this.execPostPropertyHooks(this.schema);
+      await this.execPostPropertyHooks(this.schema);
     }
-    // @NOTE somehow hook below got
-    setImmediate(async () => {
-      await this.hooks.execPost('initialize', []);
-    });
+    await this.hooks.execPost('initialize', []);
   }
 
   // Helper recursively parsing schema to find path where values should be casted
-  private execPostPropertyHooks(properties: {[s: string]: any}, prevPath: string = ''): void {
-    return Object.keys(properties).forEach(key => {
+  private async execPostPropertyHooks(properties: {[s: string]: any}, prevPath: string = ''): void {
+    return Object.keys(properties).reduce(async (promiseSoFar, key) => {
+      const soFar = await promiseSoFar;
       const currentPath = prevPath ? `${prevPath}.${key}` : key;
       const {bsonType, properties: childProperties} = properties[key];
       // Nested object case
       const isLeaf = !(bsonType === 'object' && childProperties);
       // Leaf case
-      this.hooks.execPost('initialize:property', [properties[key], currentPath, {isLeaf}]);
+      await this.hooks.execPost('initialize:property', [properties[key], currentPath, {isLeaf}]);
       if (!isLeaf) {
-        this.execPostPropertyHooks(childProperties, currentPath);
+        await this.execPostPropertyHooks(childProperties, currentPath);
       }
-    });
+      return soFar;
+    }, Promise.resolve());
   }
 
   // Collection management
