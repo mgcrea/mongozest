@@ -24,7 +24,7 @@ afterAll(async () => {
 
 describe('schemaIndexesPlugin', () => {
   let testModel: Model;
-  it('should properly loadModel', async () => {
+  it('should properly loadModel and create indexes', async () => {
     testModel = await mongo.loadModel(Test);
     expect(testModel instanceof Model).toBeTruthy();
     const indexes = await testModel.collection.indexes();

@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`schemaIndexesPlugin should properly loadModel 1`] = `
+exports[`schemaIndexesPlugin should properly loadModel and create indexes 1`] = `
 Array [
   Object {
     "key": Object {

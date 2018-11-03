@@ -1,4 +1,4 @@
-import {isString, isUndefined} from 'lodash';
+import {find, isString, isUndefined} from 'lodash';
 import {log, inspect} from './../utils/logger';
 // @types
 import {Model} from '..';
@@ -21,12 +21,22 @@ export default function schemaDefaultsPlugin(model: Model, {suffix = '_'} = {}) 
       const soFar = await promiseSoFar;
       const [path, options] = entry;
       const indexOptions = {name: `${path}${suffix}`, ...options};
-      // // We have a named index? @TODO
-      // if (indexOptions.name) {
-      //   const indexExists = await model.collection.indexExists(indexOptions.name);
-      // }
-      log(`db.${collectionName}.createIndex(${inspect({[path]: 1})}, ${inspect(indexOptions)})`);
-      const indexName = await model.collection.createIndex({[path]: 1}, indexOptions);
+      const {name} = indexOptions;
+      const key = {[path]: 1};
+      // Do we have a named index?
+      if (indexOptions.name) {
+        const indexExists = await model.collection.indexExists(name);
+        if (indexExists) {
+          // Do we have an exact match?
+          const matchingIndex = find(await model.collection.indexes(), {key, name, ...indexOptions});
+          if (matchingIndex) {
+            // Nothing more to do!
+            return soFar;
+          }
+        }
+      }
+      log(`db.${collectionName}.createIndex(${inspect(key)}, ${inspect(indexOptions)})`);
+      const indexName = await model.collection.createIndex(key, indexOptions);
       soFar.set(path, indexName);
       return soFar;
     }, Promise.resolve(new Map()));
