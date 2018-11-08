@@ -1,4 +1,5 @@
 // declare const Model: any;
+// @TODO generate with tsc!
 export {ObjectId, MongoError} from 'mongodb';
 // export {Model};
 
@@ -21,8 +22,10 @@ declare namespace mongozest {
     insertMany(docs: TSchema[], options?: CollectionInsertManyOptions): Promise<InsertWriteOpResult>;
     insertOne(docs: TSchema, options?: CollectionInsertOneOptions): Promise<InsertOneWriteOpResult>;
     replaceOne(filter: FilterQuery<TSchema>, document: TSchema, options?: ReplaceOneOptions): Promise<ReplaceWriteOpResult>;
-    updateMany(filter: FilterQuery<TSchema>, update: UpdateQuery<TSchema> | TSchema, options?: CommonOptions & { upsert?: boolean }): Promise<UpdateWriteOpResult>;
+    updateMany(filter: FilterQuery<TSchema>, update: UpdateQuery<TSchema> | TSchema, options?: CommonOptions & {upsert?: boolean}): Promise<UpdateWriteOpResult>;
     updateOne(filter: FilterQuery<TSchema>, update: UpdateQuery<TSchema> | TSchema, options?: ReplaceOneOptions): Promise<UpdateWriteOpResult>;
+    deleteOne(filter: FilterQuery<TSchema>, options: CommonOptions & {bypassDocumentValidation?: boolean} = {} ): Promise<DeleteWriteOpResultObject>;
+    deleteMany(filter: FilterQuery<TSchema>, options: CommonOptions = {}): Promise<DeleteWriteOpResultObject>;
   }
   function collectionDefaultsPlugin(model: Model, options: any);
   function schemaIndexesPlugin(model: Model, options: any);
