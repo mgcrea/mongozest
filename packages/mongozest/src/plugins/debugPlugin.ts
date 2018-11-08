@@ -3,8 +3,11 @@ import {Model} from '..';
 
 export default function debugPlugin(model: Model, options) {
   const {collectionName} = model;
-  model.pre('insertOne', (doc: TSchema) => {
-    log(`db.${collectionName}.insertOne(${inspect(doc)})`);
+  model.pre('insertOne', (document: TSchema, options: CollectionInsertOneOptions) => {
+    log(`db.${collectionName}.insertOne(${inspect(document)}, ${inspect(options)})`);
+  });
+  model.pre('replaceOne', (filter: FilterQuery<TSchema>, document: TSchema, options: ReplaceOneOptions) => {
+    log(`db.${collectionName}.replaceOne(${inspect(filter)}, ${inspect(document)}, ${inspect(options)})`);
   });
   model.pre('insertMany', (docs: TSchema[]) => {
     log(`db.${collectionName}.insertMany(${inspect(docs)})`);

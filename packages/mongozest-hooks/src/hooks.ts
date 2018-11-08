@@ -1,11 +1,6 @@
-// import assert from 'assert';
-// export interface MongoCallback<T> {
-//   (error: MongoError, result: T): void;
-// }
-
 type State = {
-  preHooks: Map<string, Array<T>>;
-  postHooks: Map<string, Array<T>>;
+  preHooks: Map<string, Array<any>>;
+  postHooks: Map<string, Array<any>>;
 };
 
 export default class Hooks {
@@ -61,6 +56,20 @@ export default class Hooks {
     }, Promise.resolve([]));
   }
 
+  execSync(hookMap: Map<string, Array<T>>, hookName: string, args: Array<any>) {
+    if (!hookMap.has(hookName)) {
+      return [];
+    }
+    const hooks = hookMap.get(hookName);
+    if (!Array.isArray(hooks)) {
+      return [];
+    }
+    return hooks.reduce((soFar, callback) => {
+      const result = callback(...args);
+      return soFar.concat(result);
+    }, []);
+  }
+
   async execMany(hookMap: Map<string, Array<T>>, hookNames: Array<string>, args: Array<any>) {
     return await hookNames.reduce(async (promiseSoFar, hookName) => {
       const soFar = await promiseSoFar;
@@ -82,6 +91,11 @@ export default class Hooks {
     return this.exec(hookMap, hookName, args);
   }
 
+  async execPreSync(hookName: string, args: Array<any>) {
+    const {preHooks: hookMap} = this.state;
+    return this.execSync(hookMap, hookName, args);
+  }
+
   async execManyPre(hookNames: Array<string>, args: Array<any>) {
     const {preHooks: hookMap} = this.state;
     return await this.execMany(hookMap, hookNames, args);
@@ -95,6 +109,11 @@ export default class Hooks {
   async execPost(hookName: string, args: Array<any>) {
     const {postHooks: hookMap} = this.state;
     return this.exec(hookMap, hookName, args);
+  }
+
+  async execPostSync(hookName: string, args: Array<any>) {
+    const {postHooks: hookMap} = this.state;
+    return this.execSync(hookMap, hookName, args);
   }
 
   async execManyPost(hookNames: Array<string>, args: Array<any>) {

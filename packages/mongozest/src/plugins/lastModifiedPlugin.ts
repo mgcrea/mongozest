@@ -1,3 +1,5 @@
+import {FilterQuery, UpdateQuery} from 'mongodb';
+
 export default function lastModifiedPlugin(model, options) {
   model.addSchemaProperties({
     updatedAt: {bsonType: 'date'},

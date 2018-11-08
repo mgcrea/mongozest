@@ -1,5 +1,5 @@
 {
-  "name": "@mgcrea/mongozest",
+  "name": "@mongozest/hooks",
   "private": true,
   "version": "1.0.0",
   "description": "",
@@ -14,13 +14,6 @@
   "author": "Olivier Louvignes <olivier@mgcrea.io>",
   "license": "UNLICENSED",
   "dependencies": {
-    "@mongozest/hooks": "1.0.0",
-    "chalk": "^2.4.1",
-    "faker": "^4.1.0",
-    "lodash": "^4.17.11",
-    "mongodb": "^3.1.8",
-    "pluralize": "^7.0.0",
-    "shortid": "^2.2.14"
   },
   "devDependencies": {
     "@babel/cli": "7.1.2",

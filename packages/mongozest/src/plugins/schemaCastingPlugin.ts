@@ -34,7 +34,16 @@ export default function autoCastingPlugin(model: Model, {ignoredKeys = ['_id'], 
       castableProperties.set(path, bsonType);
     }
   });
-  // Handle document insertion
+  // Handle find
+  // @TODO TEST-ME!
+  model.pre('find', (filter: FilterQuery<TSchema>) => {
+    castableProperties.forEach((bsonType, path) => {
+      if (has(filter, path)) {
+        set(filter, path, castValueForType(get(filter, path), bsonType));
+      }
+    });
+  });
+  // Handle insert
   model.pre('insert', (doc: T) => {
     castableProperties.forEach((bsonType, path) => {
       if (has(doc, path)) {

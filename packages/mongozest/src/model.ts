@@ -5,12 +5,12 @@
 
 import {cloneDeep, snakeCase, uniq} from 'lodash';
 import pluralize from 'pluralize';
+import Hooks from '@mongozest/hooks';
 
 import jsonSchemaPlugin from './plugins/jsonSchemaPlugin';
 import findByIdPlugin from './plugins/findByIdPlugin';
 import schemaCastingPlugin from './plugins/schemaCastingPlugin';
 import debugPlugin from './plugins/debugPlugin';
-import Hooks from './utils/hooks';
 
 // require('debug-utils').default();
 
@@ -30,6 +30,7 @@ import {
   FindOneAndReplaceOption,
   UpdateQuery,
   UpdateWriteOpResult,
+  ReplaceWriteOpResult,
   ReplaceOneOptions
 } from 'mongodb';
 
@@ -166,9 +167,36 @@ export default class Model {
   async insertOne(document: TSchema, options: CollectionInsertOneOptions = {}): Promise<InsertOneWriteOpResult> {
     await this.hooks.execManyPre(['insert', 'insertOne'], [document, options]);
     const response = await this.collection.insertOne(document, options);
-    /* [ 'result', 'connection', 'message', 'ops', 'insertedCount', 'insertedId' ] */
+    /* ['result', 'connection', 'message', 'ops', 'insertedCount', 'insertedId'] => ['n', 'opTime', 'electionId', 'ok', 'operationTime', '$clusterTime'] */
+    /* ['result', 'connection', 'message', 'ops', 'insertedCount', 'insertedId'] => ['n', 'ok'] */
     const {result, ops, insertedCount, insertedId} = response;
     await this.hooks.execManyPost(['insert', 'insertOne'], [document, {result, ops, insertedCount, insertedId}]);
+    return response;
+  }
+
+  // @docs http://mongodb.github.io/node-mongodb-native/3.1/api/Collection.html#insertOne
+  // @source https://github.com/mongodb/node-mongodb-native/blob/master/lib/operations/collection_ops.js#L861
+  async replaceOne(
+    filter: FilterQuery<TSchema>,
+    document: TSchema,
+    options: ReplaceOneOptions = {}
+  ): Promise<ReplaceWriteOpResult> {
+    await this.hooks.execPre('replaceOne', [filter, document, options]);
+    await this.hooks.execPre('insert', [document, options]);
+    const response = await this.collection.replaceOne(filter, document, options);
+    /* @docs replaced.keys() [ 'result', 'connection', 'message', 'modifiedCount', 'upsertedId', 'upsertedCount', 'matchedCount', 'ops' ] */
+    const {result, ops, modifiedCount, matchedCount, upsertedId, upsertedCount} = response;
+    // d({result, ops, modifiedCount, matchedCount, upsertedId, upsertedCount});
+    await this.hooks.execPost('replaceOne', [
+      {result, ops, modifiedCount, matchedCount, upsertedId, upsertedCount},
+      filter,
+      document,
+      options
+    ]);
+    // await this.hooks.execManyPost(
+    //   ['insert', 'insertOne'],
+    //   [{result, ops, insertedCount, insertedId}, document, options]
+    // );
     return response;
   }
 

@@ -1,5 +1,5 @@
 // declare const Model: any;
-export {ObjectId} from 'mongodb';
+export {ObjectId, MongoError} from 'mongodb';
 // export {Model};
 
 declare function mongozest(uri: string = MongoInterface.defaultClientUri, options?: MongoClientOptions): MongoInterface;
@@ -20,6 +20,7 @@ declare namespace mongozest {
     findOneAndUpdate(filter: FilterQuery<TSchema>, update: Object, options?: FindOneAndReplaceOption): Promise<FindAndModifyWriteOpResultObject<TSchema>>;
     insertMany(docs: TSchema[], options?: CollectionInsertManyOptions): Promise<InsertWriteOpResult>;
     insertOne(docs: TSchema, options?: CollectionInsertOneOptions): Promise<InsertOneWriteOpResult>;
+    replaceOne(filter: FilterQuery<TSchema>, document: TSchema, options?: ReplaceOneOptions): Promise<ReplaceWriteOpResult>;
     updateMany(filter: FilterQuery<TSchema>, update: UpdateQuery<TSchema> | TSchema, options?: CommonOptions & { upsert?: boolean }): Promise<UpdateWriteOpResult>;
     updateOne(filter: FilterQuery<TSchema>, update: UpdateQuery<TSchema> | TSchema, options?: ReplaceOneOptions): Promise<UpdateWriteOpResult>;
   }

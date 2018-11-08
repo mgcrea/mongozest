@@ -1,22 +1,4 @@
-// describe('test', () => {
-//   jest.setTimeout(10000);
-//   it('should work', async () => {
-//     d('in!');
-//     return await [1, 2, 3].reduce(async (soFar, value) => {
-//       await soFar;
-//       d('about to start', value);
-//       const result = new Promise((resolve, reject) =>
-//         setTimeout(() => {
-//           d('about to resolve', value);
-//           expect(2).toEqual(2);
-//           resolve(value);
-//         }, 1000)
-//       );
-//       return result;
-//     }, Promise.resolve([]));
-//   });
-// });
-import Hooks from './../../../src/utils/hooks';
+import Hooks from './../../src';
 
 describe('Hooks', () => {
   let hooks: Hooks;
