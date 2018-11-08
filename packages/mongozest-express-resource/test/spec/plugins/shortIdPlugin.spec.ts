@@ -33,7 +33,7 @@ afterAll(async () => {
 
 describe('Resource', () => {
   let resource: Resource;
-  describe.only('creation', () => {
+  describe('resource', () => {
     it('should properly create resource', async () => {
       resource = createResource('User', {db: 'mongo', plugins: [shortIdPlugin]});
       expect(resource instanceof Resource).toBeTruthy();
@@ -50,7 +50,6 @@ describe('Resource', () => {
       it('should return 200', async () => {
         const {ops} = await insertFixture('User');
         const {_sid} = ops[0];
-        d(`/users/${_sid}`);
         const res = await fetch(`/users/${_sid}`, {
           method: 'get',
           headers: {'Content-Type': 'application/json'}
@@ -59,7 +58,44 @@ describe('Resource', () => {
           .expect('content-type', /^application\/json/);
         const resBody = await res.json();
         expect(isObject(resBody)).toBeTruthy();
+        expect(Object.keys(resBody)).toMatchSnapshot();
         expect(omit(resBody, '_id', '_sid')).toMatchSnapshot();
+      });
+    });
+    describe('PATCH /users/:_sid', () => {
+      it('should return 200', async () => {
+        const {ops} = await insertFixture('User');
+        const {_sid} = ops[0];
+        const reqBody = {
+          firstName: 'Laura'
+        };
+        const res = await fetch(`/users/${_sid}`, {
+          method: 'patch',
+          body: JSON.stringify(reqBody),
+          headers: {'Content-Type': 'application/json'}
+        })
+          .expect(200)
+          .expect('content-type', /^application\/json/);
+        const resBody = await res.json();
+        expect(isObject(resBody)).toBeTruthy();
+        expect(Object.keys(resBody)).toMatchSnapshot();
+        expect(omit(resBody, '_id', '_sid')).toMatchSnapshot();
+      });
+    });
+    describe('DELETE /users/:_sid', () => {
+      it('should return 200', async () => {
+        const {ops} = await insertFixture('User');
+        const {_sid} = ops[0];
+        const res = await fetch(`/users/${_sid}`, {
+          method: 'delete',
+          headers: {'Content-Type': 'application/json'}
+        })
+          .expect(200)
+          .expect('content-type', /^application\/json/);
+        const resBody = await res.json();
+        expect(isObject(resBody)).toBeTruthy();
+        expect(Object.keys(resBody)).toMatchSnapshot();
+        expect(resBody).toMatchSnapshot();
       });
     });
   });

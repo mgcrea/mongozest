@@ -31,7 +31,7 @@ afterAll(async () => {
 
 describe('Resource', () => {
   let resource: Resource;
-  describe('creation', () => {
+  describe('resource', () => {
     it('should properly create resource', async () => {
       resource = createResource('User', {db: 'mongo'});
       expect(resource instanceof Resource).toBeTruthy();
@@ -93,20 +93,56 @@ describe('Resource', () => {
         expect(resBody).toMatchSnapshot();
       });
     });
-    describe('document', () => {
-      describe('GET /users/:id', () => {
-        it('should return 200', async () => {
-          const {insertedId} = await insertFixture('User');
-          const res = await fetch(`/users/${insertedId}`, {
-            method: 'get',
-            headers: {'Content-Type': 'application/json'}
-          })
-            .expect(200)
-            .expect('content-type', /^application\/json/);
-          const resBody = await res.json();
-          expect(isObject(resBody)).toBeTruthy();
-          expect(omit(resBody, '_id')).toMatchSnapshot();
-        });
+  });
+  describe('document', () => {
+    describe('GET /users/:_id', () => {
+      it('should return 200', async () => {
+        const {insertedId} = await insertFixture('User');
+        const res = await fetch(`/users/${insertedId}`, {
+          method: 'get',
+          headers: {'Content-Type': 'application/json'}
+        })
+          .expect(200)
+          .expect('content-type', /^application\/json/);
+        const resBody = await res.json();
+        expect(isObject(resBody)).toBeTruthy();
+        expect(Object.keys(resBody)).toMatchSnapshot();
+        expect(omit(resBody, '_id')).toMatchSnapshot();
+      });
+    });
+    describe('PATCH /users/:_id', () => {
+      it('should return 200', async () => {
+        const {insertedId} = await insertFixture('User');
+        const reqBody = {
+          firstName: 'Laura'
+        };
+        const res = await fetch(`/users/${insertedId}`, {
+          method: 'patch',
+          body: JSON.stringify(reqBody),
+          headers: {'Content-Type': 'application/json'}
+        })
+          .expect(200)
+          .expect('content-type', /^application\/json/);
+        const resBody = await res.json();
+        d({resBody});
+        expect(isObject(resBody)).toBeTruthy();
+        expect(Object.keys(resBody)).toMatchSnapshot();
+        expect(omit(resBody, '_id')).toMatchSnapshot();
+      });
+    });
+    describe('DELETE /users/:_id', () => {
+      it('should return 200', async () => {
+        const {insertedId} = await insertFixture('User');
+        const res = await fetch(`/users/${insertedId}`, {
+          method: 'delete',
+          headers: {'Content-Type': 'application/json'}
+        })
+          .expect(200)
+          .expect('content-type', /^application\/json/);
+        const resBody = await res.json();
+        expect(isObject(resBody)).toBeTruthy();
+        expect(Object.keys(resBody)).toMatchSnapshot();
+        expect(resBody).toMatchSnapshot();
       });
     });
   });

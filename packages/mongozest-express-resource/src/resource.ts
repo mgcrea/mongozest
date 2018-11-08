@@ -7,8 +7,9 @@ import {cloneDeep, snakeCase, uniq} from 'lodash';
 import pluralize from 'pluralize';
 import {Router as createRouter} from 'express';
 import Hooks from '@mongozest/hooks';
-import {asyncHandler} from './utils/async';
+import {ObjectId} from 'mongodb';
 import {mongoErrorMiddleware} from './utils/errors';
+import {asyncHandler, parseBodyAsUpdate} from './utils/request';
 import queryPlugin from './plugins/queryPlugin';
 import createError from 'http-errors';
 
@@ -60,7 +61,7 @@ export default class Resource {
   public options: any = {};
   private plugins: Array<any>;
   // private statics: Map<string, () => void> = new Map();
-  private params: Map<string, RegExp> = new Map([['_id', OBJECT_ID_REGEX]]);
+  private params: Map<string, RegExp> = new Map([['_id', [OBJECT_ID_REGEX, ObjectId.createFromHexString]]]);
 
   private router: Router;
   private path: string;
@@ -112,9 +113,11 @@ export default class Resource {
     const {router, params, path} = this;
     router.all(`${path}/*`, (req, res, next) => {
       req.filter = {};
+      const param = req.params[0];
       params.forEach((value, key) => {
-        if (value.test(req.params[0])) {
-          req.filter[key] = req.params[0];
+        const [regex, transform] = Array.isArray(value) ? value : [value, null];
+        if (regex.test(param)) {
+          req.filter[key] = transform ? transform(param) : param;
         }
       });
       next();
@@ -140,6 +143,9 @@ export default class Resource {
     router.post(path, asyncHandler(this.postCollection.bind(this)));
     // document
     router.get(`${path}/:_id`, asyncHandler(this.getDocument.bind(this)));
+    router.patch(`${path}/:_id`, asyncHandler(this.patchDocument.bind(this)));
+    router.delete(`${path}/:_id`, asyncHandler(this.deleteDocument.bind(this)));
+    // shutdown
     router.use(path, mongoErrorMiddleware);
     this.hooks.execPostSync('build', [router]);
     return router;
@@ -147,162 +153,82 @@ export default class Resource {
 
   async getCollection(req: Request, res: Response) {
     const model = this.getModelFromRequest(req);
-    // this.parseOptionsFromRequest(req, ['limit', 'sort' 'distinct', 'populate', 'sort'])
+    // Prepare operation params
     const filter: FilterQuery<TSchema> = req.filter;
     const options: FindOneOptions = {};
-    const operation: OperationMap = new Map([['request', req], ['method', 'GET'], ['scope', 'collection']]);
+    const operation: OperationMap = new Map([['method', 'getCollection'], ['scope', 'collection'], ['request', req]]);
+    // Execute preHooks
     await this.hooks.execManyPre(['filter', 'getCollection'], [filter, options, operation]);
+    // Actual mongo call
     const result = await model.find(filter, options);
     operation.set('result', result);
+    // Execute postHooks
     await this.hooks.execPost('getCollection', [filter, options, operation]);
     res.json(operation.get('result'));
   }
 
   async postCollection(req: Request, res: Response) {
     const model = this.getModelFromRequest(req);
+    // Prepare operation params
     const document: TSchema = req.body;
     const options: CollectionInsertOneOptions = {};
-    const operation: OperationMap = new Map([['request', req], ['method', 'POST'], ['scope', 'collection']]);
+    const operation: OperationMap = new Map([['method', 'postCollection'], ['scope', 'collection'], ['request', req]]);
+    // Execute preHooks
     await this.hooks.execManyPre(['insert', 'postCollection'], [document, options, operation]);
-    const {ops, insertedCount, insertedId} = await model.insertOne(document, options);
+    // Actual mongo call
+    const {ops} = await model.insertOne(document, options);
     operation.set('result', ops[0]);
+    // Execute postHooks
     await this.hooks.execPost('postCollection', [document, options, operation]);
     res.json(operation.get('result'));
   }
 
   async getDocument(req: Request, res: Response) {
     const model = this.getModelFromRequest(req);
-    // this.parseOptionsFromRequest(req, ['limit', 'sort' 'distinct', 'populate', 'sort'])
+    // Prepare operation params
     const filter: FilterQuery<TSchema> = req.filter;
     const options: FindOneOptions = {};
-    const operation: OperationMap = new Map([['request', req], ['method', 'GET'], ['scope', 'collection']]);
+    const operation: OperationMap = new Map([['method', 'getDocument'], ['scope', 'document'], ['request', req]]);
+    // Execute preHooks
     await this.hooks.execManyPre(['filter', 'getDocument'], [filter, options, operation]);
-    d('getDocument', {filter});
+    // Actual mongo call
     const result = await model.findOne(filter, options);
     operation.set('result', result);
+    // Execute postHooks
     await this.hooks.execPost('getDocument', [filter, options, operation]);
     res.json(operation.get('result'));
   }
 
-  /*
-      get: (req, res, next) => {
-      const model = db(req).model(modelName);
-      const queryOptions = parseQueryOptions(req, ['query', 'select', 'limit', 'distinct', 'populate', 'sort']);
-      Promise.resolve(onQuery ? onQuery(req, queryOptions.query, {method: 'GET'}) : queryOptions.query)
-        .then(resolvedQuery => {
-          const query = model.find(resolvedQuery);
-          return applyQueryOptions(query, {limit: defaultLimit * 1, ...queryOptions}).exec();
-        })
-        .then(docs => (postFind ? postFind(req, docs, model) : docs))
-        .then(::res.json)
-        .catch({name: 'TypeError'}, err => {
-          throw createError(400, err.message);
-        })
-        .catch(next);
-    },
-    */
-
-  // Initialization
-
-  // async initialize() {
-  //   // Load plugins
-  //   // await this.loadPlugins();
-  //   // PreHooks handling
-  //   await this.hooks.execPre('initialize', []);
-  //   await this.hooks.execPost('initialize', []);
-  // }
-
-  // Plugins management
-
-  // private async loadPlugins() {
-  //   const {plugins} = this;
-  //   const allPlugins = uniq([...Model.internalPrePlugins, ...plugins, ...Model.internalPostPlugins]);
-  //   allPlugins.forEach(pluginConfig => {
-  //     if (Array.isArray(pluginConfig)) {
-  //       pluginConfig[0](this, pluginConfig[1]);
-  //     } else {
-  //       pluginConfig(this);
-  //     }
-  //   });
-  // }
-
-  // // @docs http://mongodb.github.io/node-mongodb-native/3.1/api/Collection.html#insertOne
-  // async insertOne(document: TSchema, options: CollectionInsertOneOptions = {}): Promise<InsertOneWriteOpResult> {
-  //   await this.hooks.execManyPre(['insert', 'insertOne'], [document, options]);
-  //   const response = await this.collection.insertOne(document, options);
-  //   /* [ 'result', 'connection', 'message', 'ops', 'insertedCount', 'insertedId' ] */
-  //   const {result, ops, insertedCount, insertedId} = response;
-  //   await this.hooks.execManyPost(['insert', 'insertOne'], [document, {result, ops, insertedCount, insertedId}]);
-  //   return response;
-  // }
-}
-
-/*
-// mongozest-express-resource
-
-// const users = createResource('User', {db: 'mongo', plugins: []});
-// users.pre('getCollection')
-// users.post('getCollection')
-
-router.get(
-  '/users',
-  requireUser({role: 'admin'}),
-  asyncHandler(async (req, res) => {
-    const {mongo: db} = req.app.locals;
-    const User = db.model('User');
-    const users = await User.find();
-    res.json(users);
-  })
-);
-
-router.param('sid', (req, res, next, id) => {
-  if (!id.match(/^[a-zA-Z0-9]{7,14}$/)) {
-    next(createError(400, 'Invalid shortId'));
-    return;
+  async patchDocument(req: Request, res: Response) {
+    const model = this.getModelFromRequest(req);
+    // Prepare operation params
+    const filter: FilterQuery<TSchema> = req.filter;
+    const update: UpdateQuery<TSchema> | TSchema = parseBodyAsUpdate(req.body);
+    const options: FindOneAndReplaceOption = {returnOriginal: false};
+    const operation: OperationMap = new Map([['method', 'patchDocument'], ['scope', 'document'], ['request', req]]);
+    // Execute preHooks
+    await this.hooks.execManyPre(['filter', 'patchDocument'], [filter, update, options, operation]);
+    // Actual mongo call
+    const {value: result} = await model.findOneAndUpdate(filter, update, options);
+    operation.set('result', result);
+    // Execute postHooks
+    await this.hooks.execPost('patchDocument', [filter, update, options, operation]);
+    res.json(operation.get('result'));
   }
-  next();
-});
 
-router.get(
-  '/users/:sid',
-  requireUser({role: 'admin'}),
-  asyncHandler(async (req, res) => {
-    const {mongo: db} = req.app.locals;
-    const User = db.model('User');
-    const user = await User.findBySid(req.params.sid);
-    if (!user) {
-      throw createError(404);
-    }
-    res.json(user);
-  })
-);
-
-
-router.patch(
-  '/users/:sid',
-  requireUser({role: 'admin'}),
-  asyncHandler(async (req, res) => {
-    const {mongo: db} = req.app.locals;
-    const User = db.model('User');
-    const {_sid, ...payload} = req.body
-    const {result, matchedCount} = await User.updateOne({_sid: req.params.sid}, {$set: payload});
-    // const {result, modifiedCount, matchedCount, upsertedId, upsertedCount} = response;
-    if (!matchedCount) {
-      throw createError(404);
-    }
-    res.json(pick(result, ['n', 'nModified', 'ok']));
-  })
-);
-
-router.post(
-  '/users',
-  requireUser({role: 'admin'}),
-  asyncHandler(async (req, res) => {
-    const {mongo: db} = req.app.locals;
-    const User = db.model('User');
-    const {result, ops, insertedCount, insertedId} = await User.insertOne(req.body);
-    res.json({result, ops, insertedCount, insertedId});
-  })
-);
-
-*/
+  async deleteDocument(req: Request, res: Response) {
+    const model = this.getModelFromRequest(req);
+    // Prepare operation params
+    const filter: FilterQuery<TSchema> = req.filter;
+    const options: CommonOptions & {bypassDocumentValidation?: boolean} = {returnOriginal: false};
+    const operation: OperationMap = new Map([['method', 'deleteDocument'], ['scope', 'document'], ['request', req]]);
+    // Execute preHooks
+    await this.hooks.execManyPre(['filter', 'deleteDocument'], [filter, options, operation]);
+    // Actual mongo call
+    const {result} = await model.deleteOne(filter, options);
+    operation.set('result', {ok: result.ok, n: result.n});
+    // Execute postHooks
+    await this.hooks.execPost('deleteDocument', [filter, options, operation]);
+    res.json(operation.get('result'));
+  }
+}

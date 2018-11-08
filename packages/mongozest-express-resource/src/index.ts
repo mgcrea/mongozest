@@ -5,7 +5,7 @@
 // import Plugin from './plugin';
 import Resource from './resource';
 export * from './plugins';
-export {asyncHandler} from './utils/async';
+export {asyncHandler} from './utils/request';
 export {mongoErrorMiddleware} from './utils/errors';
 
 export {Resource};
