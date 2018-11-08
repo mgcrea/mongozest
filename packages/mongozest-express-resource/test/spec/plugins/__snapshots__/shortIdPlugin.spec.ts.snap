@@ -1,0 +1,9 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Resource document GET /users/:_sid should return 200 1`] = `
+Object {
+  "email": "john.doe@gmail.com",
+  "firstName": "John",
+  "lastName": "Doe",
+}
+`;

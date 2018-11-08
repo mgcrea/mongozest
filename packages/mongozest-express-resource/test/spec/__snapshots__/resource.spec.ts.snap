@@ -1,0 +1,23 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Resource collection GET /users should return 200 1`] = `
+Object {
+  "email": "john.doe@gmail.com",
+  "firstName": "John",
+  "lastName": "Doe",
+}
+`;
+
+exports[`Resource collection POST /users should return 400 when payload is invalid 1`] = `
+Object {
+  "error": "Document failed validation",
+}
+`;
+
+exports[`Resource collection document GET /users/:id should return 200 1`] = `
+Object {
+  "email": "john.doe@gmail.com",
+  "firstName": "John",
+  "lastName": "Doe",
+}
+`;

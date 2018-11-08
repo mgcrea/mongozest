@@ -1,0 +1,32 @@
+{
+  "name": "@mongozest/express-resource",
+  "private": true,
+  "version": "1.0.0",
+  "description": "",
+  "main": "lib/index.js",
+  "module": "src/index.ts",
+  "typings": "typings/module.d.ts",
+  "scripts": {
+    "build": "babel --source-maps --extensions .js,.ts --out-dir lib/ --ignore **/__tests__ src/",
+    "typecheck": "tsc --pretty --noEmit",
+    "test": "CI=true jest --runInBand --colors"
+  },
+  "author": "Olivier Louvignes <olivier@mgcrea.io>",
+  "license": "UNLICENSED",
+  "dependencies": {
+    "@mongozest/hooks": "1.0.0",
+    "express-async-handler": "^1.1.4",
+    "http-errors": "^1.7.1",
+    "json5": "^2.1.0",
+    "lodash": "^4.17.11"
+  },
+  "devDependencies": {
+    "@babel/cli": "7.1.2",
+    "@babel/core": "^7.1.2",
+    "@types/pluralize": "^0.0.29",
+    "babel-core": "^7.0.0-bridge",
+    "babel-jest": "^23.6.0",
+    "jest": "^23.6.0",
+    "typescript": "^3.1.6"
+  }
+}
