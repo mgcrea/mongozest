@@ -1,6 +1,6 @@
 // @docs https://docs.mongodb.com/manual/reference/operator/query/type/#document-type-available-types
 
-import {isUndefined, get, set, isString, isFunction} from 'lodash';
+import {isUndefined, get, set, isString, shuffle} from 'lodash';
 import faker from 'faker';
 // @types
 import {Model} from '..';
@@ -15,6 +15,7 @@ export default function schemaFakerPlugin(model: Model, {ignoredKeys = ['_id']} 
     if (isString(prop) || isUndefined(prop.faker)) {
       return;
     }
+    //
     propsWithFaker.set(path, prop.faker);
   });
   model.addStatics({
@@ -22,8 +23,13 @@ export default function schemaFakerPlugin(model: Model, {ignoredKeys = ['_id']} 
       const fake = {};
       propsWithFaker.forEach((fakerOption, path) => {
         // if (isString(fakerOption)) {
-        const fakeFunction = get(faker, fakerOption);
-        set(fake, path, fakeFunction());
+        if (fakerOption === 'enum') {
+          const pathEnumValue = get(model.schema, path).enum;
+          set(fake, path, shuffle(pathEnumValue)[0]);
+        } else {
+          const fakeFunction = get(faker, fakerOption);
+          set(fake, path, fakeFunction());
+        }
       });
       return {...fake, ...document};
     },

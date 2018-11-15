@@ -4,7 +4,7 @@ import {get, has, set, isString} from 'lodash';
 import {Long, ObjectId, Decimal128 as Decimal, Int32 as Int} from 'mongodb';
 import {toString, toNumber, toInteger, toSafeInteger} from 'lodash';
 // @types
-import {Model} from '..';
+import {Model, mapPathValues} from '..';
 
 const CASTABLE_TYPES = ['objectId', 'long', 'decimal', 'int', 'date'];
 
@@ -38,25 +38,19 @@ export default function autoCastingPlugin(model: Model, {ignoredKeys = ['_id'], 
   // @TODO TEST-ME!
   model.pre('find', (filter: FilterQuery<TSchema>) => {
     castableProperties.forEach((bsonType, path) => {
-      if (has(filter, path)) {
-        set(filter, path, castValueForType(get(filter, path), bsonType));
-      }
+      mapPathValues(filter, path, (value: any) => castValueForType(value, bsonType));
     });
   });
   // @TODO TEST-ME!
   model.pre('update', (filter: FilterQuery<TSchema>) => {
     castableProperties.forEach((bsonType, path) => {
-      if (has(filter, path)) {
-        set(filter, path, castValueForType(get(filter, path), bsonType));
-      }
+      mapPathValues(filter, path, (value: any) => castValueForType(value, bsonType));
     });
   });
   // Handle insert
   model.pre('insert', (doc: T) => {
     castableProperties.forEach((bsonType, path) => {
-      if (has(doc, path)) {
-        set(doc, path, castValueForType(get(doc, path), bsonType));
-      }
+      mapPathValues(doc, path, (value: any) => castValueForType(value, bsonType));
     });
   });
   // @TODO Handle document update

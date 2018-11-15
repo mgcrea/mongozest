@@ -1,6 +1,6 @@
 // @docs https://docs.mongodb.com/manual/reference/operator/query/jsonSchema/
 
-import {isString, pick} from 'lodash';
+import {isString, pick, omit} from 'lodash';
 
 const JSON_SCHEMA_VALID_KEYS = [
   'bsonType', // Accepts same string aliases used for the $type operator
@@ -35,17 +35,18 @@ const JSON_SCHEMA_VALID_KEYS = [
 ];
 
 export default function jsonSchemaPlugin(model, options) {
+  // @TODO refactor to decouple initialSchema override
   const buildJsonSchemaFromObject = (schema, options = {}) => {
     const initialObjectSchema = {
-      ...options,
       bsonType: 'object',
       additionalProperties: false,
-      properties: {}
+      properties: {},
+      ...options
     };
     return Object.keys(schema).reduce((soFar, key) => {
       // Add support for string shortcut
       const value = isString(schema[key]) ? {bsonType: schema[key]} : schema[key];
-      const {bsonType, required, properties, ...otherProps} = value;
+      const {bsonType, required, properties: childProperties, items: childItems, ...otherProps} = value;
       // Add support for required
       if (required === true) {
         // Initialize array on the fly due to `$jsonSchema keyword 'required' cannot be an empty array`
@@ -57,12 +58,34 @@ export default function jsonSchemaPlugin(model, options) {
       // Cleanup keys
       const validJsonKeys = pick(otherProps, JSON_SCHEMA_VALID_KEYS);
       // Nested object case
-      const isNestedObjectSchema = bsonType === 'object' && properties;
+      const isNestedObjectSchema = bsonType === 'object' && childProperties;
       if (isNestedObjectSchema) {
-        soFar.properties[key] = buildJsonSchemaFromObject(properties, validJsonKeys);
+        soFar.properties[key] = buildJsonSchemaFromObject(childProperties, validJsonKeys);
         return soFar;
       }
-      // Leaf case
+      // Nested arrayItems case
+      const isNestedArrayItems = bsonType === 'array' && childItems;
+      if (isNestedArrayItems) {
+        const isNestedObjectInArray = childItems.bsonType === 'object' && childItems.properties;
+        const validItemsJsonKeys = pick(omit(childItems, 'properties'), JSON_SCHEMA_VALID_KEYS);
+        if (isNestedObjectInArray) {
+          soFar.properties[key] = {
+            bsonType,
+            items: buildJsonSchemaFromObject(childItems.properties, validItemsJsonKeys),
+            ...validJsonKeys
+          };
+          return soFar;
+        } else {
+          // Special array leaf case
+          soFar.properties[key] = {
+            bsonType,
+            items: validItemsJsonKeys,
+            ...validJsonKeys
+          };
+          return soFar;
+        }
+      }
+      // Generic leaf case
       soFar.properties[key] = {bsonType, ...validJsonKeys};
       return soFar;
     }, initialObjectSchema);
@@ -80,5 +103,6 @@ export default function jsonSchemaPlugin(model, options) {
     }
     // Set model validator schema
     validator.$jsonSchema = buildJsonSchemaFromObject(model.schema);
+    // d(validator.$jsonSchema);
   });
 }

@@ -2,7 +2,11 @@
 
 import {isUndefined, has, set, isString, isFunction} from 'lodash';
 // @types
-import {Model} from '..';
+import {Model, defaultPathValues} from '..';
+
+const getDefault = (defaultOption: any) => {
+  return isFunction(defaultOption) ? defaultOption.call(null) : defaultOption;
+};
 
 // Handle schema defaults
 export default function schemaDefaultsPlugin(model: Model, {ignoredKeys = ['_id']} = {}) {
@@ -16,10 +20,7 @@ export default function schemaDefaultsPlugin(model: Model, {ignoredKeys = ['_id'
   // Handle document insertion
   model.pre('insert', (doc: T) => {
     propsWithDefaults.forEach((defaultOption, path) => {
-      if (!has(doc, path)) {
-        const defaultValue = isFunction(defaultOption) ? defaultOption.call(null) : defaultOption;
-        set(doc, path, defaultValue);
-      }
+      defaultPathValues(doc, path, () => getDefault(defaultOption));
     });
   });
 }

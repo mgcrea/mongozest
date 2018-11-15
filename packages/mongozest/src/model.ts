@@ -44,7 +44,7 @@ export default class Model {
   static readonly schema: object;
   static readonly collectionName: string | null = null;
   static readonly collectionOptions: CollectionCreateOptions = {};
-  static readonly plugins = [];
+  static readonly plugins: Array<any> = [];
 
   public collectionName: string;
   public collectionOptions: CollectionCreateOptions = {};
@@ -84,14 +84,27 @@ export default class Model {
     return Object.keys(properties).reduce(async (promiseSoFar, key) => {
       const soFar = await promiseSoFar;
       const currentPath = prevPath ? `${prevPath}.${key}` : key;
-      const {bsonType, properties: childProperties} = properties[key];
+      const {bsonType, properties: childProperties, items: childItems} = properties[key];
       // Nested object case
-      const isLeaf = !(bsonType === 'object' && childProperties);
-      // Leaf case
-      await this.hooks.execPost('initialize:property', [properties[key], currentPath, {isLeaf}]);
-      if (!isLeaf) {
+      const isNestedObject = bsonType === 'object' && childProperties;
+      if (isNestedObject) {
         await this.execPostPropertyHooks(childProperties, currentPath);
       }
+      // Nested arrayItems case
+      const isNestedArrayItems = bsonType === 'array' && childItems;
+      if (isNestedArrayItems) {
+        const isNestedObjectInArray = childItems.bsonType === 'object' && childItems.properties;
+        if (isNestedObjectInArray) {
+          await this.execPostPropertyHooks(childItems.properties, `${currentPath}[]`);
+        } else {
+          // Special array leaf case
+          await this.hooks.execPost('initialize:property', [childItems, `${currentPath}[]`, {isLeaf: true}]);
+          return soFar;
+        }
+      }
+      // Generic leaf case
+      const isLeaf = !isNestedObject && !isNestedArrayItems;
+      await this.hooks.execPost('initialize:property', [properties[key], currentPath, {isLeaf}]);
       return soFar;
     }, Promise.resolve());
   }

@@ -26,6 +26,7 @@ declare namespace mongozest {
     updateOne(filter: FilterQuery<TSchema>, update: UpdateQuery<TSchema> | TSchema, options?: ReplaceOneOptions): Promise<UpdateWriteOpResult>;
     deleteOne(filter: FilterQuery<TSchema>, options: CommonOptions & {bypassDocumentValidation?: boolean} = {} ): Promise<DeleteWriteOpResultObject>;
     deleteMany(filter: FilterQuery<TSchema>, options: CommonOptions = {}): Promise<DeleteWriteOpResultObject>;
+    static plugins: Array<any>
   }
   function collectionDefaultsPlugin(model: Model, options: any);
   function schemaIndexesPlugin(model: Model, options: any);
