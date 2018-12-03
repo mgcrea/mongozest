@@ -18,17 +18,17 @@
     "chalk": "^2.4.1",
     "faker": "^4.1.0",
     "lodash": "^4.17.11",
-    "mongodb": "^3.1.9",
+    "mongodb": "^3.1.10",
     "pluralize": "^7.0.0",
     "shortid": "^2.2.14"
   },
   "devDependencies": {
     "@babel/cli": "7.1.5",
-    "@babel/core": "^7.1.5",
+    "@babel/core": "^7.1.6",
     "@types/pluralize": "^0.0.29",
     "babel-core": "^7.0.0-bridge",
     "babel-jest": "^23.6.0",
     "jest": "^23.6.0",
-    "typescript": "^3.1.6"
+    "typescript": "^3.2.1"
   }
 }

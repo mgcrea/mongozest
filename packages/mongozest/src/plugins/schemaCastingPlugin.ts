@@ -1,10 +1,9 @@
 // @docs https://docs.mongodb.com/manual/reference/operator/query/type/#document-type-available-types
 
-import {get, has, set, isString} from 'lodash';
+import {get, set, isString, toString, toNumber, toSafeInteger} from 'lodash';
 import {Long, ObjectId, Decimal128 as Decimal, Int32 as Int} from 'mongodb';
-import {toString, toNumber, toInteger, toSafeInteger} from 'lodash';
 // @types
-import {Model, mapPathValues} from '..';
+import {Model, OperationMap, mapPathValues} from '..';
 
 const CASTABLE_TYPES = ['objectId', 'long', 'decimal', 'int', 'date'];
 
@@ -41,10 +40,23 @@ export default function autoCastingPlugin(model: Model, {ignoredKeys = ['_id'], 
       mapPathValues(filter, path, (value: any) => castValueForType(value, bsonType));
     });
   });
+  // model.post('find', (filter: FilterQuery<TSchema>, options: FindOneOptions, operation: OperationMap) => {
+  //   castableProperties.forEach((bsonType, path) => {
+  //     // Convert decimal type to javascript float... for now.
+  //     if (bsonType === 'decimal') {
+  //       const doc = operation.get('result');
+  //       const value = get(doc, path);
+  //       if (value) {
+  //         set(doc, path, value.toString() * 1);
+  //       }
+  //     }
+  //   });
+  // });
   // @TODO TEST-ME!
-  model.pre('update', (filter: FilterQuery<TSchema>) => {
+  model.pre('update', (filter: FilterQuery<TSchema>, update: UpdateQuery<TSchema> | TSchema) => {
     castableProperties.forEach((bsonType, path) => {
       mapPathValues(filter, path, (value: any) => castValueForType(value, bsonType));
+      mapPathValues(update.$set, path, (value: any) => castValueForType(value, bsonType));
     });
   });
   // Handle insert

@@ -35,7 +35,7 @@ import {
 } from 'mongodb';
 
 interface TSchema {}
-type OperationMap = Map<string, any>;
+export type OperationMap = Map<string, any>;
 
 export default class Model {
   static internalPrePlugins = [findByIdPlugin];
@@ -91,8 +91,14 @@ export default class Model {
         await this.execPostPropertyHooks(childProperties, currentPath);
       }
       // Nested arrayItems case
-      const isNestedArrayItems = bsonType === 'array' && childItems;
-      if (isNestedArrayItems) {
+      const hasNestedArrayItems = bsonType === 'array' && childItems;
+      if (hasNestedArrayItems) {
+        const hasNestedArraySchemas = Array.isArray(childItems);
+        if (hasNestedArraySchemas) {
+          childItems.forEach(async (childItem: {[s: string]: any}, index: number) => {
+            await this.hooks.execPost('initialize:property', [childItem, `${currentPath}[${index}]`, {isLeaf: true}]);
+          });
+        }
         const isNestedObjectInArray = childItems.bsonType === 'object' && childItems.properties;
         if (isNestedObjectInArray) {
           await this.execPostPropertyHooks(childItems.properties, `${currentPath}[]`);
@@ -103,7 +109,7 @@ export default class Model {
         }
       }
       // Generic leaf case
-      const isLeaf = !isNestedObject && !isNestedArrayItems;
+      const isLeaf = !isNestedObject && !hasNestedArrayItems;
       await this.hooks.execPost('initialize:property', [properties[key], currentPath, {isLeaf}]);
       return soFar;
     }, Promise.resolve());

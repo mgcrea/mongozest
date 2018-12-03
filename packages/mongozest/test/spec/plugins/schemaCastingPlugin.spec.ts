@@ -87,6 +87,48 @@ describe('schemaCastingPlugin', () => {
         expect(foundDoc.intValue).toEqual(-1); // @FIXME mongodb NodeJS bug?
       });
     });
+    describe('should properly cast a `decimal` bsonType', () => {
+      it('from a `string`', async () => {
+        const {ops, insertedId} = await TestModel.insertOne({decimalValue: '3.2'});
+        // Check op result
+        const insertedDoc = ops[0];
+        expect(insertedDoc.decimalValue instanceof Decimal128).toBeTruthy();
+        expect(insertedDoc.decimalValue.toString()).toEqual('3.2');
+        // Check findOne result
+        const foundDoc = await TestModel.findOne({_id: insertedId});
+        expect(foundDoc.decimalValue instanceof Decimal128).toBeTruthy();
+        expect(foundDoc.decimalValue.toString()).toEqual('3.2');
+      });
+      it('from a `float`', async () => {
+        const {ops, insertedId} = await TestModel.insertOne({decimalValue: 3.2});
+        // Check op result
+        const insertedDoc = ops[0];
+        expect(insertedDoc.decimalValue instanceof Decimal128).toBeTruthy();
+        expect(insertedDoc.decimalValue.toString()).toEqual('3.2');
+        // Check findOne result
+        const foundDoc = await TestModel.findOne({_id: insertedId});
+        expect(foundDoc.decimalValue instanceof Decimal128).toBeTruthy();
+        expect(foundDoc.decimalValue.toString()).toEqual('3.2');
+      });
+      // it('from a `number`', async () => {
+      //   const {ops, insertedId} = await TestModel.insertOne({decimalValue: Number.MIN_VALUE});
+      //   // Check op result
+      //   const insertedDoc = ops[0];
+      //   expect(insertedDoc.decimalValue.valueOf()).toEqual(0);
+      //   // Check findOne result
+      //   const foundDoc = await TestModel.findOne({_id: insertedId});
+      //   expect(foundDoc.decimalValue).toEqual(0);
+      // });
+      // it('from `Infinity`', async () => {
+      //   const {ops, insertedId} = await TestModel.insertOne({decimalValue: Infinity});
+      //   // Check op result
+      //   const insertedDoc = ops[0];
+      //   expect(insertedDoc.decimalValue.valueOf()).toEqual(9007199254740991);
+      //   // Check findOne result
+      //   const foundDoc = await TestModel.findOne({_id: insertedId});
+      //   expect(foundDoc.decimalValue).toEqual(-1); // @FIXME mongodb NodeJS bug?
+      // });
+    });
   });
   describe('schema with nestedObject properties', () => {
     class Test2 extends Model {
@@ -119,6 +161,15 @@ describe('schemaCastingPlugin', () => {
     class Test3 extends Model {
       static schema = {
         nestedArray: {bsonType: 'array', items: {bsonType: 'date'}},
+        nestedArrayBis: {
+          bsonType: 'array',
+          minItems: 2,
+          maxItems: 2,
+          items: [
+            {bsonType: 'decimal', minimum: -180, maximum: 180}, // longitude
+            {bsonType: 'decimal', minimum: -90, maximum: 90} // latitude
+          ]
+        },
         nestedArrayDeep: {
           bsonType: 'array',
           items: {bsonType: 'object', properties: {dates: {bsonType: 'array', items: {bsonType: 'date'}}}}
@@ -142,6 +193,18 @@ describe('schemaCastingPlugin', () => {
       const foundDoc = await TestModel.findOne({_id: insertedId});
       expect(foundDoc.nestedArray[0] instanceof Date).toBeTruthy();
       expect(foundDoc.nestedArray[0] instanceof Date).toBeTruthy();
+    });
+    it('should properly cast a nestedArrayBis property', async () => {
+      const date = new Date(Date.UTC(2000, 0, 1));
+      const {ops, insertedId} = await TestModel.insertOne({nestedArrayBis: [1.743815, 47.364408]});
+      // Check op result
+      const insertedDoc = ops[0];
+      expect(insertedDoc.nestedArrayBis[0] instanceof Decimal128).toBeTruthy();
+      expect(insertedDoc.nestedArrayBis[1] instanceof Decimal128).toBeTruthy();
+      // Check findOne result
+      const foundDoc = await TestModel.findOne({_id: insertedId});
+      expect(foundDoc.nestedArrayBis[0] instanceof Decimal128).toBeTruthy();
+      expect(foundDoc.nestedArrayBis[1] instanceof Decimal128).toBeTruthy();
     });
     it('should properly cast a nestedArrayDeep property', async () => {
       const date = new Date(Date.UTC(2000, 0, 1));

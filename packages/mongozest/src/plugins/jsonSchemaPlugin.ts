@@ -102,7 +102,11 @@ export default function jsonSchemaPlugin(model, options) {
       model.schema._id = {bsonType: 'objectId'};
     }
     // Set model validator schema
-    validator.$jsonSchema = buildJsonSchemaFromObject(model.schema);
+    try {
+      validator.$jsonSchema = buildJsonSchemaFromObject(model.schema);
+    } catch (err) {
+      d(model.schema);
+    }
     // d(validator.$jsonSchema);
   });
 }
