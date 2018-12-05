@@ -1,0 +1,21 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Resource collection GET /comments should return 200 1`] = `
+Object {
+  "text": "Hello World",
+  "user": Object {
+    "_id": "5c080c628716686aa388aef8",
+    "email": "john.doe@gmail.com",
+    "firstName": "John",
+    "lastName": "Doe",
+  },
+}
+`;
+
+exports[`Resource collection GET /comments should return 200 2`] = `
+Object {
+  "email": "john.doe@gmail.com",
+  "firstName": "John",
+  "lastName": "Doe",
+}
+`;

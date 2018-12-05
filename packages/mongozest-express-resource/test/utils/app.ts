@@ -34,9 +34,10 @@ export const createTestApp = ({routers = []}: TestAppOptions) => {
 
   const mongo = createMongoInterface();
   app.locals.mongo = mongo;
+  app.locals.getFixture = (model: string) => fixtures[model.toLowerCase()];
   app.locals.insertFixture = async (model: string, payload = {}) => {
-    const defaults = fixtures[model];
-    return await mongo.model(model).insertOne({...defaults, ...payload});
+    const operation = await mongo.model(model).insertOne({...app.locals.getFixture(model), ...payload});
+    return operation.ops[0];
   };
 
   return app;

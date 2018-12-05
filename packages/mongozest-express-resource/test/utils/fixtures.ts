@@ -1,7 +1,11 @@
-const User = {
+const user = {
   firstName: 'John',
   lastName: 'Doe',
   email: 'john.doe@gmail.com'
 };
 
-export {User};
+const comment = {
+  text: 'Hello World'
+};
+
+export {user, comment};

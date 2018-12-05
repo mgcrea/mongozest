@@ -11,6 +11,7 @@ import {ObjectId} from 'mongodb';
 import {mongoErrorMiddleware} from './utils/errors';
 import {asyncHandler, parseBodyAsUpdate} from './utils/request';
 import queryPlugin from './plugins/queryPlugin';
+import populatePlugin from './plugins/populatePlugin';
 import createError from 'http-errors';
 
 // @types
@@ -55,7 +56,7 @@ const OBJECT_ID_PATTERN = '[a-f\\d]{24}';
 const OBJECT_ID_REGEX = /^[a-f\d]{24}$/i;
 
 export default class Resource {
-  static internalPrePlugins = [queryPlugin];
+  static internalPrePlugins = [queryPlugin, populatePlugin];
   static internalPostPlugins = [];
 
   public options: any = {};
@@ -125,10 +126,6 @@ export default class Resource {
   }
 
   private getModelFromRequest(req: Request): Model {
-    const {modelName} = this;
-    return req.app.locals.mongo.model(modelName);
-  }
-  private parseOptionsFromRequest(req: Request) {
     const {modelName} = this;
     return req.app.locals.mongo.model(modelName);
   }
