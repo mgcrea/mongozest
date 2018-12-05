@@ -1,6 +1,6 @@
 // @docs https://docs.mongodb.com/manual/reference/operator/query/type/#document-type-available-types
 
-import {get, set, isString, toString, toNumber, toSafeInteger} from 'lodash';
+import {get, set, isString, isPlainObject, toString, toNumber, toSafeInteger} from 'lodash';
 import {Long, ObjectId, Decimal128 as Decimal, Int32 as Int} from 'mongodb';
 // @types
 import {Model, OperationMap, mapPathValues} from '..';
@@ -37,7 +37,17 @@ export default function autoCastingPlugin(model: Model, {ignoredKeys = ['_id'], 
   // @TODO TEST-ME!
   model.pre('find', (filter: FilterQuery<TSchema>) => {
     castableProperties.forEach((bsonType, path) => {
-      mapPathValues(filter, path, (value: any) => castValueForType(value, bsonType));
+      mapPathValues(filter, path, (value: any) => {
+        if (isString(value)) {
+          return castValueForType(value, bsonType);
+        }
+        if (isPlainObject(value)) {
+          if (value.$in) {
+            value.$in = value.$in.map((_value: any) => castValueForType(_value, bsonType));
+          }
+        }
+        return value;
+      });
     });
   });
   // model.post('find', (filter: FilterQuery<TSchema>, options: FindOneOptions, operation: OperationMap) => {
