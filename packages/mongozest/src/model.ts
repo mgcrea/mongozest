@@ -79,7 +79,7 @@ export default class Model {
     await this.hooks.execPost('initialize', []);
   }
 
-  // Helper recursively parsing schema to find path where values should be casted
+  // Helper recursively parsing schema
   private async execPostPropertyHooks(properties: {[s: string]: any}, prevPath: string = ''): void {
     return Object.keys(properties).reduce(async (promiseSoFar, key) => {
       const soFar = await promiseSoFar;
@@ -123,17 +123,18 @@ export default class Model {
     return collections.length > 0;
   }
   private async setupCollection(): Promise<Collection<TSchema>> {
-    const {db, collectionName} = this;
+    const {db, collectionName, collectionOptions} = this;
     const doesExist = await this.hasCollection();
-    await (doesExist ? this.updateCollection() : this.createCollection());
+    await this.hooks.execPre('setup', [collectionOptions, {doesExist}]);
+    await (doesExist ? this.updateCollection(collectionOptions) : this.createCollection(collectionOptions));
     return db.collection(collectionName);
   }
-  private async createCollection(): Promise<Collection<TSchema>> {
-    const {db, collectionName, collectionOptions} = this;
+  private async createCollection(collectionOptions: CollectionCreateOptions): Promise<Collection<TSchema>> {
+    const {db, collectionName} = this;
     return await db.createCollection(collectionName, collectionOptions);
   }
-  private async updateCollection(): Promise<any> {
-    const {db, collectionName, collectionOptions} = this;
+  private async updateCollection(collectionOptions: CollectionCreateOptions): Promise<any> {
+    const {db, collectionName} = this;
     return await db.command({
       collMod: collectionName,
       ...collectionOptions
@@ -255,12 +256,12 @@ export default class Model {
     // Prepare operation params
     const operation: OperationMap = new Map([['method', 'updateOne']]);
     // Execute preHooks
-    await this.hooks.execManyPre(['update', 'updateOne'], [filter, update, operation]);
+    await this.hooks.execManyPre(['update', 'updateOne'], [filter, update, options, operation]);
     // Actual mongodb operation
     const result = await this.collection.updateOne(filter, update, options);
     operation.set('result', result);
     // Execute postHooks
-    await this.hooks.execManyPost(['update', 'updateOne'], [filter, update, operation]);
+    await this.hooks.execManyPost(['update', 'updateOne'], [filter, update, options, operation]);
     return operation.get('result');
   }
 

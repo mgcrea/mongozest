@@ -1,8 +1,20 @@
 import {log, inspect} from './../utils/logger';
 import {Model} from '..';
 
+const {NODE_DEBUG = '0'} = process.env;
+const IS_DEBUG = NODE_DEBUG === '1';
+
 export default function debugPlugin(model: Model, options) {
   const {collectionName} = model;
+  if (IS_DEBUG) {
+    model.pre('setup', (options: CollectionCreateOptions, {doesExist}) => {
+      if (!doesExist) {
+        log(`db.createCollection("${collectionName}", ${inspect(options)})`);
+      } else {
+        log(`db.command(${inspect({collMod: collectionName, ...options})}`);
+      }
+    });
+  }
   model.pre('insertOne', (document: TSchema, options: CollectionInsertOneOptions) => {
     log(`db.${collectionName}.insertOne(${inspect(document)}, ${inspect(options)})`);
   });
@@ -12,9 +24,12 @@ export default function debugPlugin(model: Model, options) {
   model.pre('insertMany', (docs: TSchema[]) => {
     log(`db.${collectionName}.insertMany(${inspect(docs)})`);
   });
-  model.pre('updateOne', (filter: FilterQuery<TSchema>, update: UpdateQuery<TSchema> | TSchema) => {
-    log(`db.${collectionName}.updateOne(${inspect(filter)}, ${inspect(update)})`);
-  });
+  model.pre(
+    'updateOne',
+    (filter: FilterQuery<TSchema>, update: UpdateQuery<TSchema> | TSchema, options: ReplaceOneOptions) => {
+      log(`db.${collectionName}.updateOne(${inspect(filter)}, ${inspect(update)}), ${inspect(options)}`);
+    }
+  );
   model.pre(
     'findOneAndUpdate',
     (
