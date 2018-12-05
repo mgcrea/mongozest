@@ -32,7 +32,6 @@ export default function populatePlugin(resource: Resource, {strictJSON = false} 
   resource.post('getCollection', async (filter: FilterQuery<TSchema>, options: FindOneOptions, operation) => {
     const req: Request = operation.get('request');
     const model = resource.getModelFromRequest(req);
-    d();
     const {populate} = operation.get(QUERY_OPTIONS);
     if (!populate) {
       return;

@@ -48,8 +48,7 @@ describe('Resource', () => {
   describe('document', () => {
     describe('GET /users/:_sid', () => {
       it('should return 200', async () => {
-        const {ops} = await insertFixture('User');
-        const {_sid} = ops[0];
+        const {_sid} = await insertFixture('User');
         const res = await fetch(`/users/${_sid}`, {
           method: 'get',
           headers: {'Content-Type': 'application/json'}
@@ -64,8 +63,7 @@ describe('Resource', () => {
     });
     describe('PATCH /users/:_sid', () => {
       it('should return 200', async () => {
-        const {ops} = await insertFixture('User');
-        const {_sid} = ops[0];
+        const {_sid} = await insertFixture('User');
         const reqBody = {
           firstName: 'Laura'
         };
@@ -84,8 +82,7 @@ describe('Resource', () => {
     });
     describe('DELETE /users/:_sid', () => {
       it('should return 200', async () => {
-        const {ops} = await insertFixture('User');
-        const {_sid} = ops[0];
+        const {_sid} = await insertFixture('User');
         const res = await fetch(`/users/${_sid}`, {
           method: 'delete',
           headers: {'Content-Type': 'application/json'}

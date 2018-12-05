@@ -3,12 +3,6 @@
 exports[`Resource collection GET /comments should return 200 1`] = `
 Object {
   "text": "Hello World",
-  "user": Object {
-    "_id": "5c080c628716686aa388aef8",
-    "email": "john.doe@gmail.com",
-    "firstName": "John",
-    "lastName": "Doe",
-  },
 }
 `;
 

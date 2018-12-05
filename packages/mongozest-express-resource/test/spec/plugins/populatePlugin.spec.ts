@@ -80,7 +80,7 @@ describe('Resource', () => {
         const resBody = await res.json();
         expect(Array.isArray(resBody)).toBeTruthy();
         expect(resBody.length).toEqual(1);
-        expect(omit(resBody[0], '_id')).toMatchSnapshot();
+        expect(omit(resBody[0], '_id', 'user')).toMatchSnapshot();
         expect(omit(resBody[0].user, '_id')).toMatchSnapshot();
       });
     });

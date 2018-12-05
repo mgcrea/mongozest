@@ -124,7 +124,6 @@ describe('Resource', () => {
           .expect(200)
           .expect('content-type', /^application\/json/);
         const resBody = await res.json();
-        d({resBody});
         expect(isObject(resBody)).toBeTruthy();
         expect(Object.keys(resBody)).toMatchSnapshot();
         expect(omit(resBody, '_id')).toMatchSnapshot();
