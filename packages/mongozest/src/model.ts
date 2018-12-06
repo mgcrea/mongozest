@@ -35,7 +35,6 @@ import {
 } from 'mongodb';
 
 interface TSchema {}
-export type OperationMap = Map<string, any>;
 
 export default class Model {
   static internalPrePlugins = [findByIdPlugin];

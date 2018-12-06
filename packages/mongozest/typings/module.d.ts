@@ -14,6 +14,7 @@ declare namespace mongozest {
   interface ModelConstructor {
     new (): Model;
   }
+  type OperationMap = Map<string, any>;
   class Model<TSchema = Default> {
     addStatics(staticsMap: any): void;
     otherModel(modelName: string): Model;
