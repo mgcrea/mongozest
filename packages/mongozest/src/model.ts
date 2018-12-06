@@ -55,8 +55,8 @@ export default class Model {
   private hooks: Hooks = new Hooks();
 
   constructor(public db: MongoDb) {
-    const {modelName, collectionName, collectionOptions, schema, plugins} = this.constructor as any;
-    this.collectionName = collectionName ? collectionName : snakeCase(pluralize(modelName));
+    const {name: className, modelName, collectionName, collectionOptions, schema, plugins} = this.constructor as any;
+    this.collectionName = collectionName ? collectionName : snakeCase(pluralize(modelName || className));
     this.collectionOptions = cloneDeep(collectionOptions);
     this.schema = cloneDeep(schema);
     this.plugins = plugins;
