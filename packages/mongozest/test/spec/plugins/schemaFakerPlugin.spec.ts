@@ -1,7 +1,6 @@
 import createMongo, {Model, jsonSchemaPlugin, schemaFakerPlugin} from './../../../src';
 import {Decimal128 as Decimal} from 'mongodb';
-import {basename} from 'path';
-import {kebabCase} from 'lodash';
+import {getDbName} from './../../utils';
 
 const DB_NAME = getDbName(__filename);
 

@@ -1,6 +1,5 @@
 import createMongo, {Model, collectionDefaultsPlugin} from './../../../src';
-import {basename} from 'path';
-import {kebabCase} from 'lodash';
+import {getDbName} from './../../utils';
 
 const DB_NAME = getDbName(__filename);
 

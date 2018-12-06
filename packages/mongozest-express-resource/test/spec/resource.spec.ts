@@ -1,13 +1,13 @@
 import {makeFetch} from 'supertest-fetch';
 import {ObjectId, Model} from '@mgcrea/mongozest';
 import {omit, isObject} from 'lodash';
-import {createTestApp, breakdownMiddleware} from './../utils/app';
+import {createTestApp, getDbName, breakdownMiddleware} from './../utils';
 import createResource, {Resource} from './../../src';
 
 const DB_NAME = getDbName(__filename);
 
 const app = createTestApp({routers: []});
-const {mongo, insertFixture} = app.locals;
+const {mongo, redis, insertFixture} = app.locals;
 const fetch = makeFetch(app);
 
 class User extends Model {
@@ -26,7 +26,7 @@ beforeAll(async () => {
 });
 
 afterAll(async () => {
-  await mongo.disconnect();
+  await Promise.all([redis.quit(), mongo.disconnect()]);
 });
 
 describe('Resource', () => {

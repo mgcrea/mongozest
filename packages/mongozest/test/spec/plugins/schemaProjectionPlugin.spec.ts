@@ -1,7 +1,6 @@
 import createMongo, {Model, jsonSchemaPlugin, schemaProjectionPlugin} from './../../../src';
 import {Decimal128 as Decimal} from 'mongodb';
-import {basename} from 'path';
-import {kebabCase} from 'lodash';
+import {getDbName} from './../../utils';
 
 const DB_NAME = getDbName(__filename);
 
@@ -87,7 +86,7 @@ describe('schemaProjectionPlugin', () => {
         expect(foundDoc.username).toEqual('foo');
         expect(typeof foundDoc.password).toEqual('undefined');
         expect(typeof foundDoc.code).toEqual('undefined');
-      })
+      });
     });
     it('with initial inclusive projection', async () => {
       const {insertedId} = await TestModel.insertOne({
@@ -102,7 +101,7 @@ describe('schemaProjectionPlugin', () => {
         expect(foundDoc.username).toEqual('foo');
         expect(typeof foundDoc.password).toEqual('undefined');
         expect(typeof foundDoc.code).toEqual('undefined');
-      })
+      });
     });
     it('with initial exclusive projection', async () => {
       const {insertedId} = await TestModel.insertOne({
@@ -117,7 +116,7 @@ describe('schemaProjectionPlugin', () => {
         expect(foundDoc.username).toEqual('foo');
         expect(typeof foundDoc.password).toEqual('undefined');
         expect(typeof foundDoc.code).toEqual('undefined');
-      })
+      });
     });
   });
 });

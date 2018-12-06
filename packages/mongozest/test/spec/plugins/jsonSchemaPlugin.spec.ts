@@ -1,7 +1,5 @@
 import createMongo, {Model, jsonSchemaPlugin} from './../../../src';
-import {basename} from 'path';
-import {kebabCase} from 'lodash';
-import {Db} from 'mongodb';
+import {getDbName} from './../../utils';
 
 const DB_NAME = getDbName(__filename);
 

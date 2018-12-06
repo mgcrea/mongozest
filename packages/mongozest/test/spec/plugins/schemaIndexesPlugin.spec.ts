@@ -1,4 +1,5 @@
 import createMongo, {Model, jsonSchemaPlugin, schemaIndexesPlugin} from './../../../src';
+import {getDbName} from './../../utils';
 
 const DB_NAME = getDbName(__filename);
 

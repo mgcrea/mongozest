@@ -37,12 +37,14 @@ export default class MongoInterface {
   // public async loadModels(Models: Array<Model>): Promise<any> {
   //   return Promise.all(Models.map(Model => this.loadModel(Model)));
   // }
-  public async loadModels(Models: {[s: string]: ModelConstructor}): Promise<{[s: string]: Model}> {
-    return await Object.keys(Models).reduce(async (promiseSoFar, key) => {
+  public async loadModels(
+    Models: Array<ModelConstructor> | {[s: string]: ModelConstructor}
+  ): Promise<{[s: string]: Model}> {
+    const ModelsAsArray = Array.isArray(Models) ? Models : Object.keys(Models).map(key => Models[key]);
+    return await ModelsAsArray.reduce(async (promiseSoFar, Model) => {
       const soFar = await promiseSoFar;
-      soFar[key] = await this.loadModel(Models[key]);
-      return soFar;
-    }, Promise.resolve({}));
+      return soFar.concat(await this.loadModel(Model));
+    }, Promise.resolve([]));
   }
   public async loadModel(Model: ModelConstructor): Promise<Model> {
     const {name: className, modelName: classModelName} = Model;
