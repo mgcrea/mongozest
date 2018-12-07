@@ -50,18 +50,18 @@ export default function autoCastingPlugin(model: Model, {ignoredKeys = ['_id'], 
       });
     });
   });
-  // model.post('find', (filter: FilterQuery<TSchema>, options: FindOneOptions, operation: OperationMap) => {
-  //   castableProperties.forEach((bsonType, path) => {
-  //     // Convert decimal type to javascript float... for now.
-  //     if (bsonType === 'decimal') {
-  //       const doc = operation.get('result');
-  //       const value = get(doc, path);
-  //       if (value) {
-  //         set(doc, path, value.toString() * 1);
-  //       }
-  //     }
-  //   });
-  // });
+  model.post('find', (filter: FilterQuery<TSchema>, options: FindOneOptions, operation: OperationMap) => {
+    castableProperties.forEach((bsonType, path) => {
+      // Convert decimal type to javascript float... for now.
+      if (bsonType === 'decimal') {
+        const doc = operation.get('result');
+        const value = get(doc, path);
+        if (value) {
+          set(doc, path, value.toString() * 1);
+        }
+      }
+    });
+  });
   // @TODO TEST-ME!
   model.pre('update', (filter: FilterQuery<TSchema>, update: UpdateQuery<TSchema> | TSchema) => {
     castableProperties.forEach((bsonType, path) => {
