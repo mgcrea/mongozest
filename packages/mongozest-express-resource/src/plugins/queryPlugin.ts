@@ -37,6 +37,24 @@ export default function schemaProjectionPlugin(resource: Resource, {strictJSON =
     if (queryOptions.filter) {
       Object.assign(filter, queryOptions.filter);
     }
+    // Apply projection
+    if (queryOptions.projection) {
+      Object.assign(options, {projection: queryOptions.projection});
+    }
+  });
+
+  resource.pre('getDocument', (filter: FilterQuery<TSchema>, options: FindOneOptions, operation) => {
+    const req: Request = operation.get('request');
+    const whitelist = ['filter', 'projection'];
+    const queryOptions = mapValues(mapValues(pick(req.query, whitelist), parseQueryParam), castQueryParam);
+    // Apply filter
+    if (queryOptions.filter) {
+      Object.assign(filter, queryOptions.filter);
+    }
+    // Apply projection
+    if (queryOptions.projection) {
+      Object.assign(options, {projection: queryOptions.projection});
+    }
   });
   // resource.pre('postCollection', (document: TSchema, options: CollectionInsertOneOptions, operation) => {
   //   d('postCollection');

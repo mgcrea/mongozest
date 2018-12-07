@@ -16,7 +16,7 @@ import createError from 'http-errors';
 
 // @types
 import {Model} from '@mgcrea/mongozest';
-import {Request, Response, Router} from 'express';
+import {Request, RequestHandler, Response, Router} from 'express';
 import {
   Db as MongoDb,
   Collection,
@@ -65,6 +65,7 @@ export default class Resource {
   private params: Map<string, RegExp> = new Map([['_id', [OBJECT_ID_REGEX, ObjectId.createFromHexString]]]);
 
   private router: Router;
+  private middleware: RequestHandler | null;
   private path: string;
   private hooks: Hooks = new Hooks();
 
@@ -73,8 +74,9 @@ export default class Resource {
   }
 
   constructor(public modelName: string, options: ResourceOptions = {}) {
-    const {router, path, plugins} = options;
+    const {router, middleware, path, plugins} = options;
     this.router = router || createRouter();
+    this.middleware = middleware || null;
     // const {name: className, collectionName, collectionOptions, schema, plugins} = this.constructor as any;
     this.path = path || `/${snakeCase(pluralize(modelName))}`;
     // this.collectionOptions = cloneDeep(collectionOptions);
@@ -131,10 +133,13 @@ export default class Resource {
   }
 
   build() {
-    const {router, path, params} = this;
+    const {router, path, middleware} = this;
     this.hooks.execPreSync('build', [router]);
     // params
     this.setupFilterUrlParams();
+    if (middleware) {
+      router.use(path, middleware);
+    }
     // collection
     router.get(path, asyncHandler(this.getCollection.bind(this)));
     router.post(path, asyncHandler(this.postCollection.bind(this)));
