@@ -2,12 +2,16 @@
 // @docs https://gist.github.com/brennanMKE/ee8ea002d305d4539ef6
 
 import {MongoClient} from 'mongodb';
+import {parse} from 'url';
 import Model from './model';
 
 // @types
 import {Db as MongoDb, MongoClientOptions} from 'mongodb';
 
 const DEFAULT_MONGODB_URI = 'mongodb://mongo:27017';
+
+// global interfaces
+const interfaces: Map<string, MongoInterface> = new Map();
 
 export default class MongoInterface {
   static defaultClientUri = DEFAULT_MONGODB_URI;
@@ -16,17 +20,28 @@ export default class MongoInterface {
     useNewUrlParser: true
   };
   static create(uri: string = MongoInterface.defaultClientUri, options?: MongoClientOptions) {
-    return new MongoInterface(uri, options);
+    // reuse interface if already created for uri
+    if (interfaces.has(uri)) {
+      return interfaces.get(uri);
+    }
+    const mongoInterface = new MongoInterface(uri, options);
+    interfaces.set(uri, mongoInterface);
+    return mongoInterface;
   }
   client: MongoClient;
-  // models: {[modelName: string]: Model} = {};
+  private dbName: string;
   private models: Map<string, Model> = new Map();
   db: MongoDb;
 
   private constructor(uri: string, options?: MongoClientOptions) {
-    this.client = new MongoClient(uri, {...MongoInterface.defaultClientOptions, ...options});
+    const {protocol = 'mongodb:', hostname = '127.0.0.1', port = '27017', pathname = '/test'} = parse(uri);
+    this.dbName = pathname.slice(1);
+    this.client = new MongoClient(`${protocol}//${hostname}:${port}`, {
+      ...MongoInterface.defaultClientOptions,
+      ...options
+    });
   }
-  public async connect(dbName = 'test'): Promise<MongoDb> {
+  public async connect(dbName = this.dbName): Promise<MongoDb> {
     await this.client.connect();
     this.db = this.client.db(dbName);
     return this.db;
