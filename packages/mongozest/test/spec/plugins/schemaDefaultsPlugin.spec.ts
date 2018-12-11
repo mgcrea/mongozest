@@ -1,4 +1,4 @@
-import createMongo, {Model, jsonSchemaPlugin, schemaDefaultsPlugin} from './../../../src';
+import createMongo, {Model, jsonSchemaPlugin, schemaCastingPlugin, schemaDefaultsPlugin} from './../../../src';
 import {Decimal128 as Decimal} from 'mongodb';
 import {getDbName} from './../../utils';
 
@@ -24,7 +24,7 @@ describe('schemaCastingPlugin', () => {
         dateValue: {bsonType: 'date', default: Date.now},
         boolValue: {bsonType: 'bool', default: false}
       };
-      static plugins = [jsonSchemaPlugin, schemaDefaultsPlugin];
+      static plugins = [jsonSchemaPlugin, schemaDefaultsPlugin, schemaCastingPlugin];
     }
     let TestModel: Model;
     it('should properly loadModel', async () => {
@@ -97,7 +97,7 @@ describe('schemaCastingPlugin', () => {
           }
         }
       };
-      static plugins = [jsonSchemaPlugin, schemaDefaultsPlugin];
+      static plugins = [jsonSchemaPlugin, schemaDefaultsPlugin, schemaCastingPlugin];
     }
     let TestModel: Model;
     it('should properly loadModel', async () => {
