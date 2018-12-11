@@ -29,6 +29,7 @@ import {
   FindAndModifyWriteOpResultObject,
   FindOneAndReplaceOption,
   UpdateQuery,
+  UpdateManyOptions,
   UpdateWriteOpResult,
   ReplaceWriteOpResult,
   ReplaceOneOptions
@@ -263,6 +264,24 @@ export default class Model {
     operation.set('result', result);
     // Execute postHooks
     await this.hooks.execManyPost(['update', 'updateOne'], [filter, update, options, operation]);
+    return operation.get('result');
+  }
+
+  // @docs http://mongodb.github.io/node-mongodb-native/3.1/api/Collection.html#updateMany
+  async updateMany(
+    filter: FilterQuery<TSchema>,
+    update: UpdateQuery<TSchema> | TSchema,
+    options: UpdateManyOptions = {}
+  ): Promise<UpdateWriteOpResult> {
+    // Prepare operation params
+    const operation: OperationMap = new Map([['method', 'updateMany']]);
+    // Execute preHooks
+    await this.hooks.execManyPre(['update', 'updateMany'], [filter, update, options, operation]);
+    // Actual mongodb operation
+    const result = await this.collection.updateMany(filter, update, options);
+    operation.set('result', result);
+    // Execute postHooks
+    await this.hooks.execManyPost(['update', 'updateMany'], [filter, update, options, operation]);
     return operation.get('result');
   }
 

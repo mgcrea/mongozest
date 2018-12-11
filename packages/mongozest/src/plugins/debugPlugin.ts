@@ -26,8 +26,28 @@ export default function debugPlugin(model: Model, options) {
   });
   model.pre(
     'updateOne',
-    (filter: FilterQuery<TSchema>, update: UpdateQuery<TSchema> | TSchema, options: ReplaceOneOptions) => {
+    (
+      filter: FilterQuery<TSchema>,
+      update: UpdateQuery<TSchema> | TSchema,
+      options: ReplaceOneOptions,
+      operation: OperationMap
+    ) => {
+      const method = operation.get('method');
+      if (method !== 'updateOne') {
+        return;
+      }
       log(`db.${collectionName}.updateOne(${inspect(filter)}, ${inspect(update)}), ${inspect(options)}`);
+    }
+  );
+  model.pre(
+    'updateMany',
+    (
+      filter: FilterQuery<TSchema>,
+      update: UpdateQuery<TSchema> | TSchema,
+      options: UpdateManyOptions,
+      operation: OperationMap
+    ) => {
+      log(`db.${collectionName}.updateMany(${inspect(filter)}, ${inspect(update)}), ${inspect(options)}`);
     }
   );
   model.pre(
