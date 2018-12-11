@@ -188,7 +188,7 @@ export default class Model {
     // Prepare operation params
     const operation: OperationMap = new Map([['method', 'insertOne']]);
     // Execute preHooks
-    await this.hooks.execManyPre(['insert', 'insertOne'], [document, options, operation]);
+    await this.hooks.execManyPre(['insert', 'insertOne', 'validate'], [document, options, operation]);
     // Actual mongodb operation
     const result = await this.collection.insertOne(document, options);
     /* ['result', 'connection', 'message', 'ops', 'insertedCount', 'insertedId'] */
@@ -211,6 +211,7 @@ export default class Model {
     // Execute preHooks
     await this.hooks.execPre('insert', [document, options, operation]);
     await this.hooks.execPre('replaceOne', [filter, document, options, operation]);
+    await this.hooks.execPre('validate', [document, options, operation]);
     // Actual mongodb operation
     const result = await this.collection.replaceOne(filter, document, options);
     /* ['result', 'connection', 'message', 'modifiedCount', 'upsertedId', 'upsertedCount', 'matchedCount', 'ops'] */
@@ -232,6 +233,7 @@ export default class Model {
     );
     await this.hooks.execEachPre('insert', eachPreArgs);
     await this.hooks.execPre('insertMany', [documents, options, operation]);
+    await this.hooks.execEachPre('validate', eachPreArgs);
     // Actual mongodb operation
     const result = await this.collection.insertMany(documents, options);
     operation.set('result', result);
