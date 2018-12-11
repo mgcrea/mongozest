@@ -35,7 +35,7 @@ export default function schemaProjectionPlugin(resource: Resource, {strictJSON =
     const queryOptions = mapValues(mapValues(pick(req.query, whitelist), parseQueryParam), castQueryParam);
     // Apply filter
     if (queryOptions.filter) {
-      Object.assign(filter, queryOptions.filter);
+      operation.set('filter', {$and: [filter, queryOptions.filter]});
     }
     // Apply projection
     if (queryOptions.projection) {

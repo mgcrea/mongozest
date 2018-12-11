@@ -114,9 +114,9 @@ export default class Resource {
   }
   private setupFilterUrlParams() {
     const {router, params, path} = this;
-    router.all(`${path}/*`, (req, res, next) => {
+    router.all(`${path}*`, (req, res, next) => {
       req.filter = {};
-      const param = req.params[0];
+      const param = req.params[0].slice(1);
       params.forEach((value, key) => {
         const [regex, transform] = Array.isArray(value) ? value : [value, null];
         if (regex.test(param)) {
@@ -158,11 +158,16 @@ export default class Resource {
     // Prepare operation params
     const filter: FilterQuery<TSchema> = req.filter;
     const options: FindOneOptions = {};
-    const operation: OperationMap = new Map([['method', 'getCollection'], ['scope', 'collection'], ['request', req]]);
+    const operation: OperationMap = new Map([
+      ['method', 'getCollection'],
+      ['scope', 'collection'],
+      ['request', req],
+      ['filter', filter]
+    ]);
     // Execute preHooks
     await this.hooks.execManyPre(['filter', 'getCollection'], [filter, options, operation]);
     // Actual mongo call
-    const result = await model.find(filter, options);
+    const result = await model.find(operation.get('filter'), options);
     operation.set('result', result);
     // Execute postHooks
     await this.hooks.execPost('getCollection', [filter, options, operation]);
