@@ -75,6 +75,7 @@ export default function schemaValidationPlugin(model: Model, {validateJsonSchema
             });
           }
         }
+        // @TODO handle nested schemas
       }
 
       // Check props with pattern
