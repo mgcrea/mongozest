@@ -25,7 +25,10 @@ const castValueForType = (value: any, type: string) => {
 };
 
 // Helper recursively parsing schema to find path where values should be casted
-export default function autoCastingPlugin(model: Model, {ignoredKeys = ['_id'], castableTypes = CASTABLE_TYPES} = {}) {
+export default function autoCastingPlugin(
+  model: Model,
+  {ignoredKeys = ['_id'], castableTypes = CASTABLE_TYPES, castDecimalsAsFloats = false} = {}
+) {
   const castableProperties = new Map();
   model.post('initialize:property', (property: {[s: string]: any}, path: string) => {
     const bsonType = isString(property) ? property : property.bsonType;
@@ -53,7 +56,7 @@ export default function autoCastingPlugin(model: Model, {ignoredKeys = ['_id'], 
   model.post('find', (filter: FilterQuery<TSchema>, options: FindOneOptions, operation: OperationMap) => {
     castableProperties.forEach((bsonType, path) => {
       // Convert decimal type to javascript float... for now.
-      if (bsonType === 'decimal') {
+      if (castDecimalsAsFloats && bsonType === 'decimal') {
         const doc = operation.get('result');
         const value = get(doc, path);
         if (value) {

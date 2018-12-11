@@ -38,7 +38,7 @@ interface TSchema {}
 
 export default class Model {
   static internalPrePlugins = [findByIdPlugin];
-  static internalPostPlugins = [schemaCastingPlugin, jsonSchemaPlugin, debugPlugin];
+  static internalPostPlugins = [jsonSchemaPlugin, debugPlugin];
 
   static readonly schema: object;
   static readonly collectionName: string | null = null;
