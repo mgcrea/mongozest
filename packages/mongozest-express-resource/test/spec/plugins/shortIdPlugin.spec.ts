@@ -60,6 +60,19 @@ describe('Resource', () => {
         expect(Object.keys(resBody)).toMatchSnapshot();
         expect(omit(resBody, '_id', '_sid')).toMatchSnapshot();
       });
+      it('should not disrupt existing behavior', async () => {
+        const {_id} = await insertFixture('User');
+        const res = await fetch(`/users/${_id}`, {
+          method: 'get',
+          headers: {'Content-Type': 'application/json'}
+        })
+          .expect(200)
+          .expect('content-type', /^application\/json/);
+        const resBody = await res.json();
+        expect(isObject(resBody)).toBeTruthy();
+        expect(Object.keys(resBody)).toMatchSnapshot();
+        expect(omit(resBody, '_id', '_sid')).toMatchSnapshot();
+      });
     });
     describe('PATCH /users/:_sid', () => {
       it('should return 200', async () => {
