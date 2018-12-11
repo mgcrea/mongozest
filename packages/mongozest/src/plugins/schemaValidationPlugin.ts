@@ -1,6 +1,7 @@
 // @docs https://docs.mongodb.com/manual/reference/operator/query/type/#document-type-available-types
 
-import {isUndefined, has, get, isString, isFunction} from 'lodash';
+import {isUndefined, has, get, difference, isString, isFunction} from 'lodash';
+import {MongoError} from 'mongodb';
 // @types
 import {Model, defaultPathValues} from '..';
 
@@ -16,6 +17,8 @@ const formatValidationErrors = (errors: ValidationErrors) => {
       switch (error) {
         case 'required':
           return `  - "${path}" is required`;
+        case 'extraneous':
+          return `  - "${path}" is extraneous`;
         case 'pattern':
           return `  - "${path}" does not match pattern`;
         case 'validate':
@@ -28,7 +31,7 @@ const formatValidationErrors = (errors: ValidationErrors) => {
 };
 
 // Handle schema defaults
-export default function schemaValidationPlugin(model: Model, {ignoredKeys = ['_id']} = {}) {
+export default function schemaValidationPlugin(model: Model, {validateJsonSchema = true} = {}) {
   const propsWithValidation: Map<string, any> = new Map();
   const propsWithPattern: Map<string, any> = new Map();
   model.post('initialize:property', (prop: {[s: string]: any} | string, path: string) => {
@@ -42,7 +45,7 @@ export default function schemaValidationPlugin(model: Model, {ignoredKeys = ['_i
       }
       propsWithValidation.set(path, [validator, message]);
     }
-    if (!isUndefined(prop.pattern)) {
+    if (validateJsonSchema && !isUndefined(prop.pattern)) {
       propsWithPattern.set(path, new RegExp(prop.pattern));
     }
   });
@@ -50,25 +53,38 @@ export default function schemaValidationPlugin(model: Model, {ignoredKeys = ['_i
   model.pre('validate', (doc: T) => {
     const validationErrors: ValidationErrors = [];
 
-    // Check required props
-    const {validator} = model.collectionOptions;
-    if (validator && validator.$jsonSchema) {
-      const {required: requiredProps} = validator.$jsonSchema;
-      requiredProps.forEach((path: string) => {
-        if (!has(doc, path)) {
-          validationErrors.push({error: 'required', path});
+    if (validateJsonSchema) {
+      // Check required props
+      const {validator} = model.collectionOptions;
+      if (validator && validator.$jsonSchema) {
+        const {
+          required: requiredProps,
+          additionalProperties: allowsAdditionalProps,
+          properties: props
+        } = validator.$jsonSchema;
+        requiredProps.forEach((path: string) => {
+          if (!has(doc, path)) {
+            validationErrors.push({error: 'required', path});
+          }
+        });
+        if (!allowsAdditionalProps) {
+          const additionalProps = difference(Object.keys(doc), Object.keys(props));
+          if (additionalProps.length) {
+            additionalProps.forEach(path => {
+              validationErrors.push({error: 'extraneous', path});
+            });
+          }
+        }
+      }
+
+      // Check props with pattern
+      propsWithPattern.forEach((patternOption, path) => {
+        const value = get(doc, path);
+        if (value && !patternOption.test(value)) {
+          validationErrors.push({error: 'pattern', path});
         }
       });
     }
-
-    // Check props with pattern
-    propsWithPattern.forEach((patternOption, path) => {
-      const value = get(doc, path);
-      if (value && !patternOption.test(value)) {
-        d({patternOption, value, length: value.length});
-        validationErrors.push({error: 'pattern', path});
-      }
-    });
 
     // Check props with custom validation
     propsWithValidation.forEach((validateOption, path) => {
@@ -81,7 +97,11 @@ export default function schemaValidationPlugin(model: Model, {ignoredKeys = ['_i
 
     if (validationErrors.length) {
       const message = formatValidationErrors(validationErrors);
-      throw new Error(`MongoZestError: Document failed validation\n${message}\n`);
+      const error = new Error(`Document failed validation:\n${message}\n`);
+      // Fake MongoError for now...
+      error.name = 'MongoError';
+      error.code = 121;
+      throw error;
     }
   });
 }

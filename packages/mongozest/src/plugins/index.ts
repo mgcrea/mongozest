@@ -1,5 +1,6 @@
 import collectionDefaultsPlugin from './collectionDefaultsPlugin';
 import jsonSchemaPlugin from './jsonSchemaPlugin';
+import createdByPlugin from './createdByPlugin';
 import lastModifiedPlugin from './lastModifiedPlugin';
 import schemaCastingPlugin from './schemaCastingPlugin';
 import schemaDefaultsPlugin from './schemaDefaultsPlugin';
@@ -11,6 +12,7 @@ import shortIdPlugin from './shortIdPlugin';
 
 export {
   collectionDefaultsPlugin,
+  createdByPlugin,
   jsonSchemaPlugin,
   lastModifiedPlugin,
   schemaCastingPlugin,
