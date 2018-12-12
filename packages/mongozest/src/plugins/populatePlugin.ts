@@ -1,6 +1,6 @@
 // @docs https://docs.mongodb.com/manual/reference/operator/query/type/#document-type-available-types
 
-import {get, pick, map, keyBy, isUndefined, isString} from 'lodash';
+import {get, isPlainObject, map, keyBy, isUndefined, isString} from 'lodash';
 import {uniqWithObjectIds} from './../utils/objectId';
 // @types
 import {Model, OperationMap, mapPathValues} from '..';
@@ -32,7 +32,8 @@ export default function autoCastingPlugin(model: Model, options = {}) {
       // @TODO handle arrays
       const ref = propsWithRefs.get(key);
       const uniqueIds = uniqWithObjectIds(map(result, key).filter(Boolean));
-      const resolvedChildren = await model.otherModel(ref).find({_id: {$in: uniqueIds}});
+      const projection = isPlainObject(populate[key]) ? populate[key] : {};
+      const resolvedChildren = await model.otherModel(ref).find({_id: {$in: uniqueIds}}, {projection});
       const resolvedChildrenMap = keyBy(resolvedChildren, '_id');
       // Actually populate
       result.map(doc => {
