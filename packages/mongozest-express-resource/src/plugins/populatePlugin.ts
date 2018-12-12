@@ -27,29 +27,31 @@ export default function populatePlugin(resource: Resource, {strictJSON = false} 
     const req: Request = operation.get('request');
     const whitelist = ['populate'];
     const queryOptions = mapValues(pick(req.query, whitelist), parseQueryParam);
-    operation.set(QUERY_OPTIONS, queryOptions);
+    const {populate} = queryOptions;
+    options.populate = populate;
+    // operation.set(QUERY_OPTIONS, queryOptions);
   });
-  resource.post('getCollection', async (filter: FilterQuery<TSchema>, options: FindOneOptions, operation) => {
-    const req: Request = operation.get('request');
-    const model = resource.getModelFromRequest(req);
-    const {populate} = operation.get(QUERY_OPTIONS);
-    if (!populate) {
-      return;
-    }
-    const result = operation.get('result');
-    await Object.keys(populate).reduce(async (soFar, key) => {
-      await soFar;
-      // @TODO handle arrays
-      const uniqueIds = uniqWithObjectIds(map(result, key).filter(Boolean));
-      const ref = get(model.schema, key).ref;
-      const resolvedChildren = await model.otherModel(ref).find({_id: {$in: uniqueIds}});
-      const resolvedChildrenMap = keyBy(resolvedChildren, '_id');
-      // Actually populate
-      result.map(doc => {
-        if (doc[key]) {
-          doc[key] = resolvedChildrenMap[doc[key].toString()] || null;
-        }
-      });
-    }, Promise.resolve());
-  });
+  // resource.post('getCollection', async (filter: FilterQuery<TSchema>, options: FindOneOptions, operation) => {
+  //   const req: Request = operation.get('request');
+  //   const model = resource.getModelFromRequest(req);
+  //   const {populate} = operation.get(QUERY_OPTIONS);
+  //   if (!populate) {
+  //     return;
+  //   }
+  //   const result = operation.get('result');
+  //   await Object.keys(populate).reduce(async (soFar, key) => {
+  //     await soFar;
+  //     // @TODO handle arrays
+  //     const uniqueIds = uniqWithObjectIds(map(result, key).filter(Boolean));
+  //     const ref = get(model.schema, key).ref;
+  //     const resolvedChildren = await model.otherModel(ref).find({_id: {$in: uniqueIds}});
+  //     const resolvedChildrenMap = keyBy(resolvedChildren, '_id');
+  //     // Actually populate
+  //     result.map(doc => {
+  //       if (doc[key]) {
+  //         doc[key] = resolvedChildrenMap[doc[key].toString()] || null;
+  //       }
+  //     });
+  //   }, Promise.resolve());
+  // });
 }
