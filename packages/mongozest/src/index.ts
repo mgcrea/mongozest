@@ -1,4 +1,5 @@
 export * from './plugins';
+export * from './utils/objectId';
 
 import Model from './model';
 // import Plugin from './plugin';
