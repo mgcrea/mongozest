@@ -55,7 +55,9 @@ export default class MongoInterface {
   public async loadModels(
     Models: Array<ModelConstructor> | {[s: string]: ModelConstructor}
   ): Promise<{[s: string]: Model}> {
-    const ModelsAsArray = Array.isArray(Models) ? Models : Object.keys(Models).map(key => Models[key]);
+    const ModelsAsArray = (Array.isArray(Models) ? Models : Object.keys(Models).map(key => Models[key])).filter(
+      Boolean
+    );
     return await ModelsAsArray.reduce(async (promiseSoFar, Model) => {
       const soFar = await promiseSoFar;
       return soFar.concat(await this.loadModel(Model));

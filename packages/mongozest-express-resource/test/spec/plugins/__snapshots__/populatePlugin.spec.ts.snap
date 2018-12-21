@@ -1,12 +1,12 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`Resource collection GET /comments should return 200 1`] = `
+exports[`populatePlugin collection GET /comments should return 200 1`] = `
 Object {
   "text": "Hello World",
 }
 `;
 
-exports[`Resource collection GET /comments should return 200 2`] = `
+exports[`populatePlugin collection GET /comments should return 200 2`] = `
 Object {
   "email": "john.doe@gmail.com",
   "firstName": "John",

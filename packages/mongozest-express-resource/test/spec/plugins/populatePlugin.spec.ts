@@ -1,14 +1,15 @@
 import {makeFetch} from 'supertest-fetch';
-import {Model} from '@mgcrea/mongozest';
 import {omit} from 'lodash';
-import {createTestApp, getDbName, breakdownMiddleware} from './../../utils';
+import {populatePlugin as modelPopulatePlugin, Model} from '@mgcrea/mongozest';
+import {createTestApp, getDbName, breakdownMiddleware, fixtures} from './../../utils';
 import createResource, {Resource} from './../../../src';
-// import shortIdPlugin from './../../../src/plugins/shortIdPlugin';
+import populatePlugin from './../../../src/plugins/populatePlugin';
 
 const DB_NAME = getDbName(__filename);
 
 const app = createTestApp({routers: []});
 const {mongo, redis, insertFixture} = app.locals;
+app.locals.fixtures = fixtures;
 const fetch = makeFetch(app);
 
 class User extends Model {
@@ -25,6 +26,7 @@ class Comment extends Model {
     text: {bsonType: 'string'},
     user: {bsonType: 'objectId', ref: 'User'}
   };
+  static plugins = [modelPopulatePlugin];
 }
 
 beforeAll(async () => {
@@ -37,7 +39,7 @@ afterAll(async () => {
   await Promise.all([redis.quit(), mongo.disconnect()]);
 });
 
-describe('Resource', () => {
+describe('populatePlugin', () => {
   describe('resources', () => {
     describe('User', () => {
       let resource: Resource;
@@ -53,7 +55,7 @@ describe('Resource', () => {
     describe('Comment', () => {
       let resource: Resource;
       it('should properly create resources', async () => {
-        resource = createResource('Comment', {db: 'mongo'});
+        resource = createResource('Comment', {db: 'mongo', plugins: [populatePlugin]});
         expect(resource instanceof Resource).toBeTruthy();
       });
       it('should properly serve resource', async () => {
@@ -68,8 +70,8 @@ describe('Resource', () => {
   describe('collection', () => {
     describe('GET /comments', () => {
       it('should return 200', async () => {
-        const {_id: userId} = await insertFixture('User');
-        await insertFixture('Comment', {user: userId});
+        const {_id: userId} = await insertFixture('user');
+        await insertFixture('comment', {user: userId});
         const query = `populate=${JSON.stringify({user: 1})}`;
         const res = await fetch(`/comments?${query}`, {
           method: 'get',
@@ -81,6 +83,7 @@ describe('Resource', () => {
         expect(Array.isArray(resBody)).toBeTruthy();
         expect(resBody.length).toEqual(1);
         expect(omit(resBody[0], '_id', 'user')).toMatchSnapshot();
+        expect(typeof resBody[0].user).toBe('object');
         expect(omit(resBody[0].user, '_id')).toMatchSnapshot();
       });
     });

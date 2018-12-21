@@ -1,7 +1,7 @@
 import {makeFetch} from 'supertest-fetch';
 import {shortIdPlugin as modelShortIdPlugin, Model} from '@mgcrea/mongozest';
 import {omit, isObject} from 'lodash';
-import {createTestApp, getDbName, breakdownMiddleware} from './../../utils';
+import {createTestApp, getDbName, breakdownMiddleware, fixtures} from './../../utils';
 import createResource, {Resource} from './../../../src';
 import shortIdPlugin from './../../../src/plugins/shortIdPlugin';
 
@@ -9,6 +9,7 @@ const DB_NAME = getDbName(__filename);
 
 const app = createTestApp({routers: []});
 const {mongo, redis, insertFixture} = app.locals;
+app.locals.fixtures = fixtures;
 const fetch = makeFetch(app);
 
 class User extends Model {
@@ -31,7 +32,7 @@ afterAll(async () => {
   await Promise.all([redis.quit(), mongo.disconnect()]);
 });
 
-describe('Resource', () => {
+describe('shortIdPlugin', () => {
   let resource: Resource;
   describe('resource', () => {
     it('should properly create resource', async () => {

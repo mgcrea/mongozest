@@ -1,20 +1,20 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`Resource document DELETE /users/:_sid should return 200 1`] = `
+exports[`shortIdPlugin document DELETE /users/:_sid should return 200 1`] = `
 Array [
   "ok",
   "n",
 ]
 `;
 
-exports[`Resource document DELETE /users/:_sid should return 200 2`] = `
+exports[`shortIdPlugin document DELETE /users/:_sid should return 200 2`] = `
 Object {
   "n": 1,
   "ok": 1,
 }
 `;
 
-exports[`Resource document GET /users/:_sid should not disrupt existing behavior 1`] = `
+exports[`shortIdPlugin document GET /users/:_sid should not disrupt existing behavior 1`] = `
 Array [
   "_id",
   "firstName",
@@ -24,7 +24,7 @@ Array [
 ]
 `;
 
-exports[`Resource document GET /users/:_sid should not disrupt existing behavior 2`] = `
+exports[`shortIdPlugin document GET /users/:_sid should not disrupt existing behavior 2`] = `
 Object {
   "email": "john.doe@gmail.com",
   "firstName": "John",
@@ -32,7 +32,7 @@ Object {
 }
 `;
 
-exports[`Resource document GET /users/:_sid should return 200 1`] = `
+exports[`shortIdPlugin document GET /users/:_sid should return 200 1`] = `
 Array [
   "_id",
   "firstName",
@@ -42,7 +42,7 @@ Array [
 ]
 `;
 
-exports[`Resource document GET /users/:_sid should return 200 2`] = `
+exports[`shortIdPlugin document GET /users/:_sid should return 200 2`] = `
 Object {
   "email": "john.doe@gmail.com",
   "firstName": "John",
@@ -50,7 +50,7 @@ Object {
 }
 `;
 
-exports[`Resource document PATCH /users/:_sid should return 200 1`] = `
+exports[`shortIdPlugin document PATCH /users/:_sid should return 200 1`] = `
 Array [
   "_id",
   "firstName",
@@ -60,7 +60,7 @@ Array [
 ]
 `;
 
-exports[`Resource document PATCH /users/:_sid should return 200 2`] = `
+exports[`shortIdPlugin document PATCH /users/:_sid should return 200 2`] = `
 Object {
   "email": "john.doe@gmail.com",
   "firstName": "Laura",
