@@ -50,9 +50,12 @@ export default function schemaValidationPlugin(model: Model, {validateJsonSchema
     }
   });
   // Handle document insertion
-  model.pre('validate', (doc: T) => {
+  model.pre('validate', (doc: T, options, operation) => {
     const validationErrors: ValidationErrors = [];
 
+    const isUpdate = ['updateOne', 'updateMany', 'findOneAndUpdate'].includes(operation.get('method'));
+
+    // update or not? // @TODO
     if (validateJsonSchema) {
       // Check required props
       const {validator} = model.collectionOptions;
@@ -62,11 +65,13 @@ export default function schemaValidationPlugin(model: Model, {validateJsonSchema
           additionalProperties: allowsAdditionalProps,
           properties: props
         } = validator.$jsonSchema;
-        requiredProps.forEach((path: string) => {
-          if (!has(doc, path)) {
-            validationErrors.push({error: 'required', path});
-          }
-        });
+        if (!isUpdate) {
+          requiredProps.forEach((path: string) => {
+            if (!has(doc, path)) {
+              validationErrors.push({error: 'required', path});
+            }
+          });
+        }
         if (!allowsAdditionalProps) {
           const additionalProps = difference(Object.keys(doc), Object.keys(props));
           if (additionalProps.length) {

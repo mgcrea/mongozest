@@ -259,6 +259,9 @@ export default class Model {
     const operation: OperationMap = new Map([['method', 'updateOne']]);
     // Execute preHooks
     await this.hooks.execManyPre(['update', 'updateOne'], [filter, update, options, operation]);
+    if (update.$set) {
+      await this.hooks.execPre('validate', [update.$set, options, operation]);
+    }
     // Actual mongodb operation
     const result = await this.collection.updateOne(filter, update, options);
     operation.set('result', result);
@@ -277,6 +280,9 @@ export default class Model {
     const operation: OperationMap = new Map([['method', 'updateMany']]);
     // Execute preHooks
     await this.hooks.execManyPre(['update', 'updateMany'], [filter, update, options, operation]);
+    if (update.$set) {
+      await this.hooks.execPre('validate', [update.$set, options, operation]);
+    }
     // Actual mongodb operation
     const result = await this.collection.updateMany(filter, update, options);
     operation.set('result', result);
@@ -296,6 +302,9 @@ export default class Model {
     const operation: OperationMap = new Map([['method', 'findOneAndUpdate']]);
     // Execute preHooks
     await this.hooks.execManyPre(['update', 'updateOne', 'findOneAndUpdate'], [filter, update, options, operation]);
+    if (update.$set) {
+      await this.hooks.execPre('validate', [update.$set, options, operation]);
+    }
     // Actual mongodb operation
     const result = await this.collection.findOneAndUpdate(filter, update, options);
     operation.set('result', result);
