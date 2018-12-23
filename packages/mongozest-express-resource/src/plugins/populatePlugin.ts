@@ -22,15 +22,17 @@ export default function populatePlugin(resource: Resource, {strictJSON = false} 
     }
   };
   const QUERY_OPTIONS = Symbol('QUERY_OPTIONS');
-  // @docs http://mongodb.github.io/node-mongodb-native/3.1/api/Collection.html#find
-  resource.pre('getCollection', (filter: FilterQuery<TSchema>, options: FindOneOptions, operation) => {
+  const preparePopulation = (filter: FilterQuery<TSchema>, options: FindOneOptions, operation) => {
     const req: Request = operation.get('request');
     const whitelist = ['populate'];
     const queryOptions = mapValues(pick(req.query, whitelist), parseQueryParam);
     const {populate} = queryOptions;
     options.populate = populate;
     // operation.set(QUERY_OPTIONS, queryOptions);
-  });
+  };
+  // @docs http://mongodb.github.io/node-mongodb-native/3.1/api/Collection.html#find
+  resource.pre('getCollection', preparePopulation);
+  resource.pre('getDocument', preparePopulation);
   // resource.post('getCollection', async (filter: FilterQuery<TSchema>, options: FindOneOptions, operation) => {
   //   const req: Request = operation.get('request');
   //   const model = resource.getModelFromRequest(req);

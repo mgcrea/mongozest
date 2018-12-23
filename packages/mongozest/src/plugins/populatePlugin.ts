@@ -1,6 +1,6 @@
 // @docs https://docs.mongodb.com/manual/reference/operator/query/type/#document-type-available-types
 
-import {get, isPlainObject, map, keyBy, isUndefined, isString} from 'lodash';
+import {get, set, isPlainObject, map, keyBy, isUndefined, isString} from 'lodash';
 import {uniqWithObjectIds} from './../utils/objectId';
 // @types
 import {Model, OperationMap, mapPathValues} from '..';
@@ -41,6 +41,29 @@ export default function autoCastingPlugin(model: Model, options = {}) {
           doc[key] = resolvedChildrenMap[doc[key].toString()] || null;
         }
       });
+    }, Promise.resolve());
+  });
+  model.post('findOne', async (filter: FilterQuery<TSchema>, options: FindOneOptions, operation: OperationMap) => {
+    const {populate} = options;
+    if (!populate) {
+      return;
+    }
+    const result = operation.get('result');
+    await Object.keys(populate).reduce(async (soFar, key) => {
+      await soFar;
+      if (!propsWithRefs.has(key)) {
+        return;
+      }
+      // @TODO handle arrays
+      const ref = propsWithRefs.get(key);
+      const refValue = get(result, key);
+      const isArrayValue = Array.isArray(refValue);
+      const projection = isPlainObject(populate[key]) ? populate[key] : {};
+      const resolvedChildren = await model
+        .otherModel(ref)
+        [isArrayValue ? 'find' : 'findOne']({_id: isArrayValue ? {$in: refValue} : refValue}, {projection});
+      // Actually populate
+      set(result, key, resolvedChildren);
     }, Promise.resolve());
   });
 }
