@@ -1,6 +1,6 @@
 // @docs https://docs.mongodb.com/manual/reference/operator/query/type/#document-type-available-types
 
-import {get, set, isString, isPlainObject, toString, toNumber, toSafeInteger} from 'lodash';
+import {get, set, isString, isPlainObject, toString, toNumber, toSafeInteger, isUndefined} from 'lodash';
 import {Long, ObjectId, Decimal128 as Decimal, Int32 as Int} from 'mongodb';
 // @types
 import {Model, OperationMap, mapPathValues} from '..';
@@ -10,7 +10,7 @@ const CASTABLE_TYPES = ['objectId', 'long', 'decimal', 'int', 'date'];
 const castValueForType = (value: any, type: string) => {
   switch (type) {
     case 'objectId':
-      return ObjectId.createFromHexString(toString(value));
+      return value ? ObjectId.createFromHexString(toString(value)) : value;
     case 'long':
       return Long.fromNumber(toNumber(value));
     case 'decimal':
