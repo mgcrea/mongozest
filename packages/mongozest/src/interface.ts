@@ -64,11 +64,13 @@ export default class MongoInterface {
     }, Promise.resolve([]));
   }
   public async loadModel(Model: ModelConstructor): Promise<Model> {
+    const {client} = this;
     const {name: className, modelName: classModelName} = Model;
     const modelName = classModelName || className;
     if (this.models.has(modelName)) {
       return Promise.resolve(this.models.get(modelName) as Model);
     }
+    const startSession = client.startSession.bind(client);
     // const model = Model.create();
     const model = new Model(this.db);
     const modelProxy = new Proxy(model, {
@@ -76,6 +78,10 @@ export default class MongoInterface {
         // Skip proxy's constructor
         if (name === 'constructor') {
           return model.constructor;
+        }
+        // Expose startSession
+        if (name === 'startSession') {
+          return startSession;
         }
         // Wire added statics methods
         if (target.statics.has(name)) {

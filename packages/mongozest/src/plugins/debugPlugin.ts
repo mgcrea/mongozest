@@ -1,25 +1,34 @@
 import {log, inspect} from './../utils/logger';
-import {Model} from '..';
+import {Model, ObjectId} from '..';
 
 const {NODE_DEBUG = '0'} = process.env;
 const IS_DEBUG = NODE_DEBUG === '1';
+
+const leanOptions = options => {
+  const {session, ...otherOptions} = options;
+  if (session) {
+    const {id} = session.id;
+    otherOptions.session = `[ClientSession: ${id.toString('hex')}]`;
+  }
+  return otherOptions;
+};
 
 export default function debugPlugin(model: Model, options) {
   const {collectionName} = model;
   if (IS_DEBUG) {
     model.pre('setup', (options: CollectionCreateOptions, {doesExist}) => {
       if (!doesExist) {
-        log(`db.createCollection("${collectionName}", ${inspect(options)})`);
+        log(`db.createCollection("${collectionName}", ${inspect(leanOptions(options))})`);
       } else {
         log(`db.command(${inspect({collMod: collectionName, ...options})}`);
       }
     });
   }
   model.pre('insertOne', (document: TSchema, options: CollectionInsertOneOptions) => {
-    log(`db.${collectionName}.insertOne(${inspect(document)}, ${inspect(options)})`);
+    log(`db.${collectionName}.insertOne(${inspect(document)}, ${inspect(leanOptions(options))})`);
   });
   model.pre('replaceOne', (filter: FilterQuery<TSchema>, document: TSchema, options: ReplaceOneOptions) => {
-    log(`db.${collectionName}.replaceOne(${inspect(filter)}, ${inspect(document)}, ${inspect(options)})`);
+    log(`db.${collectionName}.replaceOne(${inspect(filter)}, ${inspect(document)}, ${inspect(leanOptions(options))})`);
   });
   model.pre('insertMany', (docs: TSchema[]) => {
     log(`db.${collectionName}.insertMany(${inspect(docs)})`);
@@ -36,7 +45,7 @@ export default function debugPlugin(model: Model, options) {
       if (method !== 'updateOne') {
         return;
       }
-      log(`db.${collectionName}.updateOne(${inspect(filter)}, ${inspect(update)}), ${inspect(options)}`);
+      log(`db.${collectionName}.updateOne(${inspect(filter)}, ${inspect(update)}), ${inspect(leanOptions(options))}`);
     }
   );
   model.pre(
@@ -47,7 +56,7 @@ export default function debugPlugin(model: Model, options) {
       options: UpdateManyOptions,
       operation: OperationMap
     ) => {
-      log(`db.${collectionName}.updateMany(${inspect(filter)}, ${inspect(update)}), ${inspect(options)}`);
+      log(`db.${collectionName}.updateMany(${inspect(filter)}, ${inspect(update)}), ${inspect(leanOptions(options))}`);
     }
   );
   model.pre(
@@ -58,14 +67,18 @@ export default function debugPlugin(model: Model, options) {
       options: FindOneOptions,
       operation: OperationMap
     ) => {
-      log(`db.${collectionName}.findOneAndUpdate(${inspect(filter)}, ${inspect(update)}, ${inspect(options)})`);
+      log(
+        `db.${collectionName}.findOneAndUpdate(${inspect(filter)}, ${inspect(update)}, ${inspect(
+          leanOptions(options)
+        )})`
+      );
     }
   );
   model.pre('findOne', (query: FilterQuery<TSchema>, options: FindOneOptions, operation: OperationMap) => {
-    log(`db.${collectionName}.findOne(${inspect(query)}, ${inspect(options)})`);
+    log(`db.${collectionName}.findOne(${inspect(query)}, ${inspect(leanOptions(options))})`);
   });
   model.pre('findMany', (query: FilterQuery<TSchema>, options: FindOneOptions) => {
-    log(`db.${collectionName}.find(${inspect(query)}, ${inspect(options)})`);
+    log(`db.${collectionName}.find(${inspect(query)}, ${inspect(leanOptions(options))})`);
   });
   model.pre(
     'deleteOne',
@@ -74,11 +87,11 @@ export default function debugPlugin(model: Model, options) {
       options: CommonOptions & {bypassDocumentValidation?: boolean},
       operation: OperationMap
     ) => {
-      log(`db.${collectionName}.deleteOne(${inspect(filter)}, ${inspect(options)})`);
+      log(`db.${collectionName}.deleteOne(${inspect(filter)}, ${inspect(leanOptions(options))})`);
     }
   );
   model.pre('deleteMany', (filter: FilterQuery<TSchema>, options: CommonOptions) => {
-    log(`db.${collectionName}.deleteMany(${inspect(filter)}, ${inspect(options)})`);
+    log(`db.${collectionName}.deleteMany(${inspect(filter)}, ${inspect(leanOptions(options))})`);
   });
 
   // ms-perf
