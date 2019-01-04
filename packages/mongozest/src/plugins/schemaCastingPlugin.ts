@@ -1,6 +1,6 @@
 // @docs https://docs.mongodb.com/manual/reference/operator/query/type/#document-type-available-types
 
-import {get, set, isString, isPlainObject, toString, toNumber, toSafeInteger, isUndefined} from 'lodash';
+import {get, set, isString, isPlainObject, toString, toNumber, toSafeInteger, omitBy} from 'lodash';
 import {Long, ObjectId, Decimal128 as Decimal, Int32 as Int} from 'mongodb';
 // @types
 import {Model, OperationMap, mapPathValues} from '..';
@@ -24,6 +24,18 @@ const castValueForType = (value: any, type: string) => {
   }
 };
 
+const castFilterValueForType = (value: any, type: string) => {
+  if (isString(value)) {
+    return castValueForType(value, type);
+  }
+  if (isPlainObject(value)) {
+    if (value.$in) {
+      value.$in = value.$in.map((_value: any) => castValueForType(_value, type));
+    }
+  }
+  return value;
+};
+
 // Helper recursively parsing schema to find path where values should be casted
 export default function autoCastingPlugin(
   model: Model,
@@ -40,17 +52,7 @@ export default function autoCastingPlugin(
   // @TODO TEST-ME!
   model.pre('find', (filter: FilterQuery<TSchema>) => {
     castableProperties.forEach((bsonType, path) => {
-      mapPathValues(filter, path, (value: any) => {
-        if (isString(value)) {
-          return castValueForType(value, bsonType);
-        }
-        if (isPlainObject(value)) {
-          if (value.$in) {
-            value.$in = value.$in.map((_value: any) => castValueForType(_value, bsonType));
-          }
-        }
-        return value;
-      });
+      mapPathValues(filter, path, (value: any) => castFilterValueForType(value, bsonType));
     });
   });
   model.post('find', (filter: FilterQuery<TSchema>, options: FindOneOptions, operation: OperationMap) => {
@@ -68,7 +70,7 @@ export default function autoCastingPlugin(
   // @TODO TEST-ME!
   model.pre('update', (filter: FilterQuery<TSchema>, update: UpdateQuery<TSchema> | TSchema) => {
     castableProperties.forEach((bsonType, path) => {
-      mapPathValues(filter, path, (value: any) => castValueForType(value, bsonType));
+      mapPathValues(filter, path, (value: any) => castFilterValueForType(value, bsonType));
       mapPathValues(update.$set, path, (value: any) => castValueForType(value, bsonType));
     });
   });
