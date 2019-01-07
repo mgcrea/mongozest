@@ -184,6 +184,22 @@ export default class Model {
     this.hooks.post(hookName, callback);
   }
 
+  // @docs http://mongodb.github.io/node-mongodb-native/3.1/api/Collection.html#aggregate
+  async aggregate(pipeline: Object[] = [], options: CollectionAggregationOptions = {}): Promise<Array<TSchema | null>> {
+    // Prepare operation params
+    const operation: OperationMap = new Map([['method', 'aggregate']]);
+    // Execute preHooks
+    await this.hooks.execPre('aggregate', [pipeline, options, operation]);
+    // Actual mongodb operation
+    const result = await this.collection.aggregate(pipeline, options).toArray();
+    /* ['result', 'connection', 'message', 'ops', 'insertedCount', 'insertedId'] */
+    /* {result: ['n', 'opTime', 'electionId', 'ok', 'operationTime', '$clusterTime']} */
+    operation.set('result', result);
+    // Execute postHooks
+    await this.hooks.execPost('aggregate', [pipeline, options, operation]);
+    return operation.get('result');
+  }
+
   // @docs http://mongodb.github.io/node-mongodb-native/3.1/api/Collection.html#insertOne
   async insertOne(document: TSchema, options: CollectionInsertOneOptions = {}): Promise<InsertOneWriteOpResult> {
     // Prepare operation params

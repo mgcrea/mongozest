@@ -24,6 +24,9 @@ export default function debugPlugin(model: Model, options) {
       }
     });
   }
+  model.pre('aggregate', (pipeline?: Object[], options?: CollectionAggregationOptions) => {
+    log(`db.${collectionName}.aggregate(${inspect(pipeline)}, ${inspect(leanOptions(options))})`);
+  });
   model.pre('insertOne', (document: TSchema, options: CollectionInsertOneOptions) => {
     log(`db.${collectionName}.insertOne(${inspect(document)}, ${inspect(leanOptions(options))})`);
   });
@@ -109,6 +112,15 @@ export default function debugPlugin(model: Model, options) {
   // ns-perf
   const NS_PER_SEC = 1e9;
   const hrtimeSymbol = Symbol('hrtime');
+  model.pre('aggregate', (pipeline?: Object[], options?: CollectionAggregationOptions, operation: OperationMap) => {
+    operation.set(hrtimeSymbol, process.hrtime());
+  });
+  model.post('aggregate', (pipeline?: Object[], options?: CollectionAggregationOptions, operation: OperationMap) => {
+    const docs = operation.get('result');
+    const diff = process.hrtime(operation.get(hrtimeSymbol));
+    const elapsed = (diff[0] * NS_PER_SEC + diff[1]) / 1e6;
+    log(`${inspect(docs.length)}-document(s) returned in ${inspect(elapsed.toPrecision(3) * 1)}ms`);
+  });
   model.pre('findOne', (query: FilterQuery<TSchema>, options: FindOneOptions, operation: OperationMap) => {
     operation.set(hrtimeSymbol, process.hrtime());
   });
