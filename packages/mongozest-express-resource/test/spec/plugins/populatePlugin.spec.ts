@@ -72,7 +72,7 @@ describe('populatePlugin', () => {
       it('should return 200', async () => {
         const {_id: userId} = await insertFixture('user');
         await insertFixture('comment', {user: userId});
-        const query = `populate=${JSON.stringify({user: 1})}`;
+        const query = `population=${JSON.stringify({user: 1})}`;
         const res = await fetch(`/comments?${query}`, {
           method: 'get',
           headers: {'Content-Type': 'application/json'}
