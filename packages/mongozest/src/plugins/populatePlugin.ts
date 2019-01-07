@@ -6,7 +6,7 @@ import {uniqWithObjectIds} from './../utils/objectId';
 import {Model, OperationMap, mapPathValues} from '..';
 
 // Helper recursively parsing schema to find path where values should be casted
-export default function autoCastingPlugin(model: Model, options = {}) {
+export default function autoCastingPlugin(model: Model, {optionName = 'population'} = {}) {
   const propsWithRefs = new Map();
   model.post('initialize:property', (prop: {[s: string]: any}, path: string) => {
     if (isString(prop) || isUndefined(prop.ref)) {
@@ -19,12 +19,12 @@ export default function autoCastingPlugin(model: Model, options = {}) {
   //   d({options});
   // });
   model.post('findMany', async (filter: FilterQuery<TSchema>, options: FindOneOptions, operation: OperationMap) => {
-    const {populate} = options;
-    if (!populate) {
+    if (!options[optionName]) {
       return;
     }
+    const population = options[optionName];
     const result = operation.get('result');
-    await Object.keys(populate).reduce(async (soFar, key) => {
+    await Object.keys(population).reduce(async (soFar, key) => {
       await soFar;
       if (!propsWithRefs.has(key)) {
         return;
@@ -32,7 +32,7 @@ export default function autoCastingPlugin(model: Model, options = {}) {
       // @TODO handle arrays
       const ref = propsWithRefs.get(key);
       const uniqueIds = uniqWithObjectIds(map(result, key).filter(Boolean));
-      const projection = isPlainObject(populate[key]) ? populate[key] : {};
+      const projection = isPlainObject(population[key]) ? population[key] : {};
       const resolvedChildren = await model.otherModel(ref).find({_id: {$in: uniqueIds}}, {projection});
       const resolvedChildrenMap = keyBy(resolvedChildren, '_id');
       // Actually populate
@@ -44,12 +44,12 @@ export default function autoCastingPlugin(model: Model, options = {}) {
     }, Promise.resolve());
   });
   model.post('findOne', async (filter: FilterQuery<TSchema>, options: FindOneOptions, operation: OperationMap) => {
-    const {populate} = options;
-    if (!populate) {
+    if (!options[optionName]) {
       return;
     }
+    const population = options[optionName];
     const result = operation.get('result');
-    await Object.keys(populate).reduce(async (soFar, key) => {
+    await Object.keys(population).reduce(async (soFar, key) => {
       await soFar;
       if (!propsWithRefs.has(key)) {
         return;
@@ -58,7 +58,7 @@ export default function autoCastingPlugin(model: Model, options = {}) {
       const ref = propsWithRefs.get(key);
       const refValue = get(result, key);
       const isArrayValue = Array.isArray(refValue);
-      const projection = isPlainObject(populate[key]) ? populate[key] : {};
+      const projection = isPlainObject(population[key]) ? population[key] : {};
       const resolvedChildren = await model
         .otherModel(ref)
         [isArrayValue ? 'find' : 'findOne']({_id: isArrayValue ? {$in: refValue} : refValue}, {projection});

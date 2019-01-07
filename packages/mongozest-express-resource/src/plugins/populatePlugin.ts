@@ -10,7 +10,7 @@ import {FilterQuery, FindOneOptions} from 'mongodb';
 import {Request} from 'express';
 
 // Handle schema defaults
-export default function populatePlugin(resource: Resource, {strictJSON = false} = {}) {
+export default function populatePlugin(resource: Resource, {strictJSON = false, optionName = 'population'} = {}) {
   const parseQueryParam = (value: any, key: string) => {
     if (!isString(value) || !/^[\[\{]/.test(value)) {
       return value;
@@ -21,13 +21,12 @@ export default function populatePlugin(resource: Resource, {strictJSON = false} 
       throw createError(400, `Failed to parse query field=\`${key}\``);
     }
   };
-  const QUERY_OPTIONS = Symbol('QUERY_OPTIONS');
+  // const QUERY_OPTIONS = Symbol('QUERY_OPTIONS');
   const preparePopulation = (filter: FilterQuery<TSchema>, options: FindOneOptions, operation) => {
     const req: Request = operation.get('request');
-    const whitelist = ['populate'];
+    const whitelist = [optionName];
     const queryOptions = mapValues(pick(req.query, whitelist), parseQueryParam);
-    const {populate} = queryOptions;
-    options.populate = populate;
+    options[optionName] = queryOptions[optionName];
     // operation.set(QUERY_OPTIONS, queryOptions);
   };
   // @docs http://mongodb.github.io/node-mongodb-native/3.1/api/Collection.html#find
