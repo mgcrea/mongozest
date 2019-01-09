@@ -71,7 +71,12 @@ export default function autoCastingPlugin(
   model.pre('update', (filter: FilterQuery<TSchema>, update: UpdateQuery<TSchema> | TSchema) => {
     castableProperties.forEach((bsonType, path) => {
       mapPathValues(filter, path, (value: any) => castFilterValueForType(value, bsonType));
-      mapPathValues(update.$set, path, (value: any) => castValueForType(value, bsonType));
+      if (update.$set) {
+        mapPathValues(update.$set, path, (value: any) => castValueForType(value, bsonType));
+      }
+      if (update.$push) {
+        mapPathValues(update.$push, path, (value: any) => castValueForType(value, bsonType));
+      }
     });
   });
   // Handle insert

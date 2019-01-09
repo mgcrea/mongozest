@@ -72,7 +72,8 @@ export default function schemaValidationPlugin(model: Model, {validateJsonSchema
             }
           });
         }
-        if (!allowsAdditionalProps) {
+        if (!allowsAdditionalProps && !isUpdate) {
+          // @TODO support isUpdate with $set positional in arrays
           const additionalProps = difference(Object.keys(doc), Object.keys(props));
           if (additionalProps.length) {
             additionalProps.forEach(path => {

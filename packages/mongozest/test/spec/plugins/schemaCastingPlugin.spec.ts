@@ -156,7 +156,7 @@ describe('schemaCastingPlugin', () => {
       expect(foundDoc.nestedObject.longitude instanceof Decimal128).toBeTruthy();
     });
   });
-  describe('schema with nestedArray properties', () => {
+  describe.only('schema with nestedArray properties', () => {
     class Test3 extends Model {
       static schema = {
         nestedArray: {bsonType: 'array', items: {bsonType: 'date'}},
@@ -169,6 +169,10 @@ describe('schemaCastingPlugin', () => {
             {bsonType: 'decimal', minimum: -90, maximum: 90} // latitude
           ]
         },
+        nestedArrayObject: {
+          bsonType: 'array',
+          items: {bsonType: 'object', properties: {date: {bsonType: 'date'}}}
+        },
         nestedArrayDeep: {
           bsonType: 'array',
           items: {bsonType: 'object', properties: {dates: {bsonType: 'array', items: {bsonType: 'date'}}}}
@@ -177,45 +181,103 @@ describe('schemaCastingPlugin', () => {
       static plugins = [jsonSchemaPlugin, schemaCastingPlugin];
     }
     let TestModel: Model;
-    it('should properly loadModel', async () => {
+    it.only('should properly loadModel', async () => {
       TestModel = await mongo.loadModel(Test3);
       expect(TestModel instanceof Model).toBeTruthy();
     });
-    it('should properly cast a nestedArray property', async () => {
-      const date = new Date(Date.UTC(2000, 0, 1));
-      const {ops, insertedId} = await TestModel.insertOne({nestedArray: [date.toISOString()]});
-      // Check op result
-      const insertedDoc = ops[0];
-      expect(insertedDoc.nestedArray[0] instanceof Date).toBeTruthy();
-      expect(insertedDoc.nestedArray[0] instanceof Date).toBeTruthy();
-      // Check findOne result
-      const foundDoc = await TestModel.findOne({_id: insertedId});
-      expect(foundDoc.nestedArray[0] instanceof Date).toBeTruthy();
-      expect(foundDoc.nestedArray[0] instanceof Date).toBeTruthy();
+    describe('insertOne', () => {
+      it('should properly cast a nestedArray property', async () => {
+        const date = new Date(Date.UTC(2000, 0, 1));
+        const {ops, insertedId} = await TestModel.insertOne({nestedArray: [date.toISOString()]});
+        // Check op result
+        const insertedDoc = ops[0];
+        expect(insertedDoc.nestedArray[0] instanceof Date).toBeTruthy();
+        expect(insertedDoc.nestedArray[0] instanceof Date).toBeTruthy();
+        // Check findOne result
+        const foundDoc = await TestModel.findOne({_id: insertedId});
+        expect(foundDoc.nestedArray[0] instanceof Date).toBeTruthy();
+        expect(foundDoc.nestedArray[0] instanceof Date).toBeTruthy();
+      });
+      it('should properly cast a nestedArrayBis property', async () => {
+        const date = new Date(Date.UTC(2000, 0, 1));
+        const {ops, insertedId} = await TestModel.insertOne({nestedArrayBis: [1.743815, 47.364408]});
+        // Check op result
+        const insertedDoc = ops[0];
+        expect(insertedDoc.nestedArrayBis[0] instanceof Decimal128).toBeTruthy();
+        expect(insertedDoc.nestedArrayBis[1] instanceof Decimal128).toBeTruthy();
+        // Check findOne result
+        const foundDoc = await TestModel.findOne({_id: insertedId});
+        expect(foundDoc.nestedArrayBis[0] instanceof Decimal128).toBeTruthy();
+        expect(foundDoc.nestedArrayBis[1] instanceof Decimal128).toBeTruthy();
+      });
+      it('should properly cast a nestedArrayDeep property', async () => {
+        const date = new Date(Date.UTC(2000, 0, 1));
+        const {ops, insertedId} = await TestModel.insertOne({nestedArrayDeep: [{dates: [date.toISOString()]}]});
+        // Check op result
+        const insertedDoc = ops[0];
+        expect(insertedDoc.nestedArrayDeep[0].dates[0] instanceof Date).toBeTruthy();
+        expect(insertedDoc.nestedArrayDeep[0].dates[0] instanceof Date).toBeTruthy();
+        // Check findOne result
+        const foundDoc = await TestModel.findOne({_id: insertedId});
+        expect(foundDoc.nestedArrayDeep[0].dates[0] instanceof Date).toBeTruthy();
+        expect(foundDoc.nestedArrayDeep[0].dates[0] instanceof Date).toBeTruthy();
+      });
     });
-    it('should properly cast a nestedArrayBis property', async () => {
-      const date = new Date(Date.UTC(2000, 0, 1));
-      const {ops, insertedId} = await TestModel.insertOne({nestedArrayBis: [1.743815, 47.364408]});
-      // Check op result
-      const insertedDoc = ops[0];
-      expect(insertedDoc.nestedArrayBis[0] instanceof Decimal128).toBeTruthy();
-      expect(insertedDoc.nestedArrayBis[1] instanceof Decimal128).toBeTruthy();
-      // Check findOne result
-      const foundDoc = await TestModel.findOne({_id: insertedId});
-      expect(foundDoc.nestedArrayBis[0] instanceof Decimal128).toBeTruthy();
-      expect(foundDoc.nestedArrayBis[1] instanceof Decimal128).toBeTruthy();
-    });
-    it('should properly cast a nestedArrayDeep property', async () => {
-      const date = new Date(Date.UTC(2000, 0, 1));
-      const {ops, insertedId} = await TestModel.insertOne({nestedArrayDeep: [{dates: [date.toISOString()]}]});
-      // Check op result
-      const insertedDoc = ops[0];
-      expect(insertedDoc.nestedArrayDeep[0].dates[0] instanceof Date).toBeTruthy();
-      expect(insertedDoc.nestedArrayDeep[0].dates[0] instanceof Date).toBeTruthy();
-      // Check findOne result
-      const foundDoc = await TestModel.findOne({_id: insertedId});
-      expect(foundDoc.nestedArrayDeep[0].dates[0] instanceof Date).toBeTruthy();
-      expect(foundDoc.nestedArrayDeep[0].dates[0] instanceof Date).toBeTruthy();
+    describe('updateOne', () => {
+      it('should properly cast a nestedArray property with $set', async () => {
+        const date = new Date(Date.UTC(2000, 0, 1));
+        const {insertedId} = await TestModel.insertOne({nestedArray: []});
+        const {result} = await TestModel.updateOne({_id: insertedId}, {$set: {nestedArray: [date.toISOString()]}});
+        // Check op result
+        expect(result.nModified).toEqual(1);
+        // Check findOne result
+        const foundDoc = await TestModel.findOne({_id: insertedId});
+        expect(foundDoc.nestedArray[0] instanceof Date).toBeTruthy();
+        expect(foundDoc.nestedArray[0] instanceof Date).toBeTruthy();
+      });
+      it('should properly cast a nestedArray property with $push', async () => {
+        const date = new Date(Date.UTC(2000, 0, 1));
+        const {ops, insertedId} = await TestModel.insertOne({nestedArray: []});
+        const {result} = await TestModel.updateOne({_id: insertedId}, {$push: {nestedArray: date.toISOString()}});
+        // Check op result
+        expect(result.nModified).toEqual(1);
+        // Check findOne result
+        const foundDoc = await TestModel.findOne({_id: insertedId});
+        expect(foundDoc.nestedArray[0] instanceof Date).toBeTruthy();
+        expect(foundDoc.nestedArray[0] instanceof Date).toBeTruthy();
+      });
+      it('should properly cast a nestedArray property with $set with a positional operator', async () => {
+        const date = new Date(Date.UTC(2000, 0, 1));
+        const {insertedId} = await TestModel.insertOne({nestedArray: [date.toISOString(), date.toISOString()]});
+        const updatedDate = new Date(Date.UTC(2010, 0, 1));
+        const {result} = await TestModel.updateOne(
+          {_id: insertedId},
+          {$set: {['nestedArray.1']: updatedDate.toISOString()}}
+        );
+        // Check op result
+        expect(result.nModified).toEqual(1);
+        // Check findOne result
+        const foundDoc = await TestModel.findOne({_id: insertedId});
+        expect(foundDoc.nestedArray[1] instanceof Date).toBeTruthy();
+        expect(foundDoc.nestedArray[1]).toEqual(updatedDate);
+      });
+      it('should properly cast a nestedArrayObject property with $set with a positional operator', async () => {
+        const date = new Date(Date.UTC(2000, 0, 1));
+        const {insertedId} = await TestModel.insertOne({
+          nestedArrayObject: [{date: date.toISOString()}, {date: date.toISOString()}]
+        });
+        const updatedDate = new Date(Date.UTC(2010, 0, 1));
+        const {result} = await TestModel.updateOne(
+          {_id: insertedId},
+          {$set: {['nestedArrayObject.1']: {date: updatedDate.toISOString()}}}
+        );
+        // Check op result
+        expect(result.nModified).toEqual(1);
+        // Check findOne result
+        const foundDoc = await TestModel.findOne({_id: insertedId});
+        expect(foundDoc.nestedArrayObject[1].date instanceof Date).toBeTruthy();
+        expect(foundDoc.nestedArrayObject[1].date).toEqual(updatedDate);
+      });
     });
   });
 });
