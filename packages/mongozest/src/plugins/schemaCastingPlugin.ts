@@ -7,8 +7,11 @@ import {Model, OperationMap, mapPathValues} from '..';
 
 const CASTABLE_TYPES = ['objectId', 'long', 'decimal', 'int', 'date'];
 
+// @docs https://docs.mongodb.com/manual/reference/bson-types/
 const castValueForType = (value: any, type: string) => {
   switch (type) {
+    case 'double':
+      return toNumber(value);
     case 'string':
       return toString(value);
     case 'objectId':
