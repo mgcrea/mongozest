@@ -9,6 +9,8 @@ const CASTABLE_TYPES = ['objectId', 'long', 'decimal', 'int', 'date'];
 
 const castValueForType = (value: any, type: string) => {
   switch (type) {
+    case 'string':
+      return toString(value);
     case 'objectId':
       return value ? ObjectId.createFromHexString(toString(value)) : value;
     case 'long':
