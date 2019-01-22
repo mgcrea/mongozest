@@ -23,7 +23,7 @@
     "shortid": "^2.2.14"
   },
   "devDependencies": {
-    "@babel/cli": "7.2.0",
+    "@babel/cli": "7.2.3",
     "@babel/core": "^7.2.0",
     "@types/pluralize": "^0.0.29",
     "babel-core": "^7.0.0-bridge",
