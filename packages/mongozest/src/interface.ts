@@ -95,6 +95,7 @@ export default class MongoInterface {
     modelProxy.otherModel = this.model.bind(this);
     modelProxy.allModels = () => this.models;
     this.models.set(modelName, modelProxy);
+    // @TODO add timeout for database stalling
     await modelProxy.initialize();
     return modelProxy;
   }
