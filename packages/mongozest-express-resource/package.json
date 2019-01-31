@@ -25,8 +25,8 @@
     "@babel/core": "^7.2.0",
     "@types/pluralize": "^0.0.29",
     "babel-core": "^7.0.0-bridge",
-    "babel-jest": "^23.6.0",
-    "jest": "^23.6.0",
+    "babel-jest": "^24.0.0",
+    "jest": "^24.0.0",
     "typescript": "^3.2.2"
   }
 }
