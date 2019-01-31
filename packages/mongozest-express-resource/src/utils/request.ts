@@ -17,7 +17,7 @@ export const asyncHandler = (wrappedFunction: Function) =>
     return new Promise(function(resolve) {
       resolve(wrappedFunction(...args));
     }).catch(err => {
-      d(err);
+      // d(err);
       next(err);
     });
   };
