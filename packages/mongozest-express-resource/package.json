@@ -5,7 +5,7 @@
   "description": "",
   "main": "lib/index.js",
   "module": "src/index.ts",
-  "typings": "typings/module.d.ts",
+  "typings": "src/index",
   "scripts": {
     "build": "babel --source-maps --extensions .js,.ts --out-dir lib/ --ignore **/__tests__ src/",
     "typecheck": "tsc --pretty --noEmit",
