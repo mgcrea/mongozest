@@ -22,7 +22,8 @@ describe('schemaCastingPlugin', () => {
         name: {bsonType: 'string'},
         stringValue: {bsonType: 'string', default: 'bar'},
         dateValue: {bsonType: 'date', default: Date.now},
-        boolValue: {bsonType: 'bool', default: false}
+        boolValue: {bsonType: 'bool', default: false},
+        refValue: {bsonType: 'string', default: '${name}bar'}
       };
       static plugins = [jsonSchemaPlugin, schemaDefaultsPlugin, schemaCastingPlugin];
     }
@@ -42,12 +43,14 @@ describe('schemaCastingPlugin', () => {
         expect(insertedDoc.dateValue instanceof Date).toBeTruthy();
         expect(insertedDoc.dateValue.getTime() > 0).toBeTruthy();
         expect(insertedDoc.boolValue).toEqual(false);
+        expect(insertedDoc.refValue).toEqual('foobar');
         // Check findOne result
         const foundDoc = await TestModel.findOne({_id: insertedId});
         expect(foundDoc.stringValue).toEqual('bar');
         expect(foundDoc.dateValue instanceof Date).toBeTruthy();
         expect(foundDoc.dateValue.getTime() > 0).toBeTruthy();
         expect(foundDoc.boolValue).toEqual(false);
+        expect(foundDoc.refValue).toEqual('foobar');
       });
     });
   });

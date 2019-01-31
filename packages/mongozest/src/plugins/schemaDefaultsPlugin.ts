@@ -1,11 +1,25 @@
 // @docs https://docs.mongodb.com/manual/reference/operator/query/type/#document-type-available-types
 
-import {isUndefined, has, set, isString, isFunction} from 'lodash';
+import {isUndefined, get, isString, isFunction} from 'lodash';
 // @types
 import {Model, defaultPathValues} from '..';
 
-const getDefault = (defaultOption: any) => {
-  return isFunction(defaultOption) ? defaultOption.call(null) : defaultOption;
+const INLINE_VARIABLE_REGEX = /\$\{(.+)\}/g;
+
+const getDefault = (defaultOption: any, doc: any) => {
+  if (isFunction(defaultOption)) {
+    return defaultOption.call(null);
+  }
+  if (isString(defaultOption)) {
+    const usedInlineVariables = defaultOption.match(INLINE_VARIABLE_REGEX);
+    if (usedInlineVariables) {
+      return usedInlineVariables.reduce((soFar, value) => {
+        const path = value.slice(2, -1);
+        return soFar.replace(value, get(doc, path));
+      }, defaultOption);
+    }
+  }
+  return defaultOption;
 };
 
 // Handle schema defaults
@@ -20,7 +34,7 @@ export default function schemaDefaultsPlugin(model: Model, {ignoredKeys = ['_id'
   // Handle document insertion
   model.pre('insert', (doc: T) => {
     propsWithDefaults.forEach((defaultOption, path) => {
-      defaultPathValues(doc, path, () => getDefault(defaultOption));
+      defaultPathValues(doc, path, () => getDefault(defaultOption, doc));
     });
   });
 }
