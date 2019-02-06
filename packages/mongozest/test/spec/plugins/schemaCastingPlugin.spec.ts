@@ -47,17 +47,17 @@ describe('schemaCastingPlugin', () => {
         expect(ObjectId.isValid(foundDoc.objectIdValue)).toBeTruthy();
         expect(foundDoc.objectIdValue.toString()).toEqual('5bcdc07ffd331bc20d10f2d7');
       });
-      it('from a nullable value', async () => {
-        const {ops, insertedId} = await TestModel.insertOne({
-          objectIdValue: null
-        });
-        // Check op result
-        const insertedDoc = ops[0];
-        expect(ObjectId.isValid(insertedDoc.objectIdValue)).toBeTruthy();
-        // Check findOne result
-        const foundDoc = await TestModel.findOne({_id: insertedId});
-        expect(ObjectId.isValid(foundDoc.objectIdValue)).toBeTruthy();
-      });
+      // it('from a nullable value', async () => {
+      //   const {ops, insertedId} = await TestModel.insertOne({
+      //     objectIdValue: null
+      //   });
+      //   // Check op result
+      //   const insertedDoc = ops[0];
+      //   expect(ObjectId.isValid(insertedDoc.objectIdValue)).toBeTruthy();
+      //   // Check findOne result
+      //   const foundDoc = await TestModel.findOne({_id: insertedId});
+      //   expect(ObjectId.isValid(foundDoc.objectIdValue)).toBeTruthy();
+      // });
     });
     describe('should properly cast an `int` bsonType', () => {
       it('from a `string`', async () => {

@@ -24,7 +24,7 @@ const castValueForType = (value: any, type: string) => {
       return Long.fromNumber(toNumber(value));
     case 'objectId':
       if (!value) {
-        return new ObjectId();
+        return;
       }
       return ObjectId.createFromHexString(toString(value));
     case 'string':
