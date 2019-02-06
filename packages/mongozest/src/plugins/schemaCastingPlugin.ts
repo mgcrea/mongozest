@@ -5,25 +5,30 @@ import {Long, ObjectId, Decimal128 as Decimal, Int32 as Int} from 'mongodb';
 // @types
 import {Model, OperationMap, mapPathValues} from '..';
 
-const CASTABLE_TYPES = ['objectId', 'long', 'decimal', 'int', 'date'];
+const CASTABLE_TYPES = ['bool', 'date', 'decimal', 'double', 'int', 'long', 'objectId', 'string'];
 
 // @docs https://docs.mongodb.com/manual/reference/bson-types/
 const castValueForType = (value: any, type: string) => {
   switch (type) {
-    case 'double':
-      return toNumber(value);
-    case 'string':
-      return toString(value);
-    case 'objectId':
-      return value ? ObjectId.createFromHexString(toString(value)) : value;
-    case 'long':
-      return Long.fromNumber(toNumber(value));
-    case 'decimal':
-      return Decimal.fromString(toString(value));
-    case 'int':
-      return new Int(toSafeInteger(value));
+    case 'bool':
+      return !!value;
     case 'date':
       return new Date(value);
+    case 'decimal':
+      return Decimal.fromString(toString(value));
+    case 'double':
+      return toNumber(value);
+    case 'int':
+      return new Int(toSafeInteger(value));
+    case 'long':
+      return Long.fromNumber(toNumber(value));
+    case 'objectId':
+      if (!value) {
+        return new ObjectId();
+      }
+      return ObjectId.createFromHexString(toString(value));
+    case 'string':
+      return toString(value);
     default:
       return value;
   }

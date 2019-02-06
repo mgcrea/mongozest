@@ -47,6 +47,17 @@ describe('schemaCastingPlugin', () => {
         expect(ObjectId.isValid(foundDoc.objectIdValue)).toBeTruthy();
         expect(foundDoc.objectIdValue.toString()).toEqual('5bcdc07ffd331bc20d10f2d7');
       });
+      it('from a nullable value', async () => {
+        const {ops, insertedId} = await TestModel.insertOne({
+          objectIdValue: null
+        });
+        // Check op result
+        const insertedDoc = ops[0];
+        expect(ObjectId.isValid(insertedDoc.objectIdValue)).toBeTruthy();
+        // Check findOne result
+        const foundDoc = await TestModel.findOne({_id: insertedId});
+        expect(ObjectId.isValid(foundDoc.objectIdValue)).toBeTruthy();
+      });
     });
     describe('should properly cast an `int` bsonType', () => {
       it('from a `string`', async () => {
@@ -156,7 +167,7 @@ describe('schemaCastingPlugin', () => {
       expect(foundDoc.nestedObject.longitude instanceof Decimal128).toBeTruthy();
     });
   });
-  describe.only('schema with nestedArray properties', () => {
+  describe('schema with nestedArray properties', () => {
     class Test3 extends Model {
       static schema = {
         nestedArray: {bsonType: 'array', items: {bsonType: 'date'}},
@@ -181,7 +192,7 @@ describe('schemaCastingPlugin', () => {
       static plugins = [jsonSchemaPlugin, schemaCastingPlugin];
     }
     let TestModel: Model;
-    it.only('should properly loadModel', async () => {
+    it('should properly loadModel', async () => {
       TestModel = await mongo.loadModel(Test3);
       expect(TestModel instanceof Model).toBeTruthy();
     });
