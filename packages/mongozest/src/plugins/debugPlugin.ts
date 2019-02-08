@@ -121,6 +121,15 @@ export default function debugPlugin(model: Model, options) {
     const elapsed = (diff[0] * NS_PER_SEC + diff[1]) / 1e6;
     log(`${inspect(docs.length)}-document(s) returned in ${inspect(elapsed.toPrecision(3) * 1)}ms`);
   });
+  model.pre('findMany', (query: FilterQuery<TSchema>, options: FindOneOptions, operation: OperationMap) => {
+    operation.set(hrtimeSymbol, process.hrtime());
+  });
+  model.post('findMany', (query: FilterQuery<TSchema>, options: FindOneOptions, operation: OperationMap) => {
+    const docs = operation.get('result');
+    const diff = process.hrtime(operation.get(hrtimeSymbol));
+    const elapsed = (diff[0] * NS_PER_SEC + diff[1]) / 1e6;
+    log(`db.${collectionName}.find: ${docs.length}-result(s) returned in ${inspect(elapsed.toPrecision(3) * 1)}ms`);
+  });
   model.pre('findOne', (query: FilterQuery<TSchema>, options: FindOneOptions, operation: OperationMap) => {
     operation.set(hrtimeSymbol, process.hrtime());
   });
@@ -128,6 +137,6 @@ export default function debugPlugin(model: Model, options) {
     const doc = operation.get('result');
     const diff = process.hrtime(operation.get(hrtimeSymbol));
     const elapsed = (diff[0] * NS_PER_SEC + diff[1]) / 1e6;
-    log(`${inspect(doc)} returned in ${inspect(elapsed.toPrecision(3) * 1)}ms`);
+    log(`db.${collectionName}.findOne: ${inspect(doc)} returned in ${inspect(elapsed.toPrecision(3) * 1)}ms`);
   });
 }
