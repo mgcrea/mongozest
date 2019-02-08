@@ -8,6 +8,7 @@ Object {
 
 exports[`populatePlugin collection GET /comments should return 200 2`] = `
 Object {
+  "device": "1a1a836f1cf9087b520148de",
   "email": "john.doe@gmail.com",
   "firstName": "John",
   "lastName": "Doe",

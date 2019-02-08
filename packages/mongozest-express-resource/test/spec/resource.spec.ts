@@ -16,7 +16,8 @@ class User extends Model {
     firstName: {bsonType: 'string'},
     lastName: {bsonType: 'string'},
     email: {bsonType: 'string', required: true},
-    nationality: {bsonType: 'string'}
+    nationality: {bsonType: 'string'},
+    device: {bsonType: 'objectId'}
   };
 }
 
@@ -98,7 +99,7 @@ describe('Resource', () => {
   describe('document', () => {
     describe('GET /users/:_id', () => {
       it('should return 200', async () => {
-        const {insertedId} = await insertFixture('User');
+        const {_id: insertedId} = await insertFixture('User');
         const res = await fetch(`/users/${insertedId}`, {
           method: 'get',
           headers: {'Content-Type': 'application/json'}
@@ -113,7 +114,7 @@ describe('Resource', () => {
     });
     describe('PATCH /users/:_id', () => {
       it('should return 200', async () => {
-        const {insertedId} = await insertFixture('User');
+        const {_id: insertedId} = await insertFixture('User');
         const reqBody = {
           firstName: 'Laura'
         };
@@ -132,7 +133,7 @@ describe('Resource', () => {
     });
     describe('DELETE /users/:_id', () => {
       it('should return 200', async () => {
-        const {insertedId} = await insertFixture('User');
+        const {_id: insertedId} = await insertFixture('User');
         const res = await fetch(`/users/${insertedId}`, {
           method: 'delete',
           headers: {'Content-Type': 'application/json'}
@@ -146,20 +147,162 @@ describe('Resource', () => {
       });
     });
   });
-  // describe('should properly adapt projection on findOne', () => {
-  //   it('without initial projection', async () => {
-  //     const {insertedId} = await TestModel.insertOne({
-  //       username: 'foo',
-  //       password: 'bar',
-  //       code: 'baz',
-  //       email: 'qux'
+});
+
+describe('resource with nested paths', () => {
+  let resource: Resource;
+  const PATH: string = '/devices/:device/users';
+  it('should properly create resource', async () => {
+    resource = createResource('User', {
+      db: 'mongo',
+      paths: [PATH],
+      params: {
+        device: (_id: string) => {
+          return {device: ObjectId.createFromHexString(_id)};
+        }
+      }
+    });
+    expect(resource instanceof Resource).toBeTruthy();
+  });
+  it('should properly serve resource', async () => {
+    const router = resource.build();
+    app.use(router);
+    app.use(breakdownMiddleware);
+  });
+  // describe('collection', () => {
+  //   describe('GET /users', () => {
+  //     it('should return 200', async () => {
+  //       const {insertedId} = await insertFixture('User');
+  //       const res = await fetch(`/users`, {
+  //         method: 'get',
+  //         headers: {'Content-Type': 'application/json'}
+  //       })
+  //         .expect(200)
+  //         .expect('content-type', /^application\/json/);
+  //       const resBody = await res.json();
+  //       expect(Array.isArray(resBody)).toBeTruthy();
+  //       expect(resBody.length).toEqual(1);
+  //       expect(omit(resBody[0], '_id')).toMatchSnapshot();
   //     });
-  //     // Check findOne result
-  //     const foundDoc = await TestModel.findOne({_id: insertedId});
-  //     expect(foundDoc.username).toEqual('foo');
-  //     expect(typeof foundDoc.password).toEqual('undefined');
-  //     expect(typeof foundDoc.code).toEqual('undefined');
   //   });
+  //   describe('POST /users', () => {
+  //     it('should return 200 when payload is valid', async () => {
+  //       const reqBody = {
+  //         firstName: 'John',
+  //         lastName: 'Doe',
+  //         email: 'john.doe@gmail.com'
+  //       };
+  //       const res = await fetch('/users', {
+  //         method: 'post',
+  //         body: JSON.stringify(reqBody),
+  //         headers: {'Content-Type': 'application/json'}
+  //       })
+  //         .expect(200)
+  //         .expect('content-type', /^application\/json/);
+  //       const resBody = await res.json();
+  //       expect(Object.keys(resBody)).toMatchObject([...Object.keys(reqBody), '_id']);
+  //       expect(ObjectId.isValid(resBody._id)).toBeTruthy();
+  //     });
+  //     it('should return 400 when payload is invalid', async () => {
+  //       const reqBody = {
+  //         firstName: 'John',
+  //         lastName: 'Doe'
+  //       };
+  //       const res = await fetch('/users', {
+  //         method: 'post',
+  //         body: JSON.stringify(reqBody),
+  //         headers: {'Content-Type': 'application/json'}
+  //       })
+  //         .expect(422)
+  //         .expect('content-type', /^application\/json/);
+  //       const resBody = await res.json();
+  //       expect(Object.keys(resBody)).toMatchObject(['error']);
+  //       expect(resBody).toMatchSnapshot();
+  //     });
+  //   });
+  // });
+  describe('document', () => {
+    describe(`GET ${PATH}/:_id`, () => {
+      it('should return 200 with a matching device', async () => {
+        const {_id: insertedId, device} = await insertFixture('User');
+        const res = await fetch(`${PATH.replace(':device', device)}/${insertedId}`, {
+          method: 'get',
+          headers: {'Content-Type': 'application/json'}
+        })
+          .expect(200)
+          .expect('content-type', /^application\/json/);
+        const resBody = await res.json();
+        expect(isObject(resBody)).toBeTruthy();
+        expect(Object.keys(resBody)).toMatchSnapshot();
+        expect(omit(resBody, '_id')).toMatchSnapshot();
+      });
+      it('should return 404 for an invalid device', async () => {
+        const {_id: insertedId} = await insertFixture('User');
+        const res = await fetch(`${PATH.replace(':device', `${new ObjectId()}`)}/${insertedId}`, {
+          method: 'get',
+          headers: {'Content-Type': 'application/json'}
+        })
+          .expect(404)
+          .expect('content-type', /^application\/json/);
+      });
+    });
+    describe(`PATCH ${PATH}/:_id`, () => {
+      it('should return 200', async () => {
+        const {_id: insertedId, device} = await insertFixture('User');
+        const reqBody = {
+          firstName: 'Laura'
+        };
+        const res = await fetch(`${PATH.replace(':device', device)}/${insertedId}`, {
+          method: 'patch',
+          body: JSON.stringify(reqBody),
+          headers: {'Content-Type': 'application/json'}
+        })
+          .expect(200)
+          .expect('content-type', /^application\/json/);
+        const resBody = await res.json();
+        expect(isObject(resBody)).toBeTruthy();
+        expect(Object.keys(resBody)).toMatchSnapshot();
+        expect(omit(resBody, '_id')).toMatchSnapshot();
+      });
+      it('should return 404 for an invalid device', async () => {
+        const {_id: insertedId} = await insertFixture('User');
+        const reqBody = {
+          firstName: 'Laura'
+        };
+        const res = await fetch(`${PATH.replace(':device', `${new ObjectId()}`)}/${insertedId}`, {
+          method: 'patch',
+          body: JSON.stringify(reqBody),
+          headers: {'Content-Type': 'application/json'}
+        })
+          .expect(404)
+          .expect('content-type', /^application\/json/);
+      });
+    });
+    describe(`DELETE ${PATH}/:_id`, () => {
+      it('should return 200', async () => {
+        const {_id: insertedId, device} = await insertFixture('User');
+        const res = await fetch(`${PATH.replace(':device', device)}/${insertedId}`, {
+          method: 'delete',
+          headers: {'Content-Type': 'application/json'}
+        })
+          .expect(200)
+          .expect('content-type', /^application\/json/);
+        const resBody = await res.json();
+        expect(isObject(resBody)).toBeTruthy();
+        expect(Object.keys(resBody)).toMatchSnapshot();
+        expect(resBody).toMatchSnapshot();
+      });
+      it('should return 404 for an invalid device', async () => {
+        const {_id: insertedId} = await insertFixture('User');
+        const res = await fetch(`${PATH.replace(':device', `${new ObjectId()}`)}/${insertedId}`, {
+          method: 'delete',
+          headers: {'Content-Type': 'application/json'}
+        })
+          .expect(404)
+          .expect('content-type', /^application\/json/);
+      });
+    });
+  });
 });
 
 /*

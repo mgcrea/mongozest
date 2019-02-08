@@ -2,6 +2,7 @@
 
 exports[`Resource collection GET /users should return 200 1`] = `
 Object {
+  "device": "1a1a836f1cf9087b520148de",
   "email": "john.doe@gmail.com",
   "firstName": "John",
   "lastName": "Doe",
@@ -34,11 +35,13 @@ Array [
   "firstName",
   "lastName",
   "email",
+  "device",
 ]
 `;
 
 exports[`Resource document GET /users/:_id should return 200 2`] = `
 Object {
+  "device": "1a1a836f1cf9087b520148de",
   "email": "john.doe@gmail.com",
   "firstName": "John",
   "lastName": "Doe",
@@ -51,11 +54,65 @@ Array [
   "firstName",
   "lastName",
   "email",
+  "device",
 ]
 `;
 
 exports[`Resource document PATCH /users/:_id should return 200 2`] = `
 Object {
+  "device": "1a1a836f1cf9087b520148de",
+  "email": "john.doe@gmail.com",
+  "firstName": "Laura",
+  "lastName": "Doe",
+}
+`;
+
+exports[`resource with nested paths document DELETE /devices/:device/users/:_id should return 200 1`] = `
+Array [
+  "ok",
+  "n",
+]
+`;
+
+exports[`resource with nested paths document DELETE /devices/:device/users/:_id should return 200 2`] = `
+Object {
+  "n": 1,
+  "ok": 1,
+}
+`;
+
+exports[`resource with nested paths document GET /devices/:device/users/:_id should return 200 with a matching device 1`] = `
+Array [
+  "_id",
+  "firstName",
+  "lastName",
+  "email",
+  "device",
+]
+`;
+
+exports[`resource with nested paths document GET /devices/:device/users/:_id should return 200 with a matching device 2`] = `
+Object {
+  "device": "1a1a836f1cf9087b520148de",
+  "email": "john.doe@gmail.com",
+  "firstName": "John",
+  "lastName": "Doe",
+}
+`;
+
+exports[`resource with nested paths document PATCH /devices/:device/users/:_id should return 200 1`] = `
+Array [
+  "_id",
+  "firstName",
+  "lastName",
+  "email",
+  "device",
+]
+`;
+
+exports[`resource with nested paths document PATCH /devices/:device/users/:_id should return 200 2`] = `
+Object {
+  "device": "1a1a836f1cf9087b520148de",
   "email": "john.doe@gmail.com",
   "firstName": "Laura",
   "lastName": "Doe",

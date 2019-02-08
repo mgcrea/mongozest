@@ -17,7 +17,8 @@ class User extends Model {
     firstName: {bsonType: 'string'},
     lastName: {bsonType: 'string'},
     email: {bsonType: 'string', required: true},
-    nationality: {bsonType: 'string'}
+    nationality: {bsonType: 'string'},
+    device: {bsonType: 'objectId'}
   };
   static plugins = [modelShortIdPlugin];
 }

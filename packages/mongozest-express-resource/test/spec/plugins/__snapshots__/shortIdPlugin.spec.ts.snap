@@ -20,12 +20,14 @@ Array [
   "firstName",
   "lastName",
   "email",
+  "device",
   "_sid",
 ]
 `;
 
 exports[`shortIdPlugin document GET /users/:_sid should not disrupt existing behavior 2`] = `
 Object {
+  "device": "1a1a836f1cf9087b520148de",
   "email": "john.doe@gmail.com",
   "firstName": "John",
   "lastName": "Doe",
@@ -38,12 +40,14 @@ Array [
   "firstName",
   "lastName",
   "email",
+  "device",
   "_sid",
 ]
 `;
 
 exports[`shortIdPlugin document GET /users/:_sid should return 200 2`] = `
 Object {
+  "device": "1a1a836f1cf9087b520148de",
   "email": "john.doe@gmail.com",
   "firstName": "John",
   "lastName": "Doe",
@@ -56,12 +60,14 @@ Array [
   "firstName",
   "lastName",
   "email",
+  "device",
   "_sid",
 ]
 `;
 
 exports[`shortIdPlugin document PATCH /users/:_sid should return 200 2`] = `
 Object {
+  "device": "1a1a836f1cf9087b520148de",
   "email": "john.doe@gmail.com",
   "firstName": "Laura",
   "lastName": "Doe",

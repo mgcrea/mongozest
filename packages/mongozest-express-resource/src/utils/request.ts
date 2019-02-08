@@ -14,10 +14,9 @@ export const parseBodyAsUpdate = (body: {[s: string]: any}) =>
 export const asyncHandler = (wrappedFunction: Function) =>
   function asyncWrap(...args: any[]) {
     const next = args[args.length - 1];
-    return new Promise(function(resolve) {
-      resolve(wrappedFunction(...args));
-    }).catch(err => {
-      // d(err);
+    try {
+      Promise.resolve(wrappedFunction(...args)).catch(next);
+    } catch (err) {
       next(err);
-    });
+    }
   };
