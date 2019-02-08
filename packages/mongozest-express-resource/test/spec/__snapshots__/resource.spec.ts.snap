@@ -1,5 +1,16 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`Resource collection DELETE /users should return 200 1`] = `
+Array [
+  "n",
+  "opTime",
+  "electionId",
+  "ok",
+  "operationTime",
+  "$clusterTime",
+]
+`;
+
 exports[`Resource collection GET /users should return 200 1`] = `
 Object {
   "device": "1a1a836f1cf9087b520148de",

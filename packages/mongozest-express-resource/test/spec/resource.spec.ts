@@ -95,6 +95,20 @@ describe('Resource', () => {
         expect(resBody).toMatchSnapshot();
       });
     });
+    describe('DELETE /users', () => {
+      it('should return 200', async () => {
+        await insertFixture('User');
+        const res = await fetch(`/users`, {
+          method: 'delete',
+          headers: {'Content-Type': 'application/json'}
+        })
+          .expect(200)
+          .expect('content-type', /^application\/json/);
+        const resBody = await res.json();
+        expect(isObject(resBody)).toBeTruthy();
+        expect(Object.keys(resBody)).toMatchSnapshot();
+      });
+    });
   });
   describe('document', () => {
     describe('GET /users/:_id', () => {
