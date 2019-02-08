@@ -1,25 +1,30 @@
 import shortid from 'shortid';
+import {memoize} from 'lodash';
 // @types
 import {Model} from '..';
 import {FindOneOptions, UpdateQuery, UpdateWriteOpResult, ReplaceOneOptions} from 'mongodb';
 
-export default function shortIdPlugin(model: Model, {idKey = '_sid'} = {}) {
+export default function shortIdPlugin(model: Model, {sidKey = '_sid'} = {}) {
   model.addSchemaProperties({
-    [idKey]: {bsonType: 'string', minLength: 7, maxLength: 14, index: {unique: true}}
+    [sidKey]: {bsonType: 'string', minLength: 7, maxLength: 14, index: {unique: true}}
   });
   model.addStatics({
     findBySid: async (sid: string, options?: FindOneOptions): Promise<TSchema | null> => {
-      return model.findOne({_sid: sid}, options);
+      return model.findOne({[sidKey]: sid}, options);
     },
     updateBySid: async (
       sid: string,
       update: UpdateQuery<TSchema> | TSchema,
       options: ReplaceOneOptions = {}
     ): Promise<UpdateWriteOpResult> => {
-      return model.updateOne({_sid: sid}, update, options);
-    }
+      return model.updateOne({[sidKey]: sid}, update, options);
+    },
+    lazyIdFromSid: memoize(async (sid: string) => {
+      const doc = await model.findOne({[sidKey]: sid}, {projection: {_id: 1}});
+      return doc ? doc._id : null;
+    })
   });
   model.pre('insert', (insert: T) => {
-    insert[idKey] = shortid.generate();
+    insert[sidKey] = shortid.generate();
   });
 }
