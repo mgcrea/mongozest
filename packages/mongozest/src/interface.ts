@@ -19,10 +19,10 @@ export default class MongoInterface {
     loggerLevel: 'error',
     useNewUrlParser: true
   };
-  static create(uri: string = MongoInterface.defaultClientUri, options?: MongoClientOptions) {
+  static create(uri: string = MongoInterface.defaultClientUri, options?: MongoClientOptions): MongoInterface {
     // reuse interface if already created for uri
     if (interfaces.has(uri)) {
-      return interfaces.get(uri);
+      return interfaces.get(uri) as MongoInterface;
     }
     const mongoInterface = new MongoInterface(uri, options);
     interfaces.set(uri, mongoInterface);
