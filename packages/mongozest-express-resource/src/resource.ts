@@ -287,7 +287,7 @@ export default class Resource<T> {
     // Prepare operation params
     const filter: FilterQuery<TSchema> = req.filter;
     assertScopedFilter(req.filter);
-    const update: UpdateQuery<TSchema> | TSchema = parseBodyAsUpdate(req.body);
+    const update: UpdateQuery<TSchema> = parseBodyAsUpdate(req.body);
     const options: FindOneAndReplaceOption = {returnOriginal: false};
     const operation: OperationMap = new Map([
       ['method', 'patchDocument'],

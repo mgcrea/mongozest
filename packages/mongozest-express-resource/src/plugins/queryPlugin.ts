@@ -5,7 +5,7 @@ import createError from 'http-errors';
 import {pick, mapValues, isString} from 'lodash';
 // @types
 import {Resource} from '..';
-import {FilterQuery, FindOneOptions} from 'mongodb';
+import {FilterQuery, UpdateQuery, FindOneOptions} from 'mongodb';
 import {Request} from 'express';
 
 // Handle schema defaults
@@ -56,9 +56,23 @@ export default function schemaProjectionPlugin(resource: Resource, {strictJSON =
       Object.assign(options, {projection: queryOptions.projection});
     }
   });
-  // resource.pre('postCollection', (document: TSchema, options: CollectionInsertOneOptions, operation) => {
-  //   d('postCollection');
-  // });
+
+  resource.pre(
+    'patchDocument',
+    (filter: FilterQuery<TSchema>, update: UpdateQuery<TSchema>, options: FindOneOptions, operation) => {
+      const req: Request = operation.get('request');
+      const whitelist = ['filter', 'projection'];
+      const queryOptions = mapValues(mapValues(pick(req.query, whitelist), parseQueryParam), castQueryParam);
+      // Apply filter
+      if (queryOptions.filter) {
+        Object.assign(filter, queryOptions.filter);
+      }
+      // Apply projection
+      if (queryOptions.projection) {
+        Object.assign(options, {projection: queryOptions.projection});
+      }
+    }
+  );
 }
 
 /*
