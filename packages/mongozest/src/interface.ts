@@ -1,6 +1,7 @@
 // @source  https://github.com/Automattic/mongoose/blob/master/lib/connection.js#L518
 // @docs https://gist.github.com/brennanMKE/ee8ea002d305d4539ef6
 
+import assert from 'assert';
 import {MongoClient} from 'mongodb';
 import {parse} from 'url';
 import Model from './model';
@@ -21,9 +22,10 @@ export default class MongoInterface {
   };
   static create(uri: string = MongoInterface.defaultClientUri, options?: MongoClientOptions): MongoInterface {
     // reuse interface if already created for uri
-    if (interfaces.has(uri)) {
-      return interfaces.get(uri) as MongoInterface;
-    }
+    // @TODO add option
+    // if (interfaces.has(uri)) {
+    //   return interfaces.get(uri) as MongoInterface;
+    // }
     const mongoInterface = new MongoInterface(uri, options);
     interfaces.set(uri, mongoInterface);
     return mongoInterface;
@@ -72,6 +74,7 @@ export default class MongoInterface {
     }
     const startSession = client.startSession.bind(client);
     // const model = Model.create();
+    assert(this.db, 'Missing db instance, please connect first');
     const model = new Model(this.db);
     const modelProxy = new Proxy(model, {
       get: function(target, name, receiver) {
