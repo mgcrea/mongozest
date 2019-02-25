@@ -2,7 +2,7 @@
 // @docs https://gist.github.com/brennanMKE/ee8ea002d305d4539ef6
 
 import assert from 'assert';
-import {MongoClient} from 'mongodb';
+import {MongoClient, ObjectId} from 'mongodb';
 import {parse} from 'url';
 import Model from './model';
 
@@ -23,9 +23,9 @@ export default class MongoInterface {
   static create(uri: string = MongoInterface.defaultClientUri, options?: MongoClientOptions): MongoInterface {
     // reuse interface if already created for uri
     // @TODO add option
-    // if (interfaces.has(uri)) {
-    //   return interfaces.get(uri) as MongoInterface;
-    // }
+    if (interfaces.has(uri)) {
+      return interfaces.get(uri) as MongoInterface;
+    }
     const mongoInterface = new MongoInterface(uri, options);
     interfaces.set(uri, mongoInterface);
     return mongoInterface;
@@ -33,10 +33,12 @@ export default class MongoInterface {
   client: MongoClient;
   private dbName: string;
   private models: Map<string, Model> = new Map();
+  id: ObjectId;
   db: MongoDb;
 
   private constructor(uri: string, options?: MongoClientOptions) {
     const {protocol = 'mongodb:', hostname = '127.0.0.1', port = '27017', pathname} = parse(uri);
+    this.id = new ObjectId();
     this.dbName = pathname ? String(pathname).slice(1) : 'test';
     this.client = new MongoClient(`${protocol}//${hostname}:${port}`, {
       ...MongoInterface.defaultClientOptions,

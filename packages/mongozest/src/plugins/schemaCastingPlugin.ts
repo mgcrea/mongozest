@@ -34,14 +34,26 @@ const castValueForType = (value: any, type: string) => {
   }
 };
 
+// @NOTE lib? https://github.com/kofrasa/mingo
+// @NOTE lib? https://github.com/crcn/sift.js
+const SINGLE_VALUE_QUERY_OPERATORS = ['$eq', '$gt', '$gte', '$lt', '$lte', '$ne'];
+const ARRAY_VALUE_QUERY_OPERATORS = ['$in', '$nin'];
+
 const castFilterValueForType = (value: any, type: string) => {
   if (isString(value)) {
     return castValueForType(value, type);
   }
   if (isPlainObject(value)) {
-    if (value.$in) {
-      value.$in = value.$in.map((_value: any) => castValueForType(_value, type));
-    }
+    SINGLE_VALUE_QUERY_OPERATORS.forEach(operator => {
+      if (value[operator]) {
+        value[operator] = castValueForType(value[operator], type);
+      }
+    });
+    ARRAY_VALUE_QUERY_OPERATORS.forEach(operator => {
+      if (value[operator]) {
+        value[operator] = value[operator].map((_value: any) => castValueForType(_value, type));
+      }
+    });
   }
   return value;
 };
