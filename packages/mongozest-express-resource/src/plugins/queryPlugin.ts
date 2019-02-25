@@ -2,7 +2,7 @@
 
 import JSON5 from 'json5';
 import createError from 'http-errors';
-import {pick, mapValues, isString} from 'lodash';
+import {pick, mapValues, isString, isEmpty} from 'lodash';
 // @types
 import {Resource} from '..';
 import {FilterQuery, UpdateQuery, FindOneOptions} from 'mongodb';
@@ -35,7 +35,10 @@ export default function schemaProjectionPlugin(resource: Resource, {strictJSON =
     const queryOptions = mapValues(mapValues(pick(req.query, whitelist), parseQueryParam), castQueryParam);
     // Apply filter
     if (queryOptions.filter) {
-      operation.set('filter', {$and: [filter, queryOptions.filter]});
+      operation.set(
+        'filter',
+        isEmpty(filter) ? Object.assign(filter, queryOptions.filter) : {$and: [filter, queryOptions.filter]}
+      );
     }
     // Apply projection
     if (queryOptions.projection) {
@@ -49,7 +52,10 @@ export default function schemaProjectionPlugin(resource: Resource, {strictJSON =
     const queryOptions = mapValues(mapValues(pick(req.query, whitelist), parseQueryParam), castQueryParam);
     // Apply filter
     if (queryOptions.filter) {
-      Object.assign(filter, queryOptions.filter);
+      operation.set(
+        'filter',
+        isEmpty(filter) ? Object.assign(filter, queryOptions.filter) : {$and: [filter, queryOptions.filter]}
+      );
     }
     // Apply projection
     if (queryOptions.projection) {
@@ -65,7 +71,10 @@ export default function schemaProjectionPlugin(resource: Resource, {strictJSON =
       const queryOptions = mapValues(mapValues(pick(req.query, whitelist), parseQueryParam), castQueryParam);
       // Apply filter
       if (queryOptions.filter) {
-        Object.assign(filter, queryOptions.filter);
+        operation.set(
+          'filter',
+          isEmpty(filter) ? Object.assign(filter, queryOptions.filter) : {$and: [filter, queryOptions.filter]}
+        );
       }
       // Apply projection
       if (queryOptions.projection) {
