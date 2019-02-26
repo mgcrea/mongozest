@@ -65,9 +65,7 @@ const OBJECT_ID_REGEX = /^[a-f\d]{24}$/i;
 // };
 
 const assertScopedFilter = filter => {
-  if (!filter || !Object.keys(filter).length) {
-    throw createError(400, 'Invalid identifier');
-  }
+  assert(filter && Object.keys(filter).length, 'Invalid filter');
 };
 
 export default class Resource<T> {
@@ -147,21 +145,22 @@ export default class Resource<T> {
     this.hooks.execPreSync('build', [router]);
     // params
     paths.forEach(path => {
+      const docPath = `${path}/:_id`;
       // startup
-      // wildcard allows req.params to be properly populated
-      router.all(`${path}*`, asyncHandler(this.buildRequestFilter.bind(this)));
-      // router.use(path, asyncHandler(this.buildRequestFilter.bind(this)));
+      router.all(path, asyncHandler(this.buildRequestFilter.bind(this)));
+      router.all(docPath, asyncHandler(this.buildRequestFilter.bind(this)));
       if (middleware) {
-        router.use(path, middleware);
+        router.all(path, middleware);
+        router.all(docPath, middleware);
       }
       // collection
       router.get(path, asyncHandler(this.getCollection.bind(this)));
       router.post(path, asyncHandler(this.postCollection.bind(this)));
       router.delete(path, asyncHandler(this.deleteCollection.bind(this)));
       // document
-      router.get(`${path}/:_id`, asyncHandler(this.getDocument.bind(this)));
-      router.patch(`${path}/:_id`, asyncHandler(this.patchDocument.bind(this)));
-      router.delete(`${path}/:_id`, asyncHandler(this.deleteDocument.bind(this)));
+      router.get(docPath, asyncHandler(this.getDocument.bind(this)));
+      router.patch(docPath, asyncHandler(this.patchDocument.bind(this)));
+      router.delete(docPath, asyncHandler(this.deleteDocument.bind(this)));
       // shutdown
       router.use(path, mongoErrorMiddleware);
     });
@@ -174,8 +173,8 @@ export default class Resource<T> {
     const {ids, params} = this;
     req.filter = await Object.keys(req.params).reduce(async (promiseSoFar, key) => {
       const soFar = await promiseSoFar;
-      const isIdentifier = key === '0';
-      const value = isIdentifier ? req.params[key].slice(1) : req.params[key];
+      const isIdentifier = key === '_id';
+      const value = req.params[key];
       if (isIdentifier) {
         ids.forEach((resolve, test) => {
           if (test(value)) {

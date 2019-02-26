@@ -26,7 +26,9 @@ export default function populatePlugin(resource: Resource, {strictJSON = false, 
     const req: Request = operation.get('request');
     const whitelist = [optionName];
     const queryOptions = mapValues(pick(req.query, whitelist), parseQueryParam);
-    options[optionName] = queryOptions[optionName];
+    if (queryOptions[optionName]) {
+      options[optionName] = queryOptions[optionName];
+    }
     // operation.set(QUERY_OPTIONS, queryOptions);
   };
   // @docs http://mongodb.github.io/node-mongodb-native/3.1/api/Collection.html#find
