@@ -5,7 +5,8 @@ import {get, has, set, isString, isUndefined, isFunction} from 'lodash';
 import {Model} from '..';
 import {FilterQuery, FindOneOptions} from 'mongodb';
 
-const isInclusiveProjection = (projection: {[s: string]: any}) => Object.keys(projection).some(key => projection[key] === 1);
+const isInclusiveProjection = (projection: {[s: string]: any}) =>
+  Object.keys(projection).some(key => projection[key] === 1);
 
 // Handle schema defaults
 export default function schemaProjectionPlugin(model: Model, {ignoredKeys = ['_id']} = {}) {
