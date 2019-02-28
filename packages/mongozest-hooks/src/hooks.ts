@@ -1,7 +1,10 @@
-type State = {
-  preHooks: Map<string, Array<any>>;
-  postHooks: Map<string, Array<any>>;
-};
+type HookCallback = (...args: any[]) => Promise<any> | any;
+type HookMap = Map<string, Array<HookCallback>>;
+
+interface State {
+  preHooks: HookMap;
+  postHooks: HookMap;
+}
 
 export default class Hooks {
   state: State = {
@@ -9,24 +12,24 @@ export default class Hooks {
     postHooks: new Map()
   };
 
-  register(hookMap: Map<string, Array<T>>, hookName: string, callback: () => Promise<any> | void): Hooks {
+  register(hookMap: HookMap, hookName: string, callback: HookCallback): Hooks {
     if (!hookName) {
       return this;
     }
     if (!hookMap.has(hookName)) {
       hookMap.set(hookName, [callback]);
     } else {
-      hookMap.set(hookName, hookMap.get(hookName).concat(callback));
+      hookMap.set(hookName, (hookMap.get(hookName) as Array<HookCallback>).concat(callback));
     }
     return this;
   }
 
-  pre(hookName: string, callback: () => Promise<any> | void): Hooks {
+  pre(hookName: string, callback: HookCallback): Hooks {
     const {preHooks: hookMap} = this.state;
     return this.register(hookMap, hookName, callback);
   }
 
-  post(hookName: string, callback: () => Promise<any> | void): Hooks {
+  post(hookName: string, callback: HookCallback): Hooks {
     const {postHooks: hookMap} = this.state;
     return this.register(hookMap, hookName, callback);
   }
@@ -41,7 +44,7 @@ export default class Hooks {
     return hookMap.has(hookName);
   }
 
-  async exec(hookMap: Map<string, Array<T>>, hookName: string, args: Array<any>) {
+  async exec(hookMap: HookMap, hookName: string, args: Array<any>) {
     if (!hookMap.has(hookName)) {
       return [];
     }
@@ -56,7 +59,7 @@ export default class Hooks {
     }, Promise.resolve([]));
   }
 
-  execSync(hookMap: Map<string, Array<T>>, hookName: string, args: Array<any>) {
+  execSync(hookMap: HookMap, hookName: string, args: Array<any>) {
     if (!hookMap.has(hookName)) {
       return [];
     }
@@ -70,7 +73,7 @@ export default class Hooks {
     }, []);
   }
 
-  async execMany(hookMap: Map<string, Array<T>>, hookNames: Array<string>, args: Array<any>) {
+  async execMany(hookMap: HookMap, hookNames: Array<string>, args: Array<any>) {
     return await hookNames.reduce(async (promiseSoFar, hookName) => {
       const soFar = await promiseSoFar;
       const result = await this.exec(hookMap, hookName, args);
@@ -78,7 +81,7 @@ export default class Hooks {
     }, Promise.resolve([]));
   }
 
-  async execEach(hookMap: Map<string, Array<T>>, hookName: string, arrayOfargs: Array<Array<any>>) {
+  async execEach(hookMap: HookMap, hookName: string, arrayOfargs: Array<Array<any>>) {
     return await arrayOfargs.reduce(async (promiseSoFar, args) => {
       const soFar = await promiseSoFar;
       const result = await this.exec(hookMap, hookName, args);
