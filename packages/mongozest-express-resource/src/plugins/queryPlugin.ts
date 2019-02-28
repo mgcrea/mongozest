@@ -4,12 +4,12 @@ import JSON5 from 'json5';
 import createError from 'http-errors';
 import {pick, mapValues, isString, isEmpty} from 'lodash';
 // @types
-import {Resource} from '..';
-import {FilterQuery, UpdateQuery, FindOneOptions} from 'mongodb';
+import {Resource, OperationMap} from '..';
+import {CollectionInsertOneOptions, CommonOptions, FilterQuery, FindOneOptions, UpdateQuery} from 'mongodb';
 import {Request} from 'express';
 
 // Handle schema defaults
-export default function schemaProjectionPlugin(resource: Resource, {strictJSON = false} = {}) {
+export default function schemaProjectionPlugin<TSchema>(resource: Resource, {strictJSON = false} = {}) {
   const parseQueryParam = (value: any, key: string) => {
     if (!isString(value) || !/^[\[\{]/.test(value)) {
       return value;
@@ -29,7 +29,7 @@ export default function schemaProjectionPlugin(resource: Resource, {strictJSON =
     }
   };
   // @docs http://mongodb.github.io/node-mongodb-native/3.1/api/Collection.html#find
-  resource.pre('getCollection', (filter: FilterQuery<TSchema>, options: FindOneOptions, operation) => {
+  resource.pre('getCollection', (filter: FilterQuery<TSchema>, options: FindOneOptions, operation: OperationMap) => {
     const req: Request = operation.get('request');
     const whitelist = ['filter', 'limit', 'sort', 'projection', 'skip'];
     const queryOptions = mapValues(mapValues(pick(req.query, whitelist), parseQueryParam), castQueryParam);
@@ -48,7 +48,7 @@ export default function schemaProjectionPlugin(resource: Resource, {strictJSON =
 
   resource.pre(
     'patchCollection',
-    (filter: FilterQuery<TSchema>, update: UpdateQuery<TSchema>, options: CommonOptions, operation) => {
+    (filter: FilterQuery<TSchema>, update: UpdateQuery<TSchema>, options: CommonOptions, operation: OperationMap) => {
       const req: Request = operation.get('request');
       const whitelist = ['filter', 'projection'];
       const queryOptions = mapValues(mapValues(pick(req.query, whitelist), parseQueryParam), castQueryParam);
@@ -66,7 +66,7 @@ export default function schemaProjectionPlugin(resource: Resource, {strictJSON =
     }
   );
 
-  resource.pre('getDocument', (filter: FilterQuery<TSchema>, options: FindOneOptions, operation) => {
+  resource.pre('getDocument', (filter: FilterQuery<TSchema>, options: FindOneOptions, operation: OperationMap) => {
     const req: Request = operation.get('request');
     const whitelist = ['filter', 'projection'];
     const queryOptions = mapValues(mapValues(pick(req.query, whitelist), parseQueryParam), castQueryParam);
@@ -85,7 +85,7 @@ export default function schemaProjectionPlugin(resource: Resource, {strictJSON =
 
   resource.pre(
     'patchDocument',
-    (filter: FilterQuery<TSchema>, update: UpdateQuery<TSchema>, options: FindOneOptions, operation) => {
+    (filter: FilterQuery<TSchema>, update: UpdateQuery<TSchema>, options: FindOneOptions, operation: OperationMap) => {
       const req: Request = operation.get('request');
       const whitelist = ['filter', 'projection'];
       const queryOptions = mapValues(mapValues(pick(req.query, whitelist), parseQueryParam), castQueryParam);

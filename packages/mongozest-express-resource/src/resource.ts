@@ -53,7 +53,7 @@ interface ResourceOptions {
   params?: {[s: string]: any};
 }
 
-type OperationMap = Map<string, any>;
+export type OperationMap = Map<string, any>;
 type RequestParamChecker = (s: string) => boolean;
 type RequestParamResolver<T> = (s: string) => FilterQuery<T>;
 
