@@ -15,6 +15,7 @@ export default function schemaProjectionPlugin<TSchema>(
     const req: Request = operation.get('request');
     if (req.user && req.user[idKey]) {
       document[createdByKey] = req.user[idKey];
+      document[updatedByKey] = req.user[idKey];
     }
   });
   resource.pre(
