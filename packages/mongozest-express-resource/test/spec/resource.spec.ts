@@ -95,6 +95,25 @@ describe('Resource', () => {
         expect(resBody).toMatchSnapshot();
       });
     });
+    describe('PATCH /users', () => {
+      it('should return 200', async () => {
+        const {insertedId} = await insertFixture('User');
+        const reqBody = {
+          firstName: 'Alex'
+        };
+        const res = await fetch(`/users`, {
+          method: 'patch',
+          body: JSON.stringify(reqBody),
+          headers: {'Content-Type': 'application/json'}
+        })
+          .expect(200)
+          .expect('content-type', /^application\/json/);
+        const resBody = await res.json();
+        expect(Array.isArray(resBody)).toBeTruthy();
+        expect(resBody.length > 0).toBeTruthy();
+        expect(omit(resBody[0], '_id')).toMatchSnapshot();
+      });
+    });
     describe('DELETE /users', () => {
       it('should return 200', async () => {
         await insertFixture('User');

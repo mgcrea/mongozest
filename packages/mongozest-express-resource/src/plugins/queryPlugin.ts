@@ -46,6 +46,26 @@ export default function schemaProjectionPlugin(resource: Resource, {strictJSON =
     }
   });
 
+  resource.pre(
+    'patchCollection',
+    (filter: FilterQuery<TSchema>, update: UpdateQuery<TSchema>, options: CommonOptions, operation) => {
+      const req: Request = operation.get('request');
+      const whitelist = ['filter', 'projection'];
+      const queryOptions = mapValues(mapValues(pick(req.query, whitelist), parseQueryParam), castQueryParam);
+      // Apply filter
+      if (queryOptions.filter) {
+        operation.set(
+          'filter',
+          isEmpty(filter) ? Object.assign(filter, queryOptions.filter) : {$and: [filter, queryOptions.filter]}
+        );
+      }
+      // Apply projection
+      if (queryOptions.projection) {
+        Object.assign(options, {projection: queryOptions.projection});
+      }
+    }
+  );
+
   resource.pre('getDocument', (filter: FilterQuery<TSchema>, options: FindOneOptions, operation) => {
     const req: Request = operation.get('request');
     const whitelist = ['filter', 'projection'];

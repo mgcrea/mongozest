@@ -156,6 +156,7 @@ export default class Resource<T> {
       // collection
       router.get(path, asyncHandler(this.getCollection.bind(this)));
       router.post(path, asyncHandler(this.postCollection.bind(this)));
+      router.patch(path, asyncHandler(this.patchCollection.bind(this)));
       router.delete(path, asyncHandler(this.deleteCollection.bind(this)));
       // document
       router.get(docPath, asyncHandler(this.getDocument.bind(this)));
@@ -232,6 +233,29 @@ export default class Resource<T> {
     operation.set('result', ops[0]);
     // Execute postHooks
     await this.hooks.execPost('postCollection', [document, options, operation]);
+    res.json(operation.get('result'));
+  }
+
+  async patchCollection(req: Request, res: Response) {
+    const model = this.getModelFromRequest(req);
+    // Prepare operation params
+    const filter: FilterQuery<TSchema> = req.filter;
+    const update: UpdateQuery<TSchema> = parseBodyAsUpdate(req.body);
+    const options: CommonOptions = {};
+    const operation: OperationMap = new Map([
+      ['method', 'patchCollection'],
+      ['scope', 'collection'],
+      ['request', req],
+      ['filter', filter]
+    ]);
+    // Execute preHooks
+    await this.hooks.execManyPre(['filter', 'patchCollection'], [filter, update, options, operation]);
+    // Actual mongo call
+    const {result: updateResult} = await model.updateMany(operation.get('filter'), update, options);
+    const result = await model.find(operation.get('filter'), options);
+    operation.set('result', result);
+    // Execute postHooks
+    await this.hooks.execPost('patchCollection', [filter, update, options, operation]);
     res.json(operation.get('result'));
   }
 

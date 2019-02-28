@@ -20,6 +20,15 @@ Object {
 }
 `;
 
+exports[`Resource collection PATCH /users should return 200 1`] = `
+Object {
+  "device": "1a1a836f1cf9087b520148de",
+  "email": "john.doe@gmail.com",
+  "firstName": "Alex",
+  "lastName": "Doe",
+}
+`;
+
 exports[`Resource collection POST /users should return 400 when payload is invalid 1`] = `
 Object {
   "error": "Document failed validation",
