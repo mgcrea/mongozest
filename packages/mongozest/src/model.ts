@@ -20,6 +20,7 @@ import {
   CollectionCreateOptions,
   CollectionInsertOneOptions,
   CollectionInsertManyOptions,
+  CollectionAggregationOptions,
   CommonOptions,
   DeleteWriteOpResultObject,
   InsertOneWriteOpResult,
@@ -35,9 +36,10 @@ import {
   ReplaceOneOptions
 } from 'mongodb';
 
-interface TSchema {}
+type OperationMap = Map<string, any>;
+type HookCallback = (...args: any[]) => Promise<any> | any;
 
-export default class Model {
+export default class Model<TSchema> {
   static internalPrePlugins = [findByIdPlugin];
   static internalPostPlugins = [jsonSchemaPlugin, debugPlugin];
 
@@ -52,7 +54,7 @@ export default class Model {
   private plugins: Array<any>;
   private statics: Map<string, () => void> = new Map();
 
-  public collection: Collection;
+  public collection!: Collection<TSchema>;
   private hooks: Hooks = new Hooks();
 
   constructor(public db: MongoDb) {
@@ -80,7 +82,7 @@ export default class Model {
   }
 
   // Helper recursively parsing schema
-  private async execPostPropertyHooks(properties: {[s: string]: any}, prevPath: string = ''): void {
+  private async execPostPropertyHooks(properties: {[s: string]: any}, prevPath: string = ''): Promise<void> {
     return Object.keys(properties).reduce(async (promiseSoFar, key) => {
       const soFar = await promiseSoFar;
       const currentPath = prevPath ? `${prevPath}.${key}` : key;
@@ -177,10 +179,10 @@ export default class Model {
     const {schema} = this;
     Object.assign(schema, additionalProperties);
   }
-  pre(hookName: string, callback: Function) {
+  pre(hookName: string, callback: HookCallback) {
     this.hooks.pre(hookName, callback);
   }
-  post(hookName: string, callback: Function) {
+  post(hookName: string, callback: HookCallback) {
     this.hooks.post(hookName, callback);
   }
 
@@ -197,7 +199,7 @@ export default class Model {
     operation.set('result', result);
     // Execute postHooks
     await this.hooks.execPost('aggregate', [pipeline, options, operation]);
-    return operation.get('result');
+    return operation.get('result') as Array<TSchema | null>;
   }
 
   // @docs http://mongodb.github.io/node-mongodb-native/3.1/api/Collection.html#insertOne
@@ -213,7 +215,7 @@ export default class Model {
     operation.set('result', result);
     // Execute postHooks
     await this.hooks.execManyPost(['insert', 'insertOne'], [document, options, operation]);
-    return operation.get('result');
+    return operation.get('result') as InsertOneWriteOpResult;
   }
 
   // @docs http://mongodb.github.io/node-mongodb-native/3.1/api/Collection.html#insertOne
@@ -236,7 +238,7 @@ export default class Model {
     // Execute postHooks
     await this.hooks.execPost('insert', [document, options, operation]);
     await this.hooks.execPost('replaceOne', [filter, document, options, operation]);
-    return operation.get('result');
+    return operation.get('result') as ReplaceWriteOpResult;
   }
 
   // @docs http://mongodb.github.io/node-mongodb-native/3.1/api/Collection.html#insertMany
@@ -262,7 +264,7 @@ export default class Model {
     }, []);
     await this.hooks.execEachPost('insert', eachPostArgs);
     await this.hooks.execPost('insertMany', [documents, options, operation]);
-    return operation.get('result');
+    return operation.get('result') as InsertWriteOpResult;
   }
 
   // @docs http://mongodb.github.io/node-mongodb-native/3.1/api/Collection.html#updateOne
@@ -283,13 +285,13 @@ export default class Model {
     operation.set('result', result);
     // Execute postHooks
     await this.hooks.execManyPost(['update', 'updateOne'], [filter, update, options, operation]);
-    return operation.get('result');
+    return operation.get('result') as UpdateWriteOpResult;
   }
 
   // @docs http://mongodb.github.io/node-mongodb-native/3.1/api/Collection.html#updateMany
   async updateMany(
     filter: FilterQuery<TSchema>,
-    update: UpdateQuery<TSchema> | TSchema,
+    update: UpdateQuery<TSchema>, // | TSchema
     options: UpdateManyOptions = {}
   ): Promise<UpdateWriteOpResult> {
     // Prepare operation params
@@ -304,14 +306,14 @@ export default class Model {
     operation.set('result', result);
     // Execute postHooks
     await this.hooks.execManyPost(['update', 'updateMany'], [filter, update, options, operation]);
-    return operation.get('result');
+    return operation.get('result') as UpdateWriteOpResult;
   }
 
   // @docs http://mongodb.github.io/node-mongodb-native/3.1/api/Collection.html#findOneAndUpdate
   // @note use {returnOriginal: false} to get updated object
   async findOneAndUpdate(
     filter: FilterQuery<TSchema>,
-    update: Object,
+    update: UpdateQuery<TSchema>, // | TSchema
     options: FindOneAndReplaceOption = {}
   ): Promise<FindAndModifyWriteOpResultObject<TSchema>> {
     // Prepare operation params
@@ -326,7 +328,7 @@ export default class Model {
     operation.set('result', result);
     // Execute postHooks
     await this.hooks.execManyPost(['update', 'updateOne', 'findOneAndUpdate'], [filter, update, options, operation]);
-    return operation.get('result');
+    return operation.get('result') as FindAndModifyWriteOpResultObject<TSchema>;
   }
 
   // @docs http://mongodb.github.io/node-mongodb-native/3.1/api/Collection.html#findOne
@@ -340,7 +342,7 @@ export default class Model {
     operation.set('result', result);
     // Execute postHooks
     await this.hooks.execManyPost(['find', 'findOne'], [query, options, operation]);
-    return operation.get('result');
+    return operation.get('result') as TSchema;
   }
 
   // @docs http://mongodb.github.io/node-mongodb-native/3.1/api/Collection.html#find
@@ -352,12 +354,12 @@ export default class Model {
     const result = await this.collection.find(query, options).toArray();
     operation.set('result', result);
     // Execute postHooks
-    const eachPostArgs = result.reduce((soFar: Array<any>, document: TSchema, index) => {
+    const eachPostArgs = result.reduce((soFar: Array<any>, document: TSchema) => {
       return soFar.concat([[query, options, new Map([...operation, ['result', document]])]]);
     }, []);
     await this.hooks.execEachPost('find', eachPostArgs);
     await this.hooks.execPost('findMany', [query, options, operation]);
-    return operation.get('result');
+    return operation.get('result') as Array<TSchema>;
   }
 
   // @docs http://mongodb.github.io/node-mongodb-native/3.1/api/Collection.html#deleteOne
@@ -366,92 +368,26 @@ export default class Model {
     options: CommonOptions & {bypassDocumentValidation?: boolean} = {}
   ): Promise<DeleteWriteOpResultObject> {
     // PreHooks handling
-    const opMap = new Map();
-    await this.hooks.execManyPre(['delete', 'deleteOne'], [filter, options, opMap]);
+    const operation: OperationMap = new Map([['method', 'deleteOne']]);
+    await this.hooks.execManyPre(['delete', 'deleteOne'], [filter, options, operation]);
     // Actual mongodb operation
-    const resultObject = await this.collection.deleteOne(filter, options);
-    // PostHooks handling
-    await this.hooks.execManyPost(['delete', 'deleteOne'], [resultObject, filter, options, opMap]);
-    return resultObject;
+    const result = await this.collection.deleteOne(filter, options);
+    operation.set('result', result);
+    // Execute postHooks
+    await this.hooks.execManyPost(['delete', 'deleteOne'], [result, filter, options, operation]);
+    return operation.get('result') as DeleteWriteOpResultObject;
   }
 
   // @docs http://mongodb.github.io/node-mongodb-native/3.1/api/Collection.html#deleteMany
   async deleteMany(filter: FilterQuery<TSchema>, options: CommonOptions = {}): Promise<DeleteWriteOpResultObject> {
     // PreHooks handling
-    const opMap = new Map();
-    await this.hooks.execManyPre(['delete', 'deleteMany'], [filter, options, opMap]);
+    const operation: OperationMap = new Map([['method', 'deleteMany']]);
+    await this.hooks.execManyPre(['delete', 'deleteMany'], [filter, options, operation]);
     // Actual mongodb operation
-    const resultObject = await this.collection.deleteMany(filter, options);
-    // [ 'result', 'connection', 'message', 'deletedCount' ]
-    // const {result, deletedCount} = resultObject;
-    // PostHooks handling
-    await this.hooks.execManyPost(['delete', 'deleteMany'], [resultObject, filter, options, opMap]);
-    return resultObject;
+    const result = await this.collection.deleteMany(filter, options);
+    operation.set('result', result);
+    // Execute postHooks
+    await this.hooks.execManyPost(['delete', 'deleteMany'], [result, filter, options, operation]);
+    return operation.get('result') as DeleteWriteOpResultObject;
   }
 }
-//
-
-/*
-
-  // const collection = database.collection('users');
-  // const changeStream = collection.watch([{$match: {operationType: 'insert'}}]);
-  // while (await changeStream.hasNext()) {
-  //   const changeEvent = await changeStream.next();
-  //   d(changeEvent.operationType, changeEvent.fullDocument);
-  //   // process doc here
-  // }
-  */
-
-/*
-connect.Binary = core.BSON.Binary;
-connect.Code = core.BSON.Code;
-connect.Map = core.BSON.Map;
-connect.DBRef = core.BSON.DBRef;
-connect.Double = core.BSON.Double;
-connect.Int32 = core.BSON.Int32;
-connect.Long = core.BSON.Long;
-connect.MinKey = core.BSON.MinKey;
-connect.MaxKey = core.BSON.MaxKey;
-connect.ObjectID = core.BSON.ObjectID;
-connect.ObjectId = core.BSON.ObjectID;
-connect.Symbol = core.BSON.Symbol;
-connect.Timestamp = core.BSON.Timestamp;
-connect.BSONRegExp = core.BSON.BSONRegExp;
-connect.Decimal128 = core.BSON.Decimal128;
-*/
-
-/*
-db.createCollection("students", {
-   validator: {
-      $jsonSchema: {
-         bsonType: "object",
-         required: [ "name", "year", "major", "gpa" ],
-         properties: {
-            name: {
-               bsonType: "string",
-               description: "must be a string and is required"
-            },
-            gender: {
-               bsonType: "string",
-               description: "must be a string and is not required"
-            },
-            year: {
-               bsonType: "int",
-               minimum: 2017,
-               maximum: 3017,
-               exclusiveMaximum: false,
-               description: "must be an integer in [ 2017, 3017 ] and is required"
-            },
-            major: {
-               enum: [ "Math", "English", "Computer Science", "History", null ],
-               description: "can only be one of the enum values and is required"
-            },
-            gpa: {
-               bsonType: [ "double" ],
-               description: "must be a double and is required"
-            }
-         }
-      }
-   }
-})
-*/
