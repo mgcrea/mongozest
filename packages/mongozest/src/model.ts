@@ -36,7 +36,7 @@ import {
   ReplaceOneOptions
 } from 'mongodb';
 
-type OperationMap = Map<string, any>;
+export type OperationMap = Map<string, any>;
 type HookCallback = (...args: any[]) => Promise<any> | any;
 
 export default class Model<TSchema> {
@@ -346,7 +346,7 @@ export default class Model<TSchema> {
   }
 
   // @docs http://mongodb.github.io/node-mongodb-native/3.1/api/Collection.html#find
-  async find(query: FilterQuery<TSchema>, options: FindOneOptions = {}): Promise<Array<TSchema | null>> {
+  async find(query: FilterQuery<TSchema>, options: FindOneOptions = {}): Promise<Array<TSchema>> {
     // PreHooks handling
     const operation: OperationMap = new Map([['method', 'find']]);
     await this.hooks.execManyPre(['find', 'findMany'], [query, options, operation]);
