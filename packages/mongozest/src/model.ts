@@ -8,8 +8,8 @@ import pluralize from 'pluralize';
 import Hooks from '@mongozest/hooks';
 
 import jsonSchemaPlugin from './plugins/jsonSchemaPlugin';
-import findByIdPlugin from './plugins/findByIdPlugin';
-import schemaCastingPlugin from './plugins/schemaCastingPlugin';
+import byIdPlugin from './plugins/byIdPlugin';
+// // import schemaCastingPlugin from './plugins/schemaCastingPlugin';
 import debugPlugin from './plugins/debugPlugin';
 
 // require('debug-utils').default();
@@ -40,7 +40,7 @@ export type OperationMap = Map<string, any>;
 type HookCallback = (...args: any[]) => Promise<any> | any;
 
 export default class Model<TSchema> {
-  static internalPrePlugins = [findByIdPlugin];
+  static internalPrePlugins = [byIdPlugin];
   static internalPostPlugins = [jsonSchemaPlugin, debugPlugin];
 
   static readonly schema: object;
