@@ -26,6 +26,8 @@ export default function aggregationPlugin<TSchema>(
   };
   const castQueryParam = (value: any, key: string) => {
     switch (key) {
+      case 'pipeline':
+        return Array.isArray(value) ? value : [value];
       default:
         return value;
     }
@@ -78,3 +80,6 @@ export default function aggregationPlugin<TSchema>(
     router.get(`${path}/aggregate`, asyncHandler(aggregateCollection.bind(resource)));
   });
 }
+
+// [{$group: {_id: {mission: "$mission"}, count: {$sum: 1}}}]
+// [{$group: {_id: {mission: "$mission"}, count: {$sum: 1}}}, {$project: {_id: 0, mission: "$_id.mission", count: 1}}]

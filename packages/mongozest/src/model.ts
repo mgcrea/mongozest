@@ -187,7 +187,10 @@ export default class Model<TSchema> {
   }
 
   // @docs http://mongodb.github.io/node-mongodb-native/3.1/api/Collection.html#aggregate
-  async aggregate(pipeline: Object[] = [], options: CollectionAggregationOptions = {}): Promise<Array<TSchema | null>> {
+  async aggregate(
+    pipeline: Array<Object> = [],
+    options: CollectionAggregationOptions = {}
+  ): Promise<Array<TSchema | null>> {
     // Prepare operation params
     const operation: OperationMap = new Map([['method', 'aggregate']]);
     // Execute preHooks

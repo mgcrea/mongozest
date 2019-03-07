@@ -1,5 +1,5 @@
-type HookCallback = (...args: any[]) => Promise<any> | any;
-type HookMap = Map<string, Array<HookCallback>>;
+export type HookCallback = (...args: any[]) => Promise<any> | any;
+export type HookMap = Map<string, Array<HookCallback>>;
 
 interface State {
   preHooks: HookMap;
