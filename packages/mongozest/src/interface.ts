@@ -14,7 +14,7 @@ const DEFAULT_MONGODB_URI = 'mongodb://mongo:27017';
 // global interfaces
 const interfaces: Map<string, MongoInterface> = new Map();
 
-export default class MongoInterface {
+export default class MongoInterface<TSchema = any> {
   static defaultClientUri = DEFAULT_MONGODB_URI;
   static defaultClientOptions: MongoClientOptions = {
     loggerLevel: 'error',
@@ -32,7 +32,7 @@ export default class MongoInterface {
   }
   client: MongoClient;
   private dbName: string;
-  private models: Map<string, Model> = new Map();
+  private models: Map<string, Model<TSchema>> = new Map();
   id: ObjectId;
   db: MongoDb;
 
@@ -78,7 +78,7 @@ export default class MongoInterface {
     // const model = Model.create();
     assert(this.db, 'Missing db instance, please connect first');
     const model = new Model(this.db);
-    const modelProxy = new Proxy(model, {
+    const modelProxy: Model<TSchema> = new Proxy(model, {
       get: function(target, name, receiver) {
         // Skip proxy's constructor
         if (name === 'constructor') {
@@ -104,10 +104,11 @@ export default class MongoInterface {
     await modelProxy.initialize();
     return modelProxy;
   }
-  public model(modelName: string) {
+  public model<TSchema>(modelName: string): Model<TSchema> {
     if (!this.models.has(modelName)) {
       throw new Error(`model ${modelName} not loaded`);
     }
-    return this.models.get(modelName);
+    const model = this.models.get(modelName);
+    return model as Model<TSchema>;
   }
 }

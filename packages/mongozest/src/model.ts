@@ -2,10 +2,12 @@
 // @docs https://github.com/hapijs/joi/blob/v13.7.0/API.md
 // @docs https://github.com/dylang/shortid
 // @docs http://mongodb.github.io/node-mongodb-native/3.1/reference/ecmascriptnext/crud/
+// @docs https://github.com/aljazerzen/mongodb-typescript
 
 import {cloneDeep, snakeCase, uniq} from 'lodash';
 import pluralize from 'pluralize';
-import Hooks from '@mongozest/hooks';
+import {Schema} from './schema';
+import Hooks, {HookCallback} from '@mongozest/hooks';
 
 import jsonSchemaPlugin from './plugins/jsonSchemaPlugin';
 import byIdPlugin from './plugins/byIdPlugin';
@@ -37,9 +39,10 @@ import {
 } from 'mongodb';
 
 export type OperationMap = Map<string, any>;
-type HookCallback = (...args: any[]) => Promise<any> | any;
 
-export default class Model<TSchema> {
+type Plugin<TSchema> = (m: Model<TSchema>, o?: {[s: string]: any}) => Promise<any> | any;
+
+export default class Model<TSchema = any> {
   static internalPrePlugins = [byIdPlugin];
   static internalPostPlugins = [jsonSchemaPlugin, debugPlugin];
 
@@ -50,8 +53,8 @@ export default class Model<TSchema> {
 
   public collectionName: string;
   public collectionOptions: CollectionCreateOptions = {};
-  public schema: object;
-  private plugins: Array<any>;
+  public schema: Schema<TSchema>;
+  private plugins: Array<Plugin<TSchema>>;
   private statics: Map<string, () => void> = new Map();
 
   public collection!: Collection<TSchema>;
@@ -160,14 +163,14 @@ export default class Model<TSchema> {
 
   // Plugins management
 
-  private async loadPlugins() {
+  private async loadPlugins(this: Model<TSchema>) {
     const {plugins} = this;
     const allPlugins = uniq([...Model.internalPrePlugins, ...plugins, ...Model.internalPostPlugins]);
     allPlugins.forEach(pluginConfig => {
       if (Array.isArray(pluginConfig)) {
         pluginConfig[0](this, pluginConfig[1]);
       } else {
-        pluginConfig(this);
+        pluginConfig(this, undefined);
       }
     });
   }
