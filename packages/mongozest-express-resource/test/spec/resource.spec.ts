@@ -11,7 +11,15 @@ const {mongo, redis, insertFixture} = app.locals;
 app.locals.fixtures = fixtures;
 const fetch = makeFetch(app);
 
-class User extends Model {
+interface UserSchema {
+  firstName?: string;
+  lastName?: string;
+  email: string;
+  nationality?: string;
+  device?: ObjectId;
+}
+
+class User extends Model<UserSchema> {
   static schema = {
     firstName: {bsonType: 'string'},
     lastName: {bsonType: 'string'},
@@ -254,86 +262,87 @@ describe('resource with nested paths', () => {
   //     });
   //   });
   // });
-  describe('document', () => {
-    describe(`GET ${PATH}/:_id`, () => {
-      it('should return 200 with a matching device', async () => {
-        const {_id: insertedId, device} = await insertFixture('User');
-        const res = await fetch(`${PATH.replace(':device', device)}/${insertedId}`, {
-          method: 'get',
-          headers: {'Content-Type': 'application/json'}
-        })
-          .expect(200)
-          .expect('content-type', /^application\/json/);
-        const resBody = await res.json();
-        expect(isObject(resBody)).toBeTruthy();
-        expect(Object.keys(resBody)).toMatchSnapshot();
-        expect(omit(resBody, '_id')).toMatchSnapshot();
-      });
-      it('should return 404 for an invalid device', async () => {
-        const {_id: insertedId} = await insertFixture('User');
-        const res = await fetch(`${PATH.replace(':device', `${new ObjectId()}`)}/${insertedId}`, {
-          method: 'get',
-          headers: {'Content-Type': 'application/json'}
-        })
-          .expect(404)
-          .expect('content-type', /^application\/json/);
-      });
+});
+
+describe('document', () => {
+  describe(`GET ${PATH}/:_id`, () => {
+    it('should return 200 with a matching device', async () => {
+      const {_id: insertedId, device} = await insertFixture('User');
+      const res = await fetch(`${PATH.replace(':device', device)}/${insertedId}`, {
+        method: 'get',
+        headers: {'Content-Type': 'application/json'}
+      })
+        .expect(200)
+        .expect('content-type', /^application\/json/);
+      const resBody = await res.json();
+      expect(isObject(resBody)).toBeTruthy();
+      expect(Object.keys(resBody)).toMatchSnapshot();
+      expect(omit(resBody, '_id')).toMatchSnapshot();
     });
-    describe(`PATCH ${PATH}/:_id`, () => {
-      it('should return 200', async () => {
-        const {_id: insertedId, device} = await insertFixture('User');
-        const reqBody = {
-          firstName: 'Laura'
-        };
-        const res = await fetch(`${PATH.replace(':device', device)}/${insertedId}`, {
-          method: 'patch',
-          body: JSON.stringify(reqBody),
-          headers: {'Content-Type': 'application/json'}
-        })
-          .expect(200)
-          .expect('content-type', /^application\/json/);
-        const resBody = await res.json();
-        expect(isObject(resBody)).toBeTruthy();
-        expect(Object.keys(resBody)).toMatchSnapshot();
-        expect(omit(resBody, '_id')).toMatchSnapshot();
-      });
-      it('should return 404 for an invalid device', async () => {
-        const {_id: insertedId} = await insertFixture('User');
-        const reqBody = {
-          firstName: 'Laura'
-        };
-        const res = await fetch(`${PATH.replace(':device', `${new ObjectId()}`)}/${insertedId}`, {
-          method: 'patch',
-          body: JSON.stringify(reqBody),
-          headers: {'Content-Type': 'application/json'}
-        })
-          .expect(404)
-          .expect('content-type', /^application\/json/);
-      });
+    it('should return 404 for an invalid device', async () => {
+      const {_id: insertedId} = await insertFixture('User');
+      const res = await fetch(`${PATH.replace(':device', `${new ObjectId()}`)}/${insertedId}`, {
+        method: 'get',
+        headers: {'Content-Type': 'application/json'}
+      })
+        .expect(404)
+        .expect('content-type', /^application\/json/);
     });
-    describe(`DELETE ${PATH}/:_id`, () => {
-      it('should return 200', async () => {
-        const {_id: insertedId, device} = await insertFixture('User');
-        const res = await fetch(`${PATH.replace(':device', device)}/${insertedId}`, {
-          method: 'delete',
-          headers: {'Content-Type': 'application/json'}
-        })
-          .expect(200)
-          .expect('content-type', /^application\/json/);
-        const resBody = await res.json();
-        expect(isObject(resBody)).toBeTruthy();
-        expect(Object.keys(resBody)).toMatchSnapshot();
-        expect(resBody).toMatchSnapshot();
-      });
-      it('should return 404 for an invalid device', async () => {
-        const {_id: insertedId} = await insertFixture('User');
-        const res = await fetch(`${PATH.replace(':device', `${new ObjectId()}`)}/${insertedId}`, {
-          method: 'delete',
-          headers: {'Content-Type': 'application/json'}
-        })
-          .expect(404)
-          .expect('content-type', /^application\/json/);
-      });
+  });
+  describe(`PATCH ${PATH}/:_id`, () => {
+    it('should return 200', async () => {
+      const {_id: insertedId, device} = await insertFixture('User');
+      const reqBody = {
+        firstName: 'Laura'
+      };
+      const res = await fetch(`${PATH.replace(':device', device)}/${insertedId}`, {
+        method: 'patch',
+        body: JSON.stringify(reqBody),
+        headers: {'Content-Type': 'application/json'}
+      })
+        .expect(200)
+        .expect('content-type', /^application\/json/);
+      const resBody = await res.json();
+      expect(isObject(resBody)).toBeTruthy();
+      expect(Object.keys(resBody)).toMatchSnapshot();
+      expect(omit(resBody, '_id')).toMatchSnapshot();
+    });
+    it('should return 404 for an invalid device', async () => {
+      const {_id: insertedId} = await insertFixture('User');
+      const reqBody = {
+        firstName: 'Laura'
+      };
+      const res = await fetch(`${PATH.replace(':device', `${new ObjectId()}`)}/${insertedId}`, {
+        method: 'patch',
+        body: JSON.stringify(reqBody),
+        headers: {'Content-Type': 'application/json'}
+      })
+        .expect(404)
+        .expect('content-type', /^application\/json/);
+    });
+  });
+  describe(`DELETE ${PATH}/:_id`, () => {
+    it('should return 200', async () => {
+      const {_id: insertedId, device} = await insertFixture('User');
+      const res = await fetch(`${PATH.replace(':device', device)}/${insertedId}`, {
+        method: 'delete',
+        headers: {'Content-Type': 'application/json'}
+      })
+        .expect(200)
+        .expect('content-type', /^application\/json/);
+      const resBody = await res.json();
+      expect(isObject(resBody)).toBeTruthy();
+      expect(Object.keys(resBody)).toMatchSnapshot();
+      expect(resBody).toMatchSnapshot();
+    });
+    it('should return 404 for an invalid device', async () => {
+      const {_id: insertedId} = await insertFixture('User');
+      const res = await fetch(`${PATH.replace(':device', `${new ObjectId()}`)}/${insertedId}`, {
+        method: 'delete',
+        headers: {'Content-Type': 'application/json'}
+      })
+        .expect(404)
+        .expect('content-type', /^application\/json/);
     });
   });
 });

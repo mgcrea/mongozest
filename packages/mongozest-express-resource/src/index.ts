@@ -3,11 +3,11 @@
 
 // import Model from './model';
 // import Plugin from './plugin';
-import Resource, {OperationMap} from './resource';
+import Resource, {OperationMap, AggregationPipeline} from './resource';
 export * from './plugins';
 export {asyncHandler} from './utils/request';
 export {mongoErrorMiddleware} from './utils/errors';
 
-export {Resource, OperationMap};
+export {Resource, OperationMap, AggregationPipeline};
 
 export default Resource.create;

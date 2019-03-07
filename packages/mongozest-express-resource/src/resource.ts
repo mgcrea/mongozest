@@ -25,6 +25,7 @@ import {
   CollectionAggregationOptions,
   UpdateQuery
 } from 'mongodb';
+import aggregationPlugin from './plugins/aggregationPlugin';
 
 interface ResourceOptions {
   router?: Router;
@@ -46,22 +47,22 @@ const assertScopedFilter = <TSchema>(filter: FilterQuery<TSchema>) => {
   assert(filter && Object.keys(filter).length, 'Invalid filter');
 };
 
-export default class Resource<TSchema, T> {
-  static internalPrePlugins = [queryPlugin, populatePlugin];
+export default class Resource<TSchema> {
+  static internalPrePlugins = [queryPlugin, populatePlugin, aggregationPlugin];
   static internalPostPlugins = [];
 
   public options: any = {};
   private plugins: Array<any>;
   // private statics: Map<string, () => void> = new Map();
-  private params: Map<string, RequestParamResolver<T>> = new Map();
-  private ids: Map<RequestParamChecker, RequestParamResolver<T>> = new Map([
+  private params: Map<string, RequestParamResolver<TSchema>> = new Map();
+  private ids: Map<RequestParamChecker, RequestParamResolver<TSchema>> = new Map([
     [(s: string) => OBJECT_ID_REGEX.test(s), (s: string) => ({_id: ObjectId.createFromHexString(s)})]
   ]);
 
   private router: Router;
   private middleware: RequestHandler | null;
   private paths: Array<string>;
-  private hooks: Hooks = new Hooks();
+  public hooks: Hooks = new Hooks();
 
   static create(modelName: string, options?: any) {
     return new Resource(modelName, options);
@@ -109,18 +110,23 @@ export default class Resource<TSchema, T> {
     const {ids} = this;
     ids.set(check, resolve);
   }
-  public addParams(paramsMap: {[k: string]: RequestParamResolver<T>}) {
+  public addParams(paramsMap: {[k: string]: RequestParamResolver<TSchema>}) {
     const {params} = this;
     Object.keys(paramsMap).forEach(key => params.set(key, paramsMap[key]));
   }
-  private getModelFromRequest(req: Request): Model<TSchema> {
+  public getModelFromRequest(req: Request): Model<TSchema> {
     const {modelName} = this;
     return req.app.locals.mongo.model(modelName);
   }
 
   build() {
+    console.warn('resource.build() is deprecated, please use resource.buildRouter() instead.');
+    return this.buildRouter();
+  }
+
+  buildRouter() {
     const {router, paths, middleware} = this;
-    this.hooks.execPreSync('build', [router]);
+    this.hooks.execPreSync('buildRouter', [router, paths]);
     // params
     paths.forEach(path => {
       const docPath = `${path}/:_id`;
@@ -129,8 +135,9 @@ export default class Resource<TSchema, T> {
         router.all(path, middleware);
         router.all(docPath, middleware);
       }
+      // hooks
+      this.hooks.execPreSync('buildPath', [router, path]);
       // collection
-      router.get(`${path}/aggregate`, asyncHandler(this.aggregateCollection.bind(this)));
       router.get(path, asyncHandler(this.getCollection.bind(this)));
       router.post(path, asyncHandler(this.postCollection.bind(this)));
       router.patch(path, asyncHandler(this.patchCollection.bind(this)));
@@ -139,10 +146,12 @@ export default class Resource<TSchema, T> {
       router.get(docPath, asyncHandler(this.getDocument.bind(this)));
       router.patch(docPath, asyncHandler(this.patchDocument.bind(this)));
       router.delete(docPath, asyncHandler(this.deleteDocument.bind(this)));
+      // hooks
+      this.hooks.execPostSync('buildPath', [router, path]);
       // shutdown
       router.use(path, mongoErrorMiddleware);
     });
-    this.hooks.execPostSync('build', [router]);
+    this.hooks.execPostSync('buildRouter', [router, paths]);
     return router;
   }
 
@@ -192,28 +201,6 @@ export default class Resource<TSchema, T> {
     await this.hooks.execManyPre(['filter', 'getCollection'], [filter, options, operation]);
     // Actual mongo call
     const result = await model.find(operation.get('filter'), options);
-    operation.set('result', result);
-    // Execute postHooks
-    await this.hooks.execPost('getCollection', [operation.get('filter'), options, operation]);
-    res.json(operation.get('result'));
-  }
-
-  async aggregateCollection(req: Request, res: Response) {
-    const model = this.getModelFromRequest(req);
-    // Prepare operation params
-    const pipeline: Array<Object> = await this.buildRequestPipeline(req);
-    const options: CollectionAggregationOptions = {};
-    // @ts-ignore
-    const operation: OperationMap = new Map([
-      ['method', 'aggregateCollection'],
-      ['scope', 'collection'],
-      ['request', req],
-      ['pipeline', pipeline]
-    ]);
-    // Execute preHooks
-    await this.hooks.execManyPre(['pipeline', 'aggregateCollection'], [pipeline, options, operation]);
-    // Actual mongo call
-    const result = await model.aggregate(operation.get('pipeline'), options);
     operation.set('result', result);
     // Execute postHooks
     await this.hooks.execPost('getCollection', [operation.get('filter'), options, operation]);

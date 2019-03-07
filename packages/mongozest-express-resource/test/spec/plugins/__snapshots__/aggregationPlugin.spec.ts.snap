@@ -1,0 +1,10 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Resource collection GET /users/aggregate should return 200 1`] = `
+Object {
+  "device": "1a1a836f1cf9087b520148de",
+  "email": "john.doe@gmail.com",
+  "firstName": "John",
+  "lastName": "Doe",
+}
+`;
