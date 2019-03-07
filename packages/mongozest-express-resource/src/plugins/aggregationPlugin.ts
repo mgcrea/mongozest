@@ -12,7 +12,7 @@ import {Request, Response, Router} from 'express';
 
 export default function aggregationPlugin<TSchema>(
   resource: Resource<TSchema>,
-  {strictJSON = false, optionName = 'pipeline'} = {}
+  {strictJSON = false, pipelineParamName = 'pipeline', pathName = 'aggregate'} = {}
 ) {
   const parseQueryParam = (value: any, key: string) => {
     if (!isString(value) || !/^[\[\{]/.test(value)) {
@@ -36,9 +36,9 @@ export default function aggregationPlugin<TSchema>(
   async function buildRequestPipeline(this: Resource<TSchema>, req: Request): Promise<AggregationPipeline> {
     // const model = this.getModelFromRequest(req);
     // const {ids, params} = this;
-    const whitelist = ['pipeline'];
+    const whitelist = [pipelineParamName];
     const queryOptions = mapValues(mapValues(pick(req.query, whitelist), parseQueryParam), castQueryParam);
-    return queryOptions.pipeline || [];
+    return queryOptions[pipelineParamName] || [];
   }
 
   // resource.pre(
@@ -77,7 +77,7 @@ export default function aggregationPlugin<TSchema>(
   }
 
   resource.pre('buildPath', (router: Router, path: string) => {
-    router.get(`${path}/aggregate`, asyncHandler(aggregateCollection.bind(resource)));
+    router.get(`${path}/${pathName}`, asyncHandler(aggregateCollection.bind(resource)));
   });
 }
 

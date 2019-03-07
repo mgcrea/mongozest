@@ -38,7 +38,7 @@ interface ResourceOptions {
 export type OperationMap = Map<string, any>;
 export type AggregationPipeline = Array<Object>;
 export type RequestParamChecker = (s: string) => boolean;
-export type RequestParamResolver<T> = (s: string) => FilterQuery<T>;
+export type RequestParamResolver<TSchema> = (s: string, m: Model<TSchema>) => FilterQuery<TSchema>;
 
 // const OBJECT_ID_PATTERN = '[a-f\\d]{24}';
 const OBJECT_ID_REGEX = /^[a-f\d]{24}$/i;
@@ -156,6 +156,7 @@ export default class Resource<TSchema> {
   }
 
   async buildRequestFilter(req: Request): Promise<FilterQuery<TSchema>> {
+    const model = this.getModelFromRequest(req);
     const {ids, params} = this;
     return await Object.keys(req.params).reduce(async (promiseSoFar, key) => {
       const soFar = await promiseSoFar;
@@ -165,7 +166,7 @@ export default class Resource<TSchema> {
         ids.forEach((resolve, test) => {
           if (test(value)) {
             try {
-              Object.assign(soFar, resolve(value));
+              Object.assign(soFar, resolve(value, model));
             } catch (err) {
               throw createError(400, 'Invalid url identifier');
             }
@@ -175,7 +176,7 @@ export default class Resource<TSchema> {
         const resolve = params.get(key);
         if (resolve) {
           try {
-            Object.assign(soFar, await resolve(value));
+            Object.assign(soFar, await resolve(value, model));
           } catch (err) {
             throw createError(400, 'Invalid url parameter');
           }
