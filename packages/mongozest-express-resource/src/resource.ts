@@ -22,7 +22,6 @@ import {
   FilterQuery,
   FindOneOptions,
   FindOneAndReplaceOption,
-  CollectionAggregationOptions,
   UpdateQuery
 } from 'mongodb';
 import aggregationPlugin from './plugins/aggregationPlugin';

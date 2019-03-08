@@ -1,3 +1,5 @@
+import {ObjectId} from 'mongodb';
+
 // @docs https://docs.mongodb.com/manual/reference/operator/query/jsonSchema/
 // @docs https://www.typescriptlang.org/docs/handbook/advanced-types.html
 
@@ -36,14 +38,14 @@ export interface JsonSchema<TProp> {
     ? JsonSchema<UProp> | Array<JsonSchema<UProp>>
     : JsonSchema<TProp> | Array<JsonSchema<TProp>>;
   additionalProperties?: boolean;
-  properties?: Properties<TProp>;
+  properties?: SchemaProperties<TProp>;
 }
 export interface JsonSchema<TProp> {
-  default?: TProp | string;
+  default?: TProp | string | (() => TProp | any);
 }
 export interface JsonSchema<TProp> {
   ref?: string;
 }
 
-type Properties<TSchema> = {[s in keyof TSchema]: JsonSchema<TSchema[s]>};
-export type Schema<TSchema> = Properties<TSchema>;
+export type SchemaProperties<TSchema> = {[s in keyof TSchema]: JsonSchema<TSchema[s]>};
+export type Schema<TSchema> = SchemaProperties<Partial<TSchema>>;
