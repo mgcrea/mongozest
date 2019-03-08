@@ -39,8 +39,7 @@ import {
 } from 'mongodb';
 
 export type OperationMap = Map<string, any>;
-
-type Plugin<TSchema> = (m: Model<TSchema>, o?: {[s: string]: any}) => Promise<any> | any;
+type Plugin<TSchema> = (model: Model<TSchema>, options?: {[s: string]: any}) => Promise<any> | any;
 
 export default class Model<TSchema = any> {
   static internalPrePlugins = [byIdPlugin];
@@ -155,10 +154,14 @@ export default class Model<TSchema = any> {
   }
   get jsonSchema(): object {
     const {collectionOptions} = this;
-    if (!collectionOptions.validator || !collectionOptions.validator.$jsonSchema) {
+    if (!collectionOptions.validator) {
       return {};
     }
-    return collectionOptions.validator.$jsonSchema;
+    const validator = collectionOptions.validator as {[s: string]: any};
+    if (!validator || !validator.$jsonSchema) {
+      return {};
+    }
+    return validator.$jsonSchema;
   }
 
   // Plugins management
@@ -283,8 +286,8 @@ export default class Model<TSchema = any> {
     const operation: OperationMap = new Map([['method', 'updateOne']]);
     // Execute preHooks
     await this.hooks.execManyPre(['update', 'updateOne'], [filter, update, options, operation]);
-    if (update.$set) {
-      await this.hooks.execPre('validate', [update.$set, options, operation]);
+    if ((update as UpdateQuery<TSchema>).$set) {
+      await this.hooks.execPre('validate', [(update as UpdateQuery<TSchema>).$set, options, operation]);
     }
     // Actual mongodb operation
     const result = await this.collection.updateOne(filter, update, options);
