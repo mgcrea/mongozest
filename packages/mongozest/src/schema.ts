@@ -3,7 +3,7 @@ import {ObjectId} from 'mongodb';
 // @docs https://docs.mongodb.com/manual/reference/operator/query/jsonSchema/
 // @docs https://www.typescriptlang.org/docs/handbook/advanced-types.html
 
-type BsonType =
+export type BsonType =
   | 'double'
   | 'string'
   | 'object'

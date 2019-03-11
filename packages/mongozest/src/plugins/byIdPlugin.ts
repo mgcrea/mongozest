@@ -1,7 +1,5 @@
-import {ObjectId} from 'mongodb';
-// @types
-import {Model} from '..';
 import {
+  ObjectId,
   FindOneOptions,
   UpdateQuery,
   ReplaceOneOptions,
@@ -9,6 +7,7 @@ import {
   DeleteWriteOpResultObject,
   UpdateWriteOpResult
 } from 'mongodb';
+import {Model} from '..';
 
 type StringOrObjectId = string | ObjectId;
 

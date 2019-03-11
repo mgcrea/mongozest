@@ -2,9 +2,26 @@ import shortid from 'shortid';
 import {memoize} from 'lodash';
 // @types
 import {Model} from '..';
-import {FindOneOptions, UpdateQuery, UpdateWriteOpResult, ReplaceOneOptions} from 'mongodb';
+import {FindOneOptions, UpdateQuery, UpdateWriteOpResult, ReplaceOneOptions, ObjectId} from 'mongodb';
 
-export default function shortIdPlugin(model: Model, {sidKey = '_sid'} = {}) {
+interface DocumentSchema {
+  _id?: ObjectId;
+}
+
+export interface ShortIdPluginProps {
+  _sid: string;
+}
+
+interface DocumentWithPluginProps extends DocumentSchema, ShortIdPluginProps {}
+
+export interface ShortIdPluginOptions {
+  sidKey?: string;
+}
+
+export default function shortIdPlugin<TSchema extends DocumentWithPluginProps>(
+  model: Model<TSchema>,
+  {sidKey = '_sid'}: ShortIdPluginOptions = {}
+) {
   model.addSchemaProperties({
     [sidKey]: {bsonType: 'string', minLength: 7, maxLength: 14, index: {unique: true}}
   });
@@ -24,7 +41,7 @@ export default function shortIdPlugin(model: Model, {sidKey = '_sid'} = {}) {
       return doc ? doc._id : null;
     })
   });
-  model.pre('insert', (insert: T) => {
+  model.pre('insert', (insert: TSchema) => {
     insert[sidKey] = shortid.generate();
   });
 }
