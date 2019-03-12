@@ -1,16 +1,16 @@
 import {FilterQuery, UpdateQuery} from 'mongodb';
 import {Model} from '..';
 
-export interface lastModifiedPluginProps {
+export interface LastModifiedPluginProps {
   updatedAt: Date;
   createdAt: Date;
 }
 
-export interface lastModifiedPluginOptions {}
+export interface LastModifiedPluginOptions {}
 
-export default function lastModifiedPlugin<TSchema extends lastModifiedPluginProps>(
+export default function lastModifiedPlugin<TSchema extends LastModifiedPluginProps>(
   model: Model<TSchema>,
-  _options: lastModifiedPluginOptions
+  _options: LastModifiedPluginOptions
 ) {
   model.addSchemaProperties({
     updatedAt: {bsonType: 'date'},
