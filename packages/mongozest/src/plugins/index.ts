@@ -9,6 +9,7 @@ import schemaFakerPlugin from './schemaFakerPlugin';
 import schemaIndexesPlugin from './schemaIndexesPlugin';
 import schemaProjectionPlugin from './schemaProjectionPlugin';
 import schemaValidationPlugin from './schemaValidationPlugin';
+import trimPlugin from './trimPlugin';
 import shortIdPlugin from './shortIdPlugin';
 
 export {
@@ -23,5 +24,6 @@ export {
   schemaIndexesPlugin,
   schemaProjectionPlugin,
   schemaValidationPlugin,
+  trimPlugin,
   shortIdPlugin
 };
