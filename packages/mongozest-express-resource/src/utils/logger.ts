@@ -6,3 +6,5 @@ export const inspect = (maybeObject: object) =>
 
 export const log = (maybeString: string) =>
   console.log(`${chalk.gray(new Date().toISOString())} - 🏢 resource: ${maybeString}`);
+
+export {chalk};

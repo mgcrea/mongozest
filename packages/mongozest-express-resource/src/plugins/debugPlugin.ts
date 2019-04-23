@@ -1,4 +1,4 @@
-import {log, inspect} from './../utils/logger';
+import {log, inspect, chalk} from './../utils/logger';
 import {Resource} from '..';
 import {FilterQuery, CollectionInsertOneOptions, UpdateQuery, FindOneAndReplaceOption} from 'mongodb';
 
@@ -18,7 +18,7 @@ export default function debugPlugin(resource: Resource, options = {}) {
       operation: OperationMap
     ) => {
       const req = operation.get('request');
-      log(`${req.method} ${path} ${inspect(req.body)}`);
+      log(`${chalk.cyan(req.method)} ${path} ${inspect(req.body)}`);
       // log(`${method} ${path} (${inspect(filter)}, ${inspect(update)})`);
     }
   );

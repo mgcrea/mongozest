@@ -1,4 +1,4 @@
-import {log, inspect} from './../utils/logger';
+import {log, inspect, chalkNumber} from './../utils/logger';
 import {Model, ObjectId} from '..';
 
 const {NODE_DEBUG = '0'} = process.env;
@@ -128,7 +128,11 @@ export default function debugPlugin(model: Model, options) {
     const docs = operation.get('result');
     const diff = process.hrtime(operation.get(hrtimeSymbol));
     const elapsed = (diff[0] * NS_PER_SEC + diff[1]) / 1e6;
-    log(`db.${collectionName}.find: ${docs.length}-result(s) returned in ${inspect(elapsed.toPrecision(3) * 1)}ms`);
+    log(
+      `db.${collectionName}.find: ${chalkNumber(docs.length)}-result(s) returned in ${chalkNumber(
+        elapsed.toPrecision(3)
+      )}ms`
+    );
   });
   model.pre('findOne', (query: FilterQuery<TSchema>, options: FindOneOptions, operation: OperationMap) => {
     operation.set(hrtimeSymbol, process.hrtime());
@@ -137,6 +141,10 @@ export default function debugPlugin(model: Model, options) {
     const doc = operation.get('result');
     const diff = process.hrtime(operation.get(hrtimeSymbol));
     const elapsed = (diff[0] * NS_PER_SEC + diff[1]) / 1e6;
-    log(`db.${collectionName}.findOne: ${inspect(doc)} returned in ${inspect(elapsed.toPrecision(3) * 1)}ms`);
+    log(
+      `db.${collectionName}.findOne: ${chalkNumber(doc ? '1' : '0')}-result(s) returned in ${chalkNumber(
+        elapsed.toPrecision(3)
+      )}ms`
+    );
   });
 }
