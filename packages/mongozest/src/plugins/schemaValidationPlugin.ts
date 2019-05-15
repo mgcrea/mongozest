@@ -104,7 +104,7 @@ export default function schemaValidationPlugin(model: Model, {validateJsonSchema
 
     if (validationErrors.length) {
       const message = formatValidationErrors(validationErrors);
-      const error = new Error(`Document failed validation:\n${message}\n`);
+      const error = new Error(`Document failed validation on collection "${model.collectionName}" :\n${message}\n`);
       // Fake MongoError for now...
       error.name = 'MongoError';
       error.code = 121;
