@@ -1,7 +1,7 @@
 import {BsonType} from '../schema';
 import {Model, ObjectId} from '..';
 
-export interface CreatedByPluginProps<TProp> {
+export interface CreatedByPluginProps<TProp = ObjectId> {
   ownedBy: TProp;
   createdBy: TProp;
   updatedBy: TProp;
@@ -12,7 +12,7 @@ export interface CreatedByPluginOptions {
   ref?: string;
 }
 
-export default function createdByPlugin<TSchema extends CreatedByPluginProps<ObjectId>>(
+export default function createdByPlugin<TSchema extends CreatedByPluginProps>(
   model: Model<TSchema>,
   {bsonType = 'objectId', ref = 'User'}: CreatedByPluginOptions = {}
 ) {
