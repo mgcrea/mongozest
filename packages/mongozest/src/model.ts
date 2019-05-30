@@ -218,7 +218,14 @@ export default class Model<TSchema = any> {
     // Execute preHooks
     await this.hooks.execManyPre(['insert', 'insertOne', 'validate'], [document, options, operation]);
     // Actual mongodb operation
-    const result = await this.collection.insertOne(document, options);
+    let result;
+    try {
+      result = await this.collection.insertOne(document, options);
+    } catch (error) {
+      operation.set('error', error);
+      await this.hooks.execManyPost(['insertError', 'insertOneError'], [document, options, operation]);
+      throw operation.get('error');
+    }
     /* ['result', 'connection', 'message', 'ops', 'insertedCount', 'insertedId'] */
     /* {result: ['n', 'opTime', 'electionId', 'ok', 'operationTime', '$clusterTime']} */
     operation.set('result', result);

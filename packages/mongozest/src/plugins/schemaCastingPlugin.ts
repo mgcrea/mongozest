@@ -104,7 +104,9 @@ export default function autoCastingPlugin(
   // Handle insert
   model.pre('insert', (doc: T) => {
     castableProperties.forEach((bsonType, path) => {
-      mapPathValues(doc, path, (value: any) => castValueForType(value, bsonType));
+      mapPathValues(doc, path, (value: any) => {
+        return castValueForType(value, bsonType);
+      });
     });
   });
   // @TODO Handle document update

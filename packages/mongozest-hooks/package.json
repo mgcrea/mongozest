@@ -21,6 +21,6 @@
     "babel-core": "^7.0.0-bridge",
     "babel-jest": "^24.8.0",
     "jest": "^24.8.0",
-    "typescript": "^3.5.0-rc"
+    "typescript": "^3.5.1"
   }
 }

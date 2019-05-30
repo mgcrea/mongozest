@@ -30,6 +30,11 @@ export default function debugPlugin(model: Model, options) {
   model.pre('insertOne', (document: TSchema, options: CollectionInsertOneOptions) => {
     log(`db.${collectionName}.insertOne(${inspect(document)}, ${inspect(leanOptions(options))})`);
   });
+  model.post('insertOneError', (document: TSchema, options: CollectionInsertOneOptions, operation: OperationMap) => {
+    const error = operation.get('error');
+    const method = operation.get('method');
+    error.message = `${error.message} (db.${collectionName}.${method})`;
+  });
   model.pre('replaceOne', (filter: FilterQuery<TSchema>, document: TSchema, options: ReplaceOneOptions) => {
     log(`db.${collectionName}.replaceOne(${inspect(filter)}, ${inspect(document)}, ${inspect(leanOptions(options))})`);
   });

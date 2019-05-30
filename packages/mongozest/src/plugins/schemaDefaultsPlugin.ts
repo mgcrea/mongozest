@@ -15,7 +15,11 @@ const getDefault = (defaultOption: any, doc: any) => {
     if (usedInlineVariables) {
       return usedInlineVariables.reduce((soFar, value) => {
         const path = value.slice(2, -1);
-        return soFar.replace(value, get(doc, path));
+        const resolvedValue = get(doc, path);
+        if (isUndefined(resolvedValue)) {
+          throw new Error(`Default resolution at path="${path}" for default="${value}" failed`);
+        }
+        return soFar.replace(value, resolvedValue);
       }, defaultOption);
     }
   }
