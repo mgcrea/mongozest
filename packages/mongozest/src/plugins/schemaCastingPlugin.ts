@@ -1,7 +1,7 @@
 // @docs https://docs.mongodb.com/manual/reference/operator/query/type/#document-type-available-types
 
 import {get, set, isString, isPlainObject, toString, toNumber, toSafeInteger, omitBy} from 'lodash';
-import {Long, ObjectId, Decimal128 as Decimal, Int32 as Int} from 'mongodb';
+import {Long, ObjectId, Decimal128 as Decimal, Int32 as Int, Double} from 'mongodb';
 // @types
 import {Model, OperationMap, mapPathValues} from '..';
 
@@ -17,7 +17,7 @@ const castValueForType = (value: any, type: string) => {
     case 'decimal':
       return Decimal.fromString(toString(value));
     case 'double':
-      return toNumber(value);
+      return new Double(toNumber(value));
     case 'int':
       return new Int(toSafeInteger(value));
     case 'long':
@@ -106,6 +106,9 @@ export default function autoCastingPlugin(
     castableProperties.forEach((bsonType, path) => {
       mapPathValues(doc, path, (value: any) => {
         try {
+          if (bsonType === 'double') {
+            d(model.collectionName, {bsonType, value, path}, castValueForType(value, bsonType));
+          }
           return castValueForType(value, bsonType);
         } catch (err) {
           d(model.collectionName, {bsonType, value, path});
