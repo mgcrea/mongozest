@@ -1,7 +1,17 @@
 // @docs https://docs.mongodb.com/manual/reference/operator/query/type/#document-type-available-types
 
 import {get, set, isString, isPlainObject, toString, toNumber, toSafeInteger, omitBy} from 'lodash';
-import {Long, ObjectId, Decimal128 as Decimal, Int32 as Int, Double} from 'mongodb';
+import {
+  Long,
+  ObjectId,
+  Decimal128 as Decimal,
+  Int32 as Int,
+  Double,
+  FilterQuery,
+  FindOneOptions,
+  UpdateQuery,
+  FindOneAndReplaceOption
+} from 'mongodb';
 // @types
 import {Model, OperationMap, mapPathValues} from '..';
 
@@ -34,6 +44,17 @@ const castValueForType = (value: any, type: string) => {
   }
 };
 
+const parseValueForType = (value: any, type: string) => {
+  switch (type) {
+    // Convert decimal type to javascript float as the current NodeJS driver does not handle it
+    case 'decimal': {
+      return value instanceof Decimal ? parseFloat(value.toString()) : value;
+    }
+    default:
+      return value;
+  }
+};
+
 // @NOTE lib? https://github.com/kofrasa/mingo
 // @NOTE lib? https://github.com/crcn/sift.js
 const SINGLE_VALUE_QUERY_OPERATORS = ['$eq', '$gt', '$gte', '$lt', '$lte', '$ne'];
@@ -59,7 +80,7 @@ const castFilterValueForType = (value: any, type: string) => {
 };
 
 // Helper recursively parsing schema to find path where values should be casted
-export default function autoCastingPlugin(
+export default function autoCastingPlugin<TSchema>(
   model: Model,
   {ignoredKeys = ['_id'], castableTypes = CASTABLE_TYPES, castDecimalsAsFloats = false} = {}
 ) {
@@ -78,19 +99,27 @@ export default function autoCastingPlugin(
     });
   });
   model.post('find', (filter: FilterQuery<TSchema>, options: FindOneOptions, operation: OperationMap) => {
+    const doc = operation.get('result');
     castableProperties.forEach((bsonType, path) => {
-      // Convert decimal type to javascript float... for now.
-      if (castDecimalsAsFloats && bsonType === 'decimal') {
-        const doc = operation.get('result');
-        const value = get(doc, path);
-        if (value) {
-          set(doc, path, value.toString() * 1);
-        }
-      }
+      mapPathValues(doc, path, (value: any) => parseValueForType(value, bsonType));
     });
   });
+  model.post(
+    'findOneAndUpdate',
+    (
+      filter: FilterQuery<TSchema>,
+      update: UpdateQuery<TSchema>,
+      options: FindOneAndReplaceOption,
+      operation: OperationMap
+    ) => {
+      const doc = operation.get('result').value;
+      castableProperties.forEach((bsonType, path) => {
+        mapPathValues(doc, path, (value: any) => parseValueForType(value, bsonType));
+      });
+    }
+  );
   // @TODO TEST-ME!
-  model.pre('update', (filter: FilterQuery<TSchema>, update: UpdateQuery<TSchema> | TSchema) => {
+  model.pre('update', (filter: FilterQuery<TSchema>, update: UpdateQuery<TSchema>) => {
     castableProperties.forEach((bsonType, path) => {
       // d(`update ${path}: ${bsonType}`);
       mapPathValues(filter, path, (value: any) => castFilterValueForType(value, bsonType));
