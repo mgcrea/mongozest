@@ -3,10 +3,9 @@ import {Resource} from '..';
 import {FilterQuery, CollectionInsertOneOptions, UpdateQuery, FindOneAndReplaceOption} from 'mongodb';
 
 export default function debugPlugin(resource: Resource, options = {}) {
-  const {path} = resource;
   resource.pre('postCollection', (document: TSchema, options: CollectionInsertOneOptions, operation: OperationMap) => {
     const req = operation.get('request');
-    log(`${req.method} ${path} ${inspect(req.body)}`);
+    log(`${req.method} ${req.path} ${inspect(req.body)}`);
     // log(`${req.method} ${path} (${inspect(document)}, ${inspect(options)})`);
   });
   resource.pre(
@@ -18,7 +17,7 @@ export default function debugPlugin(resource: Resource, options = {}) {
       operation: OperationMap
     ) => {
       const req = operation.get('request');
-      log(`${chalk.cyan(req.method)} ${path} ${inspect(req.body)}`);
+      log(`${chalk.cyan(req.method)} ${req.path} ${inspect(req.body)}`);
       // log(`${method} ${path} (${inspect(filter)}, ${inspect(update)})`);
     }
   );
