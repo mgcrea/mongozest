@@ -221,13 +221,15 @@ export default class Model<TSchema = any> {
     let result;
     try {
       result = await this.collection.insertOne(document, options);
+      /* ['result', 'connection', 'message', 'ops', 'insertedCount', 'insertedId'] */
+      /* {result: ['n', 'opTime', 'electionId', 'ok', 'operationTime', '$clusterTime']} */
     } catch (error) {
       operation.set('error', error);
-      await this.hooks.execManyPost(['insertError', 'insertOneError'], [document, options, operation]);
-      throw operation.get('error');
+      await this.hooks.execManyPost(['error', 'insertError', 'insertOneError'], [document, options, operation]);
+      if (operation.has('error')) {
+        throw operation.get('error');
+      }
     }
-    /* ['result', 'connection', 'message', 'ops', 'insertedCount', 'insertedId'] */
-    /* {result: ['n', 'opTime', 'electionId', 'ok', 'operationTime', '$clusterTime']} */
     operation.set('result', result);
     // Execute postHooks
     await this.hooks.execManyPost(['insert', 'insertOne'], [document, options, operation]);
@@ -297,7 +299,16 @@ export default class Model<TSchema = any> {
       await this.hooks.execPre('validate', [(update as UpdateQuery<TSchema>).$set, options, operation]);
     }
     // Actual mongodb operation
-    const result = await this.collection.updateOne(filter, update, options);
+    let result;
+    try {
+      result = await this.collection.updateOne(filter, update, options);
+    } catch (error) {
+      operation.set('error', error);
+      await this.hooks.execManyPost(['error', 'updateError', 'updateOneError'], [filter, update, options, operation]);
+      if (operation.has('error')) {
+        throw operation.get('error');
+      }
+    }
     operation.set('result', result);
     // Execute postHooks
     await this.hooks.execManyPost(['update', 'updateOne'], [filter, update, options, operation]);
@@ -340,7 +351,19 @@ export default class Model<TSchema = any> {
       await this.hooks.execPre('validate', [update.$set, options, operation]);
     }
     // Actual mongodb operation
-    const result = await this.collection.findOneAndUpdate(filter, update, options);
+    let result;
+    try {
+      result = await this.collection.findOneAndUpdate(filter, update, options);
+    } catch (error) {
+      operation.set('error', error);
+      await this.hooks.execManyPost(
+        ['error', 'updateError', 'updateOneError', 'findOneAndUpdateError'],
+        [filter, update, options, operation]
+      );
+      if (operation.has('error')) {
+        throw operation.get('error');
+      }
+    }
     operation.set('result', result);
     // Execute postHooks
     await this.hooks.execManyPost(['update', 'updateOne', 'findOneAndUpdate'], [filter, update, options, operation]);

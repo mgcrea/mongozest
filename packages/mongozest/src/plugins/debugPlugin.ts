@@ -1,5 +1,6 @@
-import {log, inspect, chalkNumber} from './../utils/logger';
-import {Model, ObjectId} from '..';
+import {log, inspect, chalkNumber, chalk, chalkString} from './../utils/logger';
+import {Model, ObjectId, OperationMap} from '..';
+import {FilterQuery, UpdateQuery, ReplaceOneOptions, UpdateManyOptions, FindOneOptions} from 'mongodb';
 
 const {NODE_DEBUG = '0'} = process.env;
 const IS_DEBUG = NODE_DEBUG === '1';
@@ -13,8 +14,18 @@ const leanOptions = options => {
   return otherOptions;
 };
 
-export default function debugPlugin(model: Model, options) {
+export default function debugPlugin<TSchema>(model: Model, options) {
   const {collectionName} = model;
+
+  const handleMongoError = (...params) => {
+    const operation = params[params.length - 1];
+    const error = operation.get('error');
+    const method = operation.get('method');
+    log(chalk.red(`db.${collectionName}.${method} failed with error.message=${chalkString(error.message)}`));
+    error.message = `${error.message} (db.${collectionName}.${method})`;
+  };
+  model.post('error', handleMongoError);
+
   if (IS_DEBUG) {
     model.pre('setup', (options: CollectionCreateOptions, {doesExist}) => {
       if (!doesExist) {
@@ -29,11 +40,6 @@ export default function debugPlugin(model: Model, options) {
   });
   model.pre('insertOne', (document: TSchema, options: CollectionInsertOneOptions) => {
     log(`db.${collectionName}.insertOne(${inspect(document)}, ${inspect(leanOptions(options))})`);
-  });
-  model.post('insertOneError', (document: TSchema, options: CollectionInsertOneOptions, operation: OperationMap) => {
-    const error = operation.get('error');
-    const method = operation.get('method');
-    error.message = `${error.message} (db.${collectionName}.${method})`;
   });
   model.pre('replaceOne', (filter: FilterQuery<TSchema>, document: TSchema, options: ReplaceOneOptions) => {
     log(`db.${collectionName}.replaceOne(${inspect(filter)}, ${inspect(document)}, ${inspect(leanOptions(options))})`);
