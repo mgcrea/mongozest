@@ -105,15 +105,12 @@ export default function autoCastingPlugin(
   model.pre('insert', (doc: T) => {
     castableProperties.forEach((bsonType, path) => {
       mapPathValues(doc, path, (value: any) => {
-        try {
-          if (bsonType === 'double') {
-            d(model.collectionName, {bsonType, value, path}, castValueForType(value, bsonType));
-          }
-          return castValueForType(value, bsonType);
-        } catch (err) {
-          d(model.collectionName, {bsonType, value, path});
-          throw err;
-        }
+        // try {
+        return castValueForType(value, bsonType);
+        // } catch (err) {
+        //   d(model.collectionName, {bsonType, value, path});
+        //   throw err;
+        // }
       });
     });
   });
