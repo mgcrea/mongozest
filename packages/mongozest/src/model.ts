@@ -346,6 +346,7 @@ export default class Model<TSchema = any> {
     // Prepare operation params
     const operation: OperationMap = new Map([['method', 'findOneAndUpdate']]);
     // Execute preHooks
+    await this.hooks.execManyPre(['find', 'findOne'], [filter, options, operation]);
     await this.hooks.execManyPre(['update', 'updateOne', 'findOneAndUpdate'], [filter, update, options, operation]);
     if (update.$set) {
       await this.hooks.execPre('validate', [update.$set, options, operation]);
@@ -366,6 +367,7 @@ export default class Model<TSchema = any> {
     }
     operation.set('result', result);
     // Execute postHooks
+    await this.hooks.execManyPost(['find', 'findOne'], [filter, options, operation]);
     await this.hooks.execManyPost(['update', 'updateOne', 'findOneAndUpdate'], [filter, update, options, operation]);
     return operation.get('result') as FindAndModifyWriteOpResultObject<TSchema>;
   }

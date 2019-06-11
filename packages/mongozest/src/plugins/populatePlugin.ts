@@ -54,7 +54,11 @@ export default function autoCastingPlugin<TSchema>(model: Model<TSchema>) {
       return;
     }
     const population = options.population;
-    const result = operation.get('result');
+    const method = operation.get('method');
+    const result = method === 'findOneAndUpdate' ? operation.get('result').value : operation.get('result');
+    if (!result) {
+      return;
+    }
     await Object.keys(population).reduce(async (soFar, key) => {
       await soFar;
       if (!propsWithRefs.has(key)) {

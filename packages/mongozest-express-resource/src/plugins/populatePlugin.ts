@@ -34,6 +34,7 @@ export default function populatePlugin(resource: Resource, {strictJSON = false, 
   // @docs http://mongodb.github.io/node-mongodb-native/3.1/api/Collection.html#find
   resource.pre('getCollection', preparePopulation);
   resource.pre('getDocument', preparePopulation);
+  resource.pre('patchDocument', (filter, update, options, operation) => preparePopulation(filter, options, operation));
   // resource.post('getCollection', async (filter: FilterQuery<TSchema>, options: FindOneOptions, operation) => {
   //   const req: Request = operation.get('request');
   //   const model = resource.getModelFromRequest(req);
