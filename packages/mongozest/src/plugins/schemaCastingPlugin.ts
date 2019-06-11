@@ -94,12 +94,20 @@ export default function autoCastingPlugin<TSchema>(
   // Handle find
   // @TODO TEST-ME!
   model.pre('find', (filter: FilterQuery<TSchema>) => {
+    // Check if we have results
+    if (!filter) {
+      return;
+    }
     castableProperties.forEach((bsonType, path) => {
       mapPathValues(filter, path, (value: any) => castFilterValueForType(value, bsonType));
     });
   });
   model.post('find', (filter: FilterQuery<TSchema>, options: FindOneOptions, operation: OperationMap) => {
     const doc = operation.get('result');
+    // Check if we have results
+    if (!doc) {
+      return;
+    }
     castableProperties.forEach((bsonType, path) => {
       mapPathValues(doc, path, (value: any) => parseValueForType(value, bsonType));
     });
@@ -113,6 +121,10 @@ export default function autoCastingPlugin<TSchema>(
       operation: OperationMap
     ) => {
       const doc = operation.get('result').value;
+      // Check if we have results
+      if (!doc) {
+        return;
+      }
       castableProperties.forEach((bsonType, path) => {
         mapPathValues(doc, path, (value: any) => parseValueForType(value, bsonType));
       });
