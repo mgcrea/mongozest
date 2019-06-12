@@ -105,7 +105,7 @@ export default class Resource<TSchema> {
 
   // urlParams -> queryFilter
 
-  public addIdentifierHandler(check: RequestParamChecker, resolve: RequestParamResolver<T>) {
+  public addIdentifierHandler(check: RequestParamChecker, resolve: RequestParamResolver<TSchema>) {
     const {ids} = this;
     ids.set(check, resolve);
   }
