@@ -367,7 +367,7 @@ export default class Model<TSchema = any> {
     }
     operation.set('result', result);
     // Execute postHooks
-    await this.hooks.execManyPost(['find', 'findOne'], [filter, options, operation]);
+    // await this.hooks.execManyPost(['find', 'findOne'], [filter, options, operation]); // @NOTE should fix: operation.get('result').value
     await this.hooks.execManyPost(['update', 'updateOne', 'findOneAndUpdate'], [filter, update, options, operation]);
     return operation.get('result') as FindAndModifyWriteOpResultObject<TSchema>;
   }

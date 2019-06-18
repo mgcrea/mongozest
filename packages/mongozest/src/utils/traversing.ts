@@ -1,49 +1,84 @@
 import {get, has, set} from 'lodash';
 
+// Check a leaf path (eg. `{foo.bar: {baz: 1}}`)
+export const hasLeafPath = (object: {[s: string]: any}, path: string): boolean => {
+  const dottedParts = path.split('.');
+  // Only relevent for deep paths (n > 2)
+  if (dottedParts.length <= 2) {
+    return false;
+  }
+  const leafPath = [dottedParts.slice(0, -1).join('.'), dottedParts.slice(-1)[0]];
+  return has(object, leafPath);
+};
+// Check a leaf path (eg. `{foo.bar: {baz: 1}}`)
+export const resolveLeafPath = (object: {[s: string]: any}, path: string): Array<string> | false => {
+  const dottedParts = path.split('.');
+  // Only relevent for deep paths (n > 2)
+  if (dottedParts.length <= 2) {
+    return false;
+  }
+  const leafPath = [dottedParts.slice(0, -1).join('.'), dottedParts.slice(-1)[0]];
+  return has(object, leafPath) ? leafPath : false;
+};
+export const getPath = (object: {[s: string]: any}, path: string): string | Array<string> | false => {
+  const hasDirectPath = has(object, path);
+  if (hasDirectPath) {
+    return path;
+  }
+  const leafPath = resolveLeafPath(object, path);
+  if (leafPath) {
+    return leafPath;
+  }
+  return false;
+};
+
 // @NOTE wtf about $ positional operator? and items.1 operator?
-export const mapPathValues = (object: any, path: string, callback: any) => {
-  const parts = path.split('[]');
-  const currentPath = parts[0];
-  const hasCurrentPath = has(object, currentPath);
-  const remainingPath = parts
+export const mapPathValues = (object: {[s: string]: any}, path: string, callback: any) => {
+  const arrayParts = path.split('[]');
+  const isArrayPath = arrayParts.length === 1;
+  // Get path before array as lodash won't handle it
+  const pathBeforeArray = arrayParts[0];
+  const foundPath = getPath(object, pathBeforeArray);
+  // @NOTE recursive?
+  const remainingArrayPath = arrayParts
     .slice(1)
     .join('[]')
     .substr(1);
-  if (hasCurrentPath) {
-    const valueAtPath = get(object, currentPath);
-    if (parts.length === 1) {
-      set(object, currentPath, callback(valueAtPath));
+  if (foundPath) {
+    const valueAtPath = get(object, foundPath);
+    if (isArrayPath) {
+      set(object, foundPath, callback(valueAtPath));
       return;
     }
     if (Array.isArray(valueAtPath)) {
-      if (!remainingPath) {
-        set(object, currentPath, valueAtPath.map(itemValue => callback(itemValue)));
+      if (!remainingArrayPath) {
+        set(object, foundPath, valueAtPath.map(itemValue => callback(itemValue)));
         return;
       }
       valueAtPath.forEach(itemValue => {
-        mapPathValues(itemValue, remainingPath, callback);
+        mapPathValues(itemValue, remainingArrayPath, callback);
       });
     } else {
-      if (!remainingPath) {
-        set(object, currentPath, callback(valueAtPath));
+      if (!remainingArrayPath) {
+        set(object, foundPath, callback(valueAtPath));
         return;
       }
       // Support non-array operators (eg. $push)
-      mapPathValues(valueAtPath, remainingPath, callback);
+      mapPathValues(valueAtPath, remainingArrayPath, callback);
     }
   }
   // @NOTE try to handle positional operators (eg. items.1.bar)
   Object.keys(object).forEach(key => {
     const positionalMatches = key.match(/(.+)\.([\d]+)(.*)/);
-    const startsWithCurrentPath = positionalMatches && key.startsWith(`${currentPath}.`);
+    const startsWithCurrentPath = positionalMatches && key.startsWith(`${pathBeforeArray}.`);
     if (!startsWithCurrentPath) {
       return;
     }
     const valueAtPath = object[key];
-    if (!remainingPath) {
+    if (!remainingArrayPath) {
       object[key] = callback(valueAtPath);
     } else {
-      mapPathValues(valueAtPath, remainingPath, callback);
+      mapPathValues(valueAtPath, remainingArrayPath, callback);
     }
   });
 };

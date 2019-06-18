@@ -106,7 +106,7 @@ describe('schemaCastingPlugin', () => {
         expect(insertedDoc.decimalValue.toString()).toEqual('3.2');
         // Check findOne result
         const foundDoc = await TestModel.findOne({_id: insertedId});
-        expect(foundDoc.decimalValue instanceof Decimal128).toBeTruthy();
+        expect(typeof foundDoc.decimalValue === 'number').toBeTruthy();
         expect(foundDoc.decimalValue.toString()).toEqual('3.2');
       });
       it('from a `float`', async () => {
@@ -117,7 +117,7 @@ describe('schemaCastingPlugin', () => {
         expect(insertedDoc.decimalValue.toString()).toEqual('3.2');
         // Check findOne result
         const foundDoc = await TestModel.findOne({_id: insertedId});
-        expect(foundDoc.decimalValue instanceof Decimal128).toBeTruthy();
+        expect(typeof foundDoc.decimalValue === 'number').toBeTruthy();
         expect(foundDoc.decimalValue.toString()).toEqual('3.2');
       });
       // it('from a `number`', async () => {
@@ -145,7 +145,16 @@ describe('schemaCastingPlugin', () => {
       static schema = {
         nestedObject: {
           bsonType: 'object',
-          properties: {latitude: {bsonType: 'decimal'}, longitude: {bsonType: 'decimal'}}
+          properties: {decimal: {bsonType: 'decimal'}, long: {bsonType: 'long'}, date: {bsonType: 'date'}}
+        },
+        deepNestedObject: {
+          bsonType: 'object',
+          properties: {
+            nestedObject: {
+              bsonType: 'object',
+              properties: {decimal: {bsonType: 'decimal'}, long: {bsonType: 'long'}, date: {bsonType: 'date'}}
+            }
+          }
         }
       };
       static plugins = [jsonSchemaPlugin, schemaCastingPlugin];
@@ -156,15 +165,37 @@ describe('schemaCastingPlugin', () => {
       expect(TestModel instanceof Model).toBeTruthy();
     });
     it('should properly cast a nestedObject property', async () => {
-      const {ops, insertedId} = await TestModel.insertOne({nestedObject: {latitude: '43.21', longitude: 45.67}});
+      const {ops, insertedId} = await TestModel.insertOne({
+        nestedObject: {decimal: '43.21', long: '123456', date: new Date().toISOString()}
+      });
       // Check op result
       const insertedDoc = ops[0];
-      expect(insertedDoc.nestedObject.latitude instanceof Decimal128).toBeTruthy();
-      expect(insertedDoc.nestedObject.longitude instanceof Decimal128).toBeTruthy();
+      expect(insertedDoc.nestedObject.decimal instanceof Decimal128).toBeTruthy();
+      expect(insertedDoc.nestedObject.long instanceof Long).toBeTruthy();
+      expect(insertedDoc.nestedObject.date instanceof Date).toBeTruthy();
       // Check findOne result
       const foundDoc = await TestModel.findOne({_id: insertedId});
-      expect(foundDoc.nestedObject.latitude instanceof Decimal128).toBeTruthy();
-      expect(foundDoc.nestedObject.longitude instanceof Decimal128).toBeTruthy();
+      expect(typeof foundDoc.nestedObject.decimal === 'number').toBeTruthy();
+      expect(typeof foundDoc.nestedObject.long === 'number').toBeTruthy();
+      expect(foundDoc.nestedObject.date instanceof Date).toBeTruthy();
+      // Check deepNested update
+      const {value: updatedDoc} = await TestModel.findOneAndUpdate(
+        {_id: insertedId},
+        {
+          $set: {
+            'deepNestedObject.nestedObject': {decimal: '43.21', long: '123456', date: new Date().toISOString()}
+          }
+        },
+        {returnOriginal: false}
+      );
+      expect(typeof updatedDoc.deepNestedObject.nestedObject.decimal === 'number').toBeTruthy();
+      expect(typeof updatedDoc.deepNestedObject.nestedObject.long === 'number').toBeTruthy();
+      expect(updatedDoc.deepNestedObject.nestedObject.date instanceof Date).toBeTruthy();
+      // Check findOne result
+      const foundDocAfterUpdate = await TestModel.findOne({_id: insertedId});
+      expect(typeof foundDocAfterUpdate.deepNestedObject.nestedObject.decimal === 'number').toBeTruthy();
+      expect(typeof foundDocAfterUpdate.deepNestedObject.nestedObject.long === 'number').toBeTruthy();
+      expect(foundDocAfterUpdate.deepNestedObject.nestedObject.date instanceof Date).toBeTruthy();
     });
   });
   describe('schema with nestedArray properties', () => {
@@ -218,8 +249,8 @@ describe('schemaCastingPlugin', () => {
         expect(insertedDoc.nestedArrayBis[1] instanceof Decimal128).toBeTruthy();
         // Check findOne result
         const foundDoc = await TestModel.findOne({_id: insertedId});
-        expect(foundDoc.nestedArrayBis[0] instanceof Decimal128).toBeTruthy();
-        expect(foundDoc.nestedArrayBis[1] instanceof Decimal128).toBeTruthy();
+        expect(typeof foundDoc.nestedArrayBis[0] === 'number').toBeTruthy();
+        expect(typeof foundDoc.nestedArrayBis[1] === 'number').toBeTruthy();
       });
       it('should properly cast a nestedArrayDeep property', async () => {
         const date = new Date(Date.UTC(2000, 0, 1));
