@@ -119,7 +119,7 @@ export default class Resource<TSchema> {
   }
 
   build() {
-    console.warn('resource.build() is deprecated, please use resource.buildRouter() instead.');
+    // console.warn('resource.build() is deprecated, please use resource.buildRouter() instead.');
     return this.buildRouter();
   }
 
