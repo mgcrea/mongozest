@@ -1,6 +1,6 @@
 // @docs https://docs.mongodb.com/manual/reference/operator/query/type/#document-type-available-types
 
-import {get, set, isPlainObject, map, keyBy, isUndefined, isString} from 'lodash';
+import {get, set, isPlainObject, map, keyBy, isUndefined, isEmpty, isString} from 'lodash';
 import {uniqWithObjectIds} from './../utils/objectId';
 // @types
 import {Model, OperationMap, mapPathValues} from '..';
@@ -20,15 +20,27 @@ export default function autoCastingPlugin<TSchema>(model: Model<TSchema>) {
     }
     propsWithRefs.set(path, prop.ref);
   });
-  // Handle find
-  // model.pre('find', (filter: FilterQuery<TSchema>, options: FindOneOptions, operation: OperationMap) => {
-  //   d({options});
-  // });
-  model.post('findMany', async (filter: FilterQuery<TSchema>, options: FindOneOptions, operation: OperationMap) => {
-    if (!options.population) {
+  // Automatically add missing keys
+  model.pre('find', (filter: FilterQuery<TSchema>, options: FindOneOptions, operation: OperationMap) => {
+    const {projection, population} = options;
+    if (!population) {
       return;
     }
-    const population = options.population;
+    if (!projection || isEmpty(projection)) {
+      return;
+    }
+    Object.keys(population).forEach(key => {
+      if (get(projection, key) !== 1) {
+        set(projection, key, 1);
+      }
+    });
+  });
+
+  model.post('findMany', async (filter: FilterQuery<TSchema>, options: FindOneOptions, operation: OperationMap) => {
+    const {population} = options;
+    if (!population) {
+      return;
+    }
     const result = operation.get('result');
     await Object.keys(population).reduce(async (soFar, key) => {
       await soFar;
@@ -38,8 +50,8 @@ export default function autoCastingPlugin<TSchema>(model: Model<TSchema>) {
       // @TODO handle arrays
       const ref = propsWithRefs.get(key);
       const uniqueIds = uniqWithObjectIds(map(result, key).filter(Boolean));
-      const projection = isPlainObject(population[key]) ? population[key] : {};
-      const resolvedChildren = await model.otherModel(ref).find({_id: {$in: uniqueIds}}, {projection});
+      const childProjection = isPlainObject(population[key]) ? {...population[key], _id: 1} : {};
+      const resolvedChildren = await model.otherModel(ref).find({_id: {$in: uniqueIds}}, {projection: childProjection});
       const resolvedChildrenMap = keyBy(resolvedChildren, '_id');
       // Actually populate
       result.map(doc => {
@@ -50,10 +62,10 @@ export default function autoCastingPlugin<TSchema>(model: Model<TSchema>) {
     }, Promise.resolve());
   });
   model.post('findOne', async (filter: FilterQuery<TSchema>, options: FindOneOptions, operation: OperationMap) => {
-    if (!options.population) {
+    const {population} = options;
+    if (!population) {
       return;
     }
-    const population = options.population;
     const method = operation.get('method');
     const result = method === 'findOneAndUpdate' ? operation.get('result').value : operation.get('result');
     if (!result) {
@@ -68,10 +80,13 @@ export default function autoCastingPlugin<TSchema>(model: Model<TSchema>) {
       const ref = propsWithRefs.get(key);
       const refValue = get(result, key);
       const isArrayValue = Array.isArray(refValue);
-      const projection = isPlainObject(population[key]) ? population[key] : {};
+      const childProjection = isPlainObject(population[key]) ? {...population[key], _id: 1} : {};
       const resolvedChildren = await model
         .otherModel(ref)
-        [isArrayValue ? 'find' : 'findOne']({_id: isArrayValue ? {$in: refValue} : refValue}, {projection});
+        [isArrayValue ? 'find' : 'findOne'](
+          {_id: isArrayValue ? {$in: refValue} : refValue},
+          {projection: childProjection}
+        );
       // Actually populate
       set(result, key, resolvedChildren);
     }, Promise.resolve());
