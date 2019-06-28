@@ -95,9 +95,13 @@ export default function autoCastingPlugin<TSchema>(model: Model<TSchema>) {
         );
       // Tweak references to exclude _ids
       if (childProjectionExcludesIds) {
-        resolvedChildren.forEach(resolvedChild => {
-          delete resolvedChild._id;
-        });
+        if (isArrayValue && Array.isArray(resolvedChildren)) {
+          resolvedChildren.forEach(resolvedChild => {
+            delete resolvedChild._id;
+          });
+        } else if (resolvedChildren) {
+          delete resolvedChildren._id;
+        }
       }
       // Actually populate
       set(result, key, resolvedChildren);
