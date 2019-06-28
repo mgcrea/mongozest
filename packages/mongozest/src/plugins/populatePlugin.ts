@@ -47,12 +47,18 @@ export default function autoCastingPlugin<TSchema>(model: Model<TSchema>) {
       if (!propsWithRefs.has(key)) {
         return;
       }
-      // @TODO handle arrays
       const ref = propsWithRefs.get(key);
       const uniqueIds = uniqWithObjectIds(map(result, key).filter(Boolean));
+      const childProjectionExcludesIds = isPlainObject(population[key]) && population[key]._id === 0;
       const childProjection = isPlainObject(population[key]) ? {...population[key], _id: 1} : {};
       const resolvedChildren = await model.otherModel(ref).find({_id: {$in: uniqueIds}}, {projection: childProjection});
       const resolvedChildrenMap = keyBy(resolvedChildren, '_id');
+      // Tweak references to exclude _ids
+      if (childProjectionExcludesIds) {
+        resolvedChildren.forEach(resolvedChild => {
+          delete resolvedChild._id;
+        });
+      }
       // Actually populate
       result.map(doc => {
         if (doc[key]) {
@@ -76,10 +82,10 @@ export default function autoCastingPlugin<TSchema>(model: Model<TSchema>) {
       if (!propsWithRefs.has(key)) {
         return;
       }
-      // @TODO handle arrays
       const ref = propsWithRefs.get(key);
       const refValue = get(result, key);
       const isArrayValue = Array.isArray(refValue);
+      const childProjectionExcludesIds = isPlainObject(population[key]) && population[key]._id === 0;
       const childProjection = isPlainObject(population[key]) ? {...population[key], _id: 1} : {};
       const resolvedChildren = await model
         .otherModel(ref)
@@ -87,6 +93,12 @@ export default function autoCastingPlugin<TSchema>(model: Model<TSchema>) {
           {_id: isArrayValue ? {$in: refValue} : refValue},
           {projection: childProjection}
         );
+      // Tweak references to exclude _ids
+      if (childProjectionExcludesIds) {
+        resolvedChildren.forEach(resolvedChild => {
+          delete resolvedChild._id;
+        });
+      }
       // Actually populate
       set(result, key, resolvedChildren);
     }, Promise.resolve());
