@@ -1,5 +1,5 @@
 import shortid from 'shortid';
-import {memoize} from 'lodash';
+import {memoize, isEmpty} from 'lodash';
 // @types
 import {Model} from '..';
 import {FindOneOptions, UpdateQuery, UpdateWriteOpResult, ReplaceOneOptions, ObjectId} from 'mongodb';
@@ -16,11 +16,12 @@ interface DocumentWithPluginProps extends DocumentSchema, ShortIdPluginProps {}
 
 export interface ShortIdPluginOptions {
   sidKey?: string;
+  insertKeyOnTop?: boolean;
 }
 
 export default function shortIdPlugin<TSchema extends DocumentWithPluginProps>(
   model: Model<TSchema>,
-  {sidKey = '_sid'}: ShortIdPluginOptions = {}
+  {sidKey = '_sid', insertKeyOnTop = true}: ShortIdPluginOptions = {}
 ) {
   model.addSchemaProperties({
     [sidKey]: {bsonType: 'string', minLength: 7, maxLength: 14, index: {unique: true}}
@@ -41,7 +42,31 @@ export default function shortIdPlugin<TSchema extends DocumentWithPluginProps>(
       return doc ? doc._id : null;
     })
   });
-  model.pre('insert', (insert: TSchema) => {
-    insert[sidKey] = shortid.generate();
-  });
+
+  // Easy case
+  if (!insertKeyOnTop) {
+    model.pre('insert', (insert: TSchema) => {
+      insert[sidKey] = shortid.generate();
+    });
+  } else {
+    // Complex logic as we want the _sid to end up on top
+    model.pre('insertOne', (document: TSchema, _options: CollectionInsertOneOptions, operation: OperationMap) => {
+      if (document) {
+        operation.set('document', {[sidKey]: shortid.generate(), ...document});
+      }
+    });
+    model.pre('replaceOne', (document: TSchema, _options: ReplaceOneOptions, operation: OperationMap) => {
+      if (document) {
+        operation.set('document', {[sidKey]: shortid.generate(), ...document});
+      }
+    });
+    model.pre('replaceMany', (documents: TSchema[], _options: CollectionInsertManyOptions, operation: OperationMap) => {
+      if (documents) {
+        operation.set(
+          'documents',
+          documents.map(document => (document ? {[sidKey]: shortid.generate(), ...document} : document))
+        );
+      }
+    });
+  }
 }

@@ -220,7 +220,10 @@ export default class Model<TSchema = any> {
     // Actual mongodb operation
     let result;
     try {
-      result = await this.collection.insertOne(document, options);
+      result = await this.collection.insertOne(
+        operation.has('document') ? operation.get('document') : document,
+        options
+      );
       /* ['result', 'connection', 'message', 'ops', 'insertedCount', 'insertedId'] */
       /* {result: ['n', 'opTime', 'electionId', 'ok', 'operationTime', '$clusterTime']} */
     } catch (error) {
@@ -250,7 +253,11 @@ export default class Model<TSchema = any> {
     await this.hooks.execPre('replaceOne', [filter, document, options, operation]);
     await this.hooks.execPre('validate', [document, options, operation]);
     // Actual mongodb operation
-    const result = await this.collection.replaceOne(filter, document, options);
+    const result = await this.collection.replaceOne(
+      filter,
+      operation.has('document') ? operation.get('document') : document,
+      options
+    );
     /* ['result', 'connection', 'message', 'modifiedCount', 'upsertedId', 'upsertedCount', 'matchedCount', 'ops'] */
     operation.set('result', result);
     // Execute postHooks
@@ -272,7 +279,10 @@ export default class Model<TSchema = any> {
     await this.hooks.execPre('insertMany', [documents, options, operation]);
     await this.hooks.execEachPre('validate', eachPreArgs);
     // Actual mongodb operation
-    const result = await this.collection.insertMany(documents, options);
+    const result = await this.collection.insertMany(
+      operation.has('documents') ? operation.get('documents') : documents,
+      options
+    );
     operation.set('result', result);
     // Execute postHooks
     const {ops, insertedIds} = result;
