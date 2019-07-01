@@ -8,6 +8,9 @@ import {FilterQuery, FindOneOptions} from 'mongodb';
 const isInclusiveProjection = (projection: {[s: string]: any}) =>
   Object.keys(projection).some(key => projection[key] === 1);
 
+// const isExclusiveProjection = (projection: {[s: string]: any}) =>
+//   Object.keys(projection).some(key => projection[key] === 0);
+
 // Handle schema defaults
 export default function schemaProjectionPlugin(model: Model, {ignoredKeys = ['_id']} = {}) {
   const propsWithProjection: Map<string, number> = new Map();
