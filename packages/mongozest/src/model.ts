@@ -406,13 +406,13 @@ export default class Model<TSchema = any> {
     const result = await this.collection.find(query, options).toArray();
     operation.set('result', result);
     // Execute postHooks
-    const pre = process.hrtime();
+    // const pre = process.hrtime();
     const eachPostArgs = result.reduce((soFar: Array<any>, document: TSchema) => {
       return soFar.concat([[query, options, new Map([...operation, ['result', document]])]]);
     }, []);
-    const diff = process.hrtime(pre);
-    const elapsed = (diff[0] * NS_PER_SEC + diff[1]) / 1e6;
-    d({elapsed: `${elapsed.toPrecision(3)}ms`});
+    // const diff = process.hrtime(pre);
+    // const elapsed = (diff[0] * NS_PER_SEC + diff[1]) / 1e6;
+    // d({elapsed: `${elapsed.toPrecision(3)}ms`});
     await this.hooks.execEachPost('find', eachPostArgs);
     await this.hooks.execPost('findMany', [query, options, operation]);
     return operation.get('result') as Array<TSchema>;
