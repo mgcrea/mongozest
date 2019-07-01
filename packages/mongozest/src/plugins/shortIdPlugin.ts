@@ -83,6 +83,8 @@ export default function shortIdPlugin<TSchema extends DocumentWithPluginProps>(
     if (options.projection._id !== 0 || !isInclusiveProjection(options.projection)) {
       return;
     }
+    // Drop invalid projection
+    delete options.projection._id;
     operation.set('shortIdPlugin.clearId', true);
   });
   model.post('find', (filter: FilterQuery<TSchema>, options: FindOneOptions, operation: OperationMap) => {
