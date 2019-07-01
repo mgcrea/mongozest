@@ -74,24 +74,25 @@ export default function shortIdPlugin<TSchema extends DocumentWithPluginProps>(
   }
 
   // Support {_id: 0} to clear existing _id from projections
-  model.pre('find', (query: FilterQuery<TSchema>, options: FindOneOptions, operation: OperationMap) => {
-    // Nothing to do if we don't have a projection
-    if (!options.projection) {
-      return;
-    }
-    // Check that we have both {_id: 0} and an inclusive projection
-    if (options.projection._id !== 0 || !isInclusiveProjection(options.projection)) {
-      return;
-    }
-    // Drop invalid projection
-    delete options.projection._id;
-    operation.set('shortIdPlugin.clearId', true);
-  });
-  model.post('find', (filter: FilterQuery<TSchema>, options: FindOneOptions, operation: OperationMap) => {
-    const clearId = operation.get('shortIdPlugin.clearId');
-    if (clearId) {
-      const result = operation.get('result');
-      delete result._id;
-    }
-  });
+  // model.pre('find', (query: FilterQuery<TSchema>, options: FindOneOptions, operation: OperationMap) => {
+  //   // Nothing to do if we don't have a projection
+  //   if (!options.projection) {
+  //     return;
+  //   }
+  //   // Check that we have both {_id: 0} and an inclusive projection
+  //   if (options.projection._id !== 0 || !isInclusiveProjection(options.projection)) {
+  //     return;
+  //   }
+  //   // Drop invalid projection
+  //   d('in!!');
+  //   delete options.projection._id;
+  //   operation.set('shortIdPlugin.clearId', true);
+  // });
+  // model.post('find', (filter: FilterQuery<TSchema>, options: FindOneOptions, operation: OperationMap) => {
+  //   const clearId = operation.get('shortIdPlugin.clearId');
+  //   if (clearId) {
+  //     const result = operation.get('result');
+  //     delete result._id;
+  //   }
+  // });
 }
