@@ -24,6 +24,7 @@
     "@babel/cli": "^7.4.4",
     "@babel/core": "^7.4.4",
     "@types/json5": "^0.0.30",
+    "@types/mongodb": "^3.1.28",
     "@types/pluralize": "^0.0.29",
     "babel-core": "^7.0.0-bridge",
     "babel-jest": "^24.8.0",
