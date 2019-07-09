@@ -17,11 +17,11 @@ Object {
 exports[`shortIdPlugin document GET /users/:_sid should not disrupt existing behavior 1`] = `
 Array [
   "_id",
+  "_sid",
   "firstName",
   "lastName",
   "email",
   "device",
-  "_sid",
 ]
 `;
 
@@ -37,11 +37,11 @@ Object {
 exports[`shortIdPlugin document GET /users/:_sid should return 200 1`] = `
 Array [
   "_id",
+  "_sid",
   "firstName",
   "lastName",
   "email",
   "device",
-  "_sid",
 ]
 `;
 
@@ -57,11 +57,11 @@ Object {
 exports[`shortIdPlugin document PATCH /users/:_sid should return 200 1`] = `
 Array [
   "_id",
+  "_sid",
   "firstName",
   "lastName",
   "email",
   "device",
-  "_sid",
 ]
 `;
 

@@ -1,8 +1,16 @@
 import shortid from 'shortid';
 import {memoize, isEmpty} from 'lodash';
 // @types
-import {Model} from '..';
-import {FindOneOptions, UpdateQuery, UpdateWriteOpResult, ReplaceOneOptions, ObjectId} from 'mongodb';
+import {Model, OperationMap} from '..';
+import {
+  FindOneOptions,
+  UpdateQuery,
+  UpdateWriteOpResult,
+  ReplaceOneOptions,
+  ObjectId,
+  CollectionInsertManyOptions,
+  CollectionInsertOneOptions
+} from 'mongodb';
 
 interface DocumentSchema {
   _id?: ObjectId;
@@ -46,28 +54,35 @@ export default function shortIdPlugin<TSchema extends DocumentWithPluginProps>(
     })
   });
 
-  // Easy case
-  if (!insertKeyOnTop) {
-    model.pre('insert', (insert: TSchema) => {
-      insert[sidKey] = shortid.generate();
-    });
-  } else {
-    // Complex logic as we want the _sid to end up on top
+  // Setup the generated key asap in the pipeline (eg. before defaults!)
+  model.pre('insert', (insert: TSchema) => {
+    insert[sidKey] = shortid.generate();
+  });
+  // Complex logic as we want the _sid to end up on top
+  if (insertKeyOnTop) {
     model.pre('insertOne', (document: TSchema, _options: CollectionInsertOneOptions, operation: OperationMap) => {
       if (document) {
-        operation.set('document', {[sidKey]: shortid.generate(), ...document});
+        operation.set('document', {[sidKey]: undefined, ...document});
       }
     });
+    model.pre(
+      'insertMany',
+      (documents: TSchema[], _options: CollectionInsertManyOptions = {}, operation: OperationMap) => {
+        if (documents && Array.isArray(documents)) {
+          operation.set('documents', documents.map((document: TSchema) => ({[sidKey]: undefined, ...document})));
+        }
+      }
+    );
     model.pre('replaceOne', (document: TSchema, _options: ReplaceOneOptions, operation: OperationMap) => {
       if (document) {
-        operation.set('document', {[sidKey]: shortid.generate(), ...document});
+        operation.set('document', {[sidKey]: undefined, ...document});
       }
     });
     model.pre('replaceMany', (documents: TSchema[], _options: CollectionInsertManyOptions, operation: OperationMap) => {
       if (documents) {
         operation.set(
           'documents',
-          documents.map(document => (document ? {[sidKey]: shortid.generate(), ...document} : document))
+          documents.map(document => (document ? {[sidKey]: undefined, ...document} : document))
         );
       }
     });
