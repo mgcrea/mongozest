@@ -11,6 +11,8 @@ interface FindOneOptions {
   population?: {[s: string]: number | boolean};
 }
 
+const isExcludingProjection = (projection: {[s: string]: any}) => Object.keys(projection).some(key => !projection[key]);
+
 // Helper recursively parsing schema to find path where values should be casted
 export default function autoCastingPlugin<TSchema>(model: Model<TSchema>) {
   const propsWithRefs = new Map();
@@ -26,7 +28,7 @@ export default function autoCastingPlugin<TSchema>(model: Model<TSchema>) {
     if (!population) {
       return;
     }
-    if (!projection || isEmpty(projection)) {
+    if (!projection || isEmpty(projection) || isExcludingProjection(projection)) {
       return;
     }
     Object.keys(population).forEach(key => {
