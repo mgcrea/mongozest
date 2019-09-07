@@ -11,7 +11,9 @@ interface FindOneOptions {
   population?: {[s: string]: number | boolean};
 }
 
-const isExcludingProjection = (projection: {[s: string]: any}) => Object.keys(projection).some(key => !projection[key]);
+// @NOTE hybrid projection is allowed with _id field
+const isExcludingProjection = (projection: {[s: string]: any}) =>
+  Object.keys(projection).some(key => key !== '_id' && !projection[key]);
 
 // Helper recursively parsing schema to find path where values should be casted
 export default function autoCastingPlugin<TSchema>(model: Model<TSchema>) {
