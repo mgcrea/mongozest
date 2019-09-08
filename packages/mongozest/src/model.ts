@@ -35,7 +35,10 @@ import {
   UpdateManyOptions,
   UpdateWriteOpResult,
   ReplaceWriteOpResult,
-  ReplaceOneOptions
+  ReplaceOneOptions,
+  ReadPreference,
+  ClientSession,
+  ObjectId
 } from 'mongodb';
 
 export type OperationMap = Map<string, any>;
@@ -210,6 +213,25 @@ export default class Model<TSchema = any> {
     // Execute postHooks
     await this.hooks.execPost('aggregate', [pipeline, options, operation]);
     return operation.get('result') as Array<TSchema | null>;
+  }
+
+  // @docs http://mongodb.github.io/node-mongodb-native/3.1/api/Collection.html#aggregate
+  async distinct(
+    key: string,
+    query: FilterQuery<TSchema>,
+    options: {readPreference?: ReadPreference | string; maxTimeMS?: number; session?: ClientSession} = {}
+  ): Promise<Array<ObjectId>> {
+    // Prepare operation params
+    const operation: OperationMap = new Map([['method', 'distinct']]);
+    // Execute preHooks
+    await this.hooks.execPre('find', [query, options, operation]);
+    await this.hooks.execPre('distinct', [key, query, options, operation]);
+    // Actual mongodb operation
+    const result: Array<ObjectId> = await this.collection.distinct(key, query, options);
+    operation.set('result', result);
+    // Execute postHooks
+    await this.hooks.execPost('distinct', [key, query, options, operation]);
+    return operation.get('result') as Array<ObjectId>;
   }
 
   // @docs http://mongodb.github.io/node-mongodb-native/3.1/api/Collection.html#insertOne
