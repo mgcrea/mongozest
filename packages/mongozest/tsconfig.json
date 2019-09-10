@@ -1,33 +1,10 @@
 {
   "extends": "../../tsconfig",
   "compilerOptions": {
-    "baseUrl": "src",
+    "baseUrl": "./",
     "paths": {
-      "src/*": ["*"]
+      "src/*": ["./src/*"]
     }
   },
-  "include": ["src/**/*"],
-  "exclude": ["node_modules", "**/*.spec.ts"]
+  "include": ["src/"]
 }
-
-// {
-//   "extends": "../../tsconfig",
-//   "typeRoots": ["../../node_modules/@types/", "node_modules/@types/"],
-//   "types": ["mongodb"]
-//   // {
-//   //   "compilerOptions": {
-//   //     "module": "commonjs",
-//   //     "esModuleInterop": true,
-//   //     "target": "es6",
-//   //     "noImplicitAny": true,
-//   //     "moduleResolution": "node",
-//   //     "sourceMap": true,
-//   //     "outDir": "dist",
-//   //     "baseUrl": ".",
-//   //     "paths": {
-//   //       "*": ["node_modules/*", "typings/*"]
-//   //     }
-//   //   },
-//   //   "include": ["src/**/*", "typings/**/*"]
-//   // }
-// }
