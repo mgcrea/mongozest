@@ -38,7 +38,8 @@ import {
   ReplaceOneOptions,
   ReadPreference,
   ClientSession,
-  ObjectId
+  ObjectId,
+  MongoCountPreferences
 } from 'mongodb';
 
 export type OperationMap = Map<string, any>;
@@ -213,6 +214,21 @@ export default class Model<TSchema = any> {
     // Execute postHooks
     await this.hooks.execPost('aggregate', [pipeline, options, operation]);
     return operation.get('result') as Array<TSchema | null>;
+  }
+
+  // @docs http://mongodb.github.io/node-mongodb-native/3.1/api/Collection.html#countDocuments
+  async countDocuments(query: FilterQuery<TSchema>, options: MongoCountPreferences = {}): Promise<number> {
+    // Prepare operation params
+    const operation: OperationMap = new Map([['method', 'countDocuments']]);
+    // Execute preHooks
+    await this.hooks.execPre('find', [query, options, operation]);
+    await this.hooks.execPre('countDocuments', [query, options, operation]);
+    // Actual mongodb operation
+    const result: number = await this.collection.countDocuments(query, options);
+    operation.set('result', result);
+    // Execute postHooks
+    await this.hooks.execPost('countDocuments', [query, options, operation]);
+    return operation.get('result') as number;
   }
 
   // @docs http://mongodb.github.io/node-mongodb-native/3.1/api/Collection.html#aggregate
