@@ -17,10 +17,7 @@ const trimValueForType = (value: any, type: string) => {
 };
 
 // Helper recursively parsing schema to find path where values should be casted
-export default function trimPlugin<TSchema>(
-  model: Model,
-  {ignoredKeys = ['_id'], trimmableTypes = TRIMMABLE_TYPES, castDecimalsAsFloats = false} = {}
-) {
+export default function trimPlugin<TSchema>(model: Model, {trimmableTypes = TRIMMABLE_TYPES} = {}) {
   const trimmableProperties = new Map();
   model.post('initialize:property', (property: {[s: string]: any}, path: string) => {
     const bsonType = isString(property) ? property : property.bsonType;
