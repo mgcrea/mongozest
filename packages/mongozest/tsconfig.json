@@ -6,5 +6,5 @@
       "src/*": ["./src/*"]
     }
   },
-  "include": ["src/"]
+  "include": ["package.json", "src/"]
 }
