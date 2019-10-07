@@ -56,7 +56,7 @@ describe('Resource', () => {
   describe('collection', () => {
     describe('GET /users', () => {
       it('should return 200', async () => {
-        const {insertedId} = await insertFixture('User');
+        const {insertedId} = await insertFixture('User.mongozest');
         const res = await fetch(`/users`, {
           method: 'get',
           headers: {'Content-Type': 'application/json'}
@@ -106,7 +106,7 @@ describe('Resource', () => {
     });
     describe('PATCH /users', () => {
       it('should return 200', async () => {
-        const {insertedId} = await insertFixture('User');
+        const {insertedId} = await insertFixture('User.mongozest');
         const reqBody = {
           firstName: 'Alex'
         };
@@ -125,7 +125,7 @@ describe('Resource', () => {
     });
     describe('DELETE /users', () => {
       it('should return 200', async () => {
-        await insertFixture('User');
+        await insertFixture('User.mongozest');
         const res = await fetch(`/users`, {
           method: 'delete',
           headers: {'Content-Type': 'application/json'}
@@ -142,7 +142,7 @@ describe('Resource', () => {
   describe('document', () => {
     describe('GET /users/:_id', () => {
       it('should return 200', async () => {
-        const {_id: insertedId} = await insertFixture('User');
+        const {_id: insertedId} = await insertFixture('User.mongozest');
         const res = await fetch(`/users/${insertedId}`, {
           method: 'get',
           headers: {'Content-Type': 'application/json'}
@@ -157,7 +157,7 @@ describe('Resource', () => {
     });
     describe('PATCH /users/:_id', () => {
       it('should return 200', async () => {
-        const {_id: insertedId} = await insertFixture('User');
+        const {_id: insertedId} = await insertFixture('User.mongozest');
         const reqBody = {
           firstName: 'Laura'
         };
@@ -176,7 +176,7 @@ describe('Resource', () => {
     });
     describe('DELETE /users/:_id', () => {
       it('should return 200', async () => {
-        const {_id: insertedId} = await insertFixture('User');
+        const {_id: insertedId} = await insertFixture('User.mongozest');
         const res = await fetch(`/users/${insertedId}`, {
           method: 'delete',
           headers: {'Content-Type': 'application/json'}
@@ -215,7 +215,7 @@ describe('resource with nested paths', () => {
   // describe('collection', () => {
   //   describe('GET /users', () => {
   //     it('should return 200', async () => {
-  //       const {insertedId} = await insertFixture('User');
+  //       const {insertedId} = await insertFixture('User.mongozest');
   //       const res = await fetch(`/users`, {
   //         method: 'get',
   //         headers: {'Content-Type': 'application/json'}

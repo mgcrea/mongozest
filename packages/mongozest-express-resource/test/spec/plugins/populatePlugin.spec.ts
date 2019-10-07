@@ -71,8 +71,8 @@ describe('populatePlugin', () => {
   describe('collection', () => {
     describe('GET /comments', () => {
       it('should return 200', async () => {
-        const {_id: userId} = await insertFixture('user');
-        await insertFixture('comment', {user: userId});
+        const {_id: userId} = await insertFixture('user.mongozest');
+        const {insertedId} = await mongo.model('Comment').insertOne({text: 'Hello World', user: userId});
         const query = `population=${JSON.stringify({user: 1})}`;
         const res = await fetch(`/comments?${query}`, {
           method: 'get',

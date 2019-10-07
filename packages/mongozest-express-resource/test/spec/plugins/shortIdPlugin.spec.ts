@@ -50,7 +50,7 @@ describe('shortIdPlugin', () => {
   describe('document', () => {
     describe('GET /users/:_sid', () => {
       it('should return 200', async () => {
-        const {_sid} = await insertFixture('User');
+        const {_sid} = await insertFixture('User.mongozest');
         const res = await fetch(`/users/${_sid}`, {
           method: 'get',
           headers: {'Content-Type': 'application/json'}
@@ -63,7 +63,7 @@ describe('shortIdPlugin', () => {
         expect(omit(resBody, '_id', '_sid')).toMatchSnapshot();
       });
       it('should not disrupt existing behavior', async () => {
-        const {_id} = await insertFixture('User');
+        const {_id} = await insertFixture('User.mongozest');
         const res = await fetch(`/users/${_id}`, {
           method: 'get',
           headers: {'Content-Type': 'application/json'}
@@ -78,7 +78,7 @@ describe('shortIdPlugin', () => {
     });
     describe('PATCH /users/:_sid', () => {
       it('should return 200', async () => {
-        const {_sid} = await insertFixture('User');
+        const {_sid} = await insertFixture('User.mongozest');
         const reqBody = {
           firstName: 'Laura'
         };
@@ -97,7 +97,7 @@ describe('shortIdPlugin', () => {
     });
     describe('DELETE /users/:_sid', () => {
       it('should return 200', async () => {
-        const {_sid} = await insertFixture('User');
+        const {_sid} = await insertFixture('User.mongozest');
         const res = await fetch(`/users/${_sid}`, {
           method: 'delete',
           headers: {'Content-Type': 'application/json'}

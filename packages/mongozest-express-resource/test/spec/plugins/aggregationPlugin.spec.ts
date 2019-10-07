@@ -55,7 +55,7 @@ describe('Resource', () => {
   describe('collection', () => {
     describe('GET /users/aggregate', () => {
       it('should return 200', async () => {
-        const {insertedId} = await insertFixture('User');
+        const {insertedId} = await insertFixture('User.mongozest');
         const pipeline = [];
         const query = `pipeline=${JSON.stringify(pipeline)}`;
         const res = await fetch(`/users/aggregate?${query}`, {
