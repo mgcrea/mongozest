@@ -17,19 +17,19 @@
     "@mongozest/hooks": "1.0.0",
     "chalk": "^2.4.2",
     "faker": "^4.1.0",
-    "lodash": "^4.17.11",
-    "mongodb": "^3.2.6",
+    "lodash": "^4.17.15",
+    "mongodb": "^3.3.2",
     "pluralize": "^8.0.0",
-    "shortid": "^2.2.14"
+    "shortid": "^2.2.15"
   },
   "devDependencies": {
-    "@babel/cli": "^7.4.4",
-    "@babel/core": "^7.4.5",
+    "@babel/cli": "^7.6.2",
+    "@babel/core": "^7.6.2",
     "@types/pluralize": "^0.0.29",
     "@types/shortid": "^0.0.29",
     "babel-core": "^7.0.0-bridge",
-    "babel-jest": "^24.8.0",
-    "jest": "^24.8.0",
-    "typescript": "^3.5.1"
+    "babel-jest": "^24.9.0",
+    "jest": "^24.9.0",
+    "typescript": "^3.6.3"
   }
 }

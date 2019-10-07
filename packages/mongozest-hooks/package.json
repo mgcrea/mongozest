@@ -15,12 +15,12 @@
   "license": "UNLICENSED",
   "dependencies": {},
   "devDependencies": {
-    "@babel/cli": "^7.4.4",
-    "@babel/core": "^7.4.4",
+    "@babel/cli": "^7.6.2",
+    "@babel/core": "^7.6.2",
     "@types/pluralize": "^0.0.29",
     "babel-core": "^7.0.0-bridge",
-    "babel-jest": "^24.8.0",
-    "jest": "^24.8.0",
-    "typescript": "^3.5.1"
+    "babel-jest": "^24.9.0",
+    "jest": "^24.9.0",
+    "typescript": "^3.6.3"
   }
 }

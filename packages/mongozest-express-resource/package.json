@@ -16,19 +16,19 @@
   "dependencies": {
     "@mongozest/hooks": "1.0.0",
     "express-async-handler": "^1.1.4",
-    "http-errors": "^1.7.2",
-    "json5": "^2.1.0",
-    "lodash": "^4.17.11"
+    "http-errors": "^1.7.3",
+    "json5": "^2.1.1",
+    "lodash": "^4.17.15"
   },
   "devDependencies": {
-    "@babel/cli": "^7.4.4",
-    "@babel/core": "^7.4.4",
+    "@babel/cli": "^7.6.2",
+    "@babel/core": "^7.6.2",
     "@types/json5": "^0.0.30",
-    "@types/mongodb": "^3.1.28",
+    "@types/mongodb": "^3.3.5",
     "@types/pluralize": "^0.0.29",
     "babel-core": "^7.0.0-bridge",
-    "babel-jest": "^24.8.0",
-    "jest": "^24.8.0",
-    "typescript": "^3.5.1"
+    "babel-jest": "^24.9.0",
+    "jest": "^24.9.0",
+    "typescript": "^3.6.3"
   }
 }
