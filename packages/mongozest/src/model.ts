@@ -6,7 +6,7 @@
 
 import {cloneDeep, snakeCase, uniq} from 'lodash';
 import pluralize from 'pluralize';
-import {Schema} from './schema';
+import {Schema, JsonSchema} from './schema';
 import Hooks, {HookCallback} from '@mongozest/hooks';
 
 import jsonSchemaPlugin from './plugins/jsonSchemaPlugin';
@@ -89,7 +89,7 @@ export default class Model<TSchema = any> {
   }
 
   // Helper recursively parsing schema
-  private async execPostPropertyHooks(properties: {[s: string]: any}, prevPath: string = ''): Promise<void> {
+  private async execPostPropertyHooks(properties: Record<string, JsonSchema>, prevPath: string = ''): Promise<void> {
     return Object.keys(properties).reduce(async (promiseSoFar, key) => {
       const soFar = await promiseSoFar;
       const currentPath = prevPath ? `${prevPath}.${key}` : key;
@@ -97,14 +97,14 @@ export default class Model<TSchema = any> {
       // Nested object case
       const isNestedObject = bsonType === 'object' && childProperties;
       if (isNestedObject) {
-        await this.execPostPropertyHooks(childProperties, currentPath);
+        await this.execPostPropertyHooks(childProperties as Record<string, JsonSchema<unknown>>, currentPath);
       }
       // Nested arrayItems case
       const hasNestedArrayItems = bsonType === 'array' && childItems;
       if (hasNestedArrayItems) {
         const hasNestedArraySchemas = Array.isArray(childItems);
         if (hasNestedArraySchemas) {
-          childItems.forEach(async (childItem: {[s: string]: any}, index: number) => {
+          childItems.forEach(async (childItem: Record<string, unknown>, index: number) => {
             await this.hooks.execPost('initialize:property', [childItem, `${currentPath}[${index}]`, {isLeaf: true}]);
           });
         }
@@ -183,10 +183,10 @@ export default class Model<TSchema = any> {
     });
   }
 
-  addStatics(staticsMap: {[s: string]: any}): void {
+  addStatics(staticsMap: Record<string, () => void>): void {
     Object.keys(staticsMap).forEach(key => this.statics.set(key, staticsMap[key]));
   }
-  addSchemaProperties(additionalProperties: {[s: string]: any}) {
+  addSchemaProperties(additionalProperties: Record<string, unknown>) {
     const {schema} = this;
     Object.assign(schema, additionalProperties);
   }
@@ -199,7 +199,7 @@ export default class Model<TSchema = any> {
 
   // @docs http://mongodb.github.io/node-mongodb-native/3.1/api/Collection.html#aggregate
   async aggregate(
-    pipeline: Array<Object> = [],
+    pipeline: Array<Record<string, unknown>> = [],
     options: CollectionAggregationOptions = {}
   ): Promise<Array<TSchema | null>> {
     // Prepare operation params
@@ -251,7 +251,10 @@ export default class Model<TSchema = any> {
   }
 
   // @docs http://mongodb.github.io/node-mongodb-native/3.1/api/Collection.html#insertOne
-  async insertOne(document: TSchema, options: CollectionInsertOneOptions = {}): Promise<InsertOneWriteOpResult> {
+  async insertOne(
+    document: TSchema,
+    options: CollectionInsertOneOptions = {}
+  ): Promise<InsertOneWriteOpResult<TSchema>> {
     // Prepare operation params
     const operation: OperationMap = new Map([['method', 'insertOne']]);
     // Execute preHooks
@@ -275,7 +278,7 @@ export default class Model<TSchema = any> {
     operation.set('result', result);
     // Execute postHooks
     await this.hooks.execManyPost(['insert', 'insertOne'], [document, options, operation]);
-    return operation.get('result') as InsertOneWriteOpResult;
+    return operation.get('result') as InsertOneWriteOpResult<TSchema>;
   }
 
   // @docs http://mongodb.github.io/node-mongodb-native/3.1/api/Collection.html#insertOne
@@ -306,7 +309,10 @@ export default class Model<TSchema = any> {
   }
 
   // @docs http://mongodb.github.io/node-mongodb-native/3.1/api/Collection.html#insertMany
-  async insertMany(documents: TSchema[], options: CollectionInsertManyOptions = {}): Promise<InsertWriteOpResult> {
+  async insertMany(
+    documents: TSchema[],
+    options: CollectionInsertManyOptions = {}
+  ): Promise<InsertWriteOpResult<TSchema>> {
     // Prepare operation params
     const operation: OperationMap = new Map([['method', 'insertMany']]);
     // Execute preHooks
@@ -331,7 +337,7 @@ export default class Model<TSchema = any> {
     }, []);
     await this.hooks.execEachPost('insert', eachPostArgs);
     await this.hooks.execPost('insertMany', [documents, options, operation]);
-    return operation.get('result') as InsertWriteOpResult;
+    return operation.get('result') as InsertWriteOpResult<TSchema>;
   }
 
   // @docs http://mongodb.github.io/node-mongodb-native/3.1/api/Collection.html#updateOne
@@ -445,7 +451,7 @@ export default class Model<TSchema = any> {
     operation.set('result', result);
     // Execute postHooks
     // const pre = process.hrtime();
-    const eachPostArgs = result.reduce((soFar: Array<any>, document: TSchema) => {
+    const eachPostArgs = result.reduce((soFar: Array<unknown>, document: TSchema) => {
       return soFar.concat([[query, options, new Map([...operation, ['result', document]])]]);
     }, []);
     // const diff = process.hrtime(pre);

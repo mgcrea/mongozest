@@ -1,7 +1,7 @@
 import {get, has, set} from 'lodash';
 
 // Check a leaf path (eg. `{foo.bar: {baz: 1}}`)
-export const hasLeafPath = (object: {[s: string]: any}, path: string): boolean => {
+export const hasLeafPath = (object: Record<string, unknown>, path: string): boolean => {
   const dottedParts = path.split('.');
   // Only relevent for deep paths (n > 2)
   if (dottedParts.length <= 2) {
@@ -11,7 +11,7 @@ export const hasLeafPath = (object: {[s: string]: any}, path: string): boolean =
   return has(object, leafPath);
 };
 // Check a leaf path (eg. `{foo.bar: {baz: 1}}`)
-export const resolveLeafPath = (object: {[s: string]: any}, path: string): Array<string> | false => {
+export const resolveLeafPath = (object: Record<string, unknown>, path: string): Array<string> | false => {
   const dottedParts = path.split('.');
   // Only relevent for deep paths (n > 2)
   if (dottedParts.length <= 2) {
@@ -20,7 +20,7 @@ export const resolveLeafPath = (object: {[s: string]: any}, path: string): Array
   const leafPath = [dottedParts.slice(0, -1).join('.'), dottedParts.slice(-1)[0]];
   return has(object, leafPath) ? leafPath : false;
 };
-export const getPath = (object: {[s: string]: any}, path: string): string | Array<string> | false => {
+export const getPath = (object: Record<string, unknown>, path: string): string | Array<string> | false => {
   const hasDirectPath = has(object, path);
   if (hasDirectPath) {
     return path;
@@ -33,7 +33,7 @@ export const getPath = (object: {[s: string]: any}, path: string): string | Arra
 };
 
 // @NOTE wtf about $ positional operator? and items.1 operator?
-export const mapPathValues = (object: {[s: string]: any}, path: string, callback: any) => {
+export const mapPathValues = (object: Record<string, unknown>, path: string, callback: any) => {
   const arrayParts = path.split('[]');
   const isArrayPath = arrayParts.length === 1;
   // Get path before array as lodash won't handle it

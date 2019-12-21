@@ -23,7 +23,7 @@ export type BsonType =
   | 'minKey'
   | 'maxKey';
 
-export interface JsonSchema<TProp> {
+export interface JsonSchema<TProp = unknown> {
   bsonType: BsonType;
   pattern?: string;
   enum?: Array<TProp>;

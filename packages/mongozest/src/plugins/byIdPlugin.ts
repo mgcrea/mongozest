@@ -11,7 +11,7 @@ import {Model} from '..';
 
 type StringOrObjectId = string | ObjectId;
 
-export default function byIdPlugin<TSchema>(model: Model<TSchema>) {
+export default function byIdPlugin<TSchema extends {_id: ObjectId}>(model: Model<TSchema>) {
   model.addStatics({
     findById: async (id: StringOrObjectId, options?: FindOneOptions): Promise<TSchema | null> => {
       return model.findOne({_id: new ObjectId(id)}, options);
