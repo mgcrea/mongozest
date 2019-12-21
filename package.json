@@ -1,0 +1,48 @@
+{
+  "name": "@mgcrea/mongozest",
+  "version": "0.1.0",
+  "license": "MIT",
+  "private": true,
+  "scripts": {
+    "test": "jest",
+    "typecheck": "tsc --noEmit",
+    "prettycheck": "prettier --check 'packages/*/{src,test}/*.{ts,tsx}'",
+    "lint": "eslint --ext .ts,.tsx packages/*/src",
+    "clean": "rm -rf node_modules; scripts/runPackages.sh --eval \"rm -rf node_modules\"",
+    "build": "scripts/runPackages.sh \"yarn build\"",
+    "publish": "scripts/runPackages.sh \"yarn publish --non-interactive --access public\"",
+    "website": "cd website; GIT_USER=mgcrea CURRENT_BRANCH=master USE_SSH=true yarn run publish-gh-pages; cd -",
+    "version": "scripts/setVersion.sh"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@babel/core": "^7.7.7",
+    "@babel/preset-typescript": "^7.7.7",
+    "@babel/runtime": "^7.7.7",
+    "@typescript-eslint/eslint-plugin": "^2.12.0",
+    "@typescript-eslint/parser": "^2.12.0",
+    "babel-eslint": "^10.0.3",
+    "babel-jest": "^24.9.0",
+    "babel-plugin-module-name-mapper": "^1.2.0",
+    "eslint": "^6.8.0",
+    "eslint-config-airbnb": "^18.0.1",
+    "eslint-config-prettier": "^6.7.0",
+    "eslint-plugin-import": "^2.19.1",
+    "eslint-plugin-jsx-a11y": "^6.2.3",
+    "eslint-plugin-prettier": "^3.1.2",
+    "jest": "^24.9.0",
+    "metro-react-native-babel-preset": "^0.57.0",
+    "prettier": "^1.19.1",
+    "typescript": "^3.7.4"
+  },
+  "workspaces": {
+    "packages": [
+      "packages/*"
+    ]
+  },
+  "jest": {
+    "projects": [
+      "<rootDir>/packages/*"
+    ]
+  }
+}
