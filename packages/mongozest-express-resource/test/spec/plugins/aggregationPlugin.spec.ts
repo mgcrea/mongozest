@@ -1,5 +1,5 @@
 import {makeFetch} from 'supertest-fetch';
-import {ObjectId, Model} from '@mgcrea/mongozest';
+import {ObjectId, Model} from '@mongozest/core';
 import {omit, isObject} from 'lodash';
 import {createTestApp, getDbName, breakdownMiddleware, fixtures} from './../../utils';
 import createResource, {Resource} from 'src/';

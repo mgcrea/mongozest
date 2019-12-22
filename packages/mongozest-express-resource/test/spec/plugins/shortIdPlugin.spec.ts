@@ -1,5 +1,5 @@
 import {makeFetch} from 'supertest-fetch';
-import {shortIdPlugin as modelShortIdPlugin, Model} from '@mgcrea/mongozest';
+import {shortIdPlugin as modelShortIdPlugin, Model} from '@mongozest/core';
 import {omit, isObject} from 'lodash';
 import {createTestApp, getDbName, breakdownMiddleware, fixtures} from './../../utils';
 import createResource, {Resource} from './../../../src';

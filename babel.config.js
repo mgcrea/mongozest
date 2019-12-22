@@ -22,7 +22,11 @@ const presets = [
     }
   ]
 ];
-const plugins = [['babel-plugin-module-name-mapper', moduleNameMapperOptions], '@babel/plugin-transform-runtime'];
+const plugins = [
+  ['babel-plugin-module-name-mapper', moduleNameMapperOptions],
+  ['@babel/plugin-proposal-class-properties', {loose: true}],
+  '@babel/plugin-transform-runtime'
+];
 
 // if (NODE_ENV !== 'production') {
 //   moduleNameMapperOptions.moduleNameMapper['^@mgcrea/react-native-([^/]+)$'] = '<rootDir>/../../packages/$1/src';

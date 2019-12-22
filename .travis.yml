@@ -5,3 +5,5 @@ script:
   - yarn run typecheck
   - yarn run prettycheck
   - yarn run lint
+services:
+  - mongodb

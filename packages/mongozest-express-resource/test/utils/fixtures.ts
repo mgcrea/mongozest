@@ -1,4 +1,4 @@
-import {ObjectId} from '@mgcrea/mongozest';
+import {ObjectId} from '@mongozest/core';
 const user = {
   firstName: 'John',
   lastName: 'Doe',

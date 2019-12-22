@@ -18,15 +18,14 @@
     "chalk": "^3.0.0",
     "faker": "^4.1.0",
     "lodash": "^4.17.15",
+    "mongodb": "^3.4.1",
     "pluralize": "^8.0.0",
     "shortid": "^2.2.15"
-  },
-  "peerDependencies": {
-    "mongodb": ">=3.4.1"
   },
   "devDependencies": {
     "@babel/cli": "^7.7.7",
     "@babel/core": "^7.7.7",
+    "@types/jest": "^24.0.24",
     "@types/pluralize": "^0.0.29",
     "@types/shortid": "^0.0.29",
     "jest": "^24.9.0",

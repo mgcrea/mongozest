@@ -52,7 +52,7 @@ export default class Hooks {
     if (!Array.isArray(hooks)) {
       return [];
     }
-    return await hooks.reduce(async (promiseSoFar, callback) => {
+    return await hooks.reduce<Promise<unknown[]>>(async (promiseSoFar, callback) => {
       const soFar = await promiseSoFar;
       const result = await callback(...args);
       return soFar.concat(result);
@@ -67,14 +67,14 @@ export default class Hooks {
     if (!Array.isArray(hooks)) {
       return [];
     }
-    return hooks.reduce((soFar, callback) => {
+    return hooks.reduce<unknown[]>((soFar, callback) => {
       const result = callback(...args);
       return soFar.concat(result);
     }, []);
   }
 
   async execMany(hookMap: HookMap, hookNames: Array<string>, args: Array<unknown>) {
-    return await hookNames.reduce(async (promiseSoFar, hookName) => {
+    return await hookNames.reduce<Promise<unknown[]>>(async (promiseSoFar, hookName) => {
       const soFar = await promiseSoFar;
       const result = await this.exec(hookMap, hookName, args);
       return soFar.concat(result);
@@ -82,7 +82,7 @@ export default class Hooks {
   }
 
   async execEach(hookMap: HookMap, hookName: string, arrayOfargs: Array<Array<unknown>>) {
-    return await arrayOfargs.reduce(async (promiseSoFar, args) => {
+    return await arrayOfargs.reduce<Promise<unknown[]>>(async (promiseSoFar, args) => {
       const soFar = await promiseSoFar;
       const result = await this.exec(hookMap, hookName, args);
       return soFar.concat(result);

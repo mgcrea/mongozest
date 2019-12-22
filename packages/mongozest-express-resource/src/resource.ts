@@ -1,7 +1,3 @@
-// @docs https://www.mongodb.com/blog/post/handling-files-using-mongodb-stitch-and-aws-s3
-// @docs https://github.com/hapijs/joi/blob/v13.7.0/API.md
-// @docs https://github.com/dylang/shortid
-// @docs http://mongodb.github.io/node-mongodb-native/3.1/reference/ecmascriptnext/crud/
 
 import assert from 'assert';
 import {snakeCase, uniq} from 'lodash';
@@ -14,7 +10,7 @@ import {asyncHandler, parseBodyAsUpdate} from './utils/request';
 import queryPlugin from './plugins/queryPlugin';
 import populatePlugin from './plugins/populatePlugin';
 import createError from 'http-errors';
-import {Model} from '@mgcrea/mongozest';
+import {Model} from '@mongozest/core';
 import {Request, RequestHandler, Response, Router} from 'express';
 import {
   CollectionInsertOneOptions,

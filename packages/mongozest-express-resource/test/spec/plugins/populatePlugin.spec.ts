@@ -1,6 +1,6 @@
 import {makeFetch} from 'supertest-fetch';
 import {omit} from 'lodash';
-import {populatePlugin as modelPopulatePlugin, Model} from '@mgcrea/mongozest';
+import {populatePlugin as modelPopulatePlugin, Model} from '@mongozest/core';
 import {createTestApp, getDbName, breakdownMiddleware, fixtures} from './../../utils';
 import createResource, {Resource} from './../../../src';
 import populatePlugin from './../../../src/plugins/populatePlugin';

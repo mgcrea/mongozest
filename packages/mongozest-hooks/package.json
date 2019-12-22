@@ -17,6 +17,7 @@
   "devDependencies": {
     "@babel/cli": "^7.7.7",
     "@babel/core": "^7.7.7",
+    "@types/jest": "^24.0.24",
     "typescript": "^3.7.4"
   }
 }
