@@ -1,7 +1,7 @@
 {
   "name": "@mongozest/express-resource",
   "private": true,
-  "version": "1.0.0",
+  "version": "0.1.0",
   "description": "",
   "main": "lib/index.js",
   "module": "src/index.ts",
@@ -12,23 +12,27 @@
     "test": "CI=true jest --runInBand --colors"
   },
   "author": "Olivier Louvignes <olivier@mgcrea.io>",
-  "license": "UNLICENSED",
+  "license": "MIT",
   "dependencies": {
-    "@mongozest/hooks": "1.0.0",
+    "@mongozest/core": "0.1.0",
+    "@mongozest/hooks": "0.1.0",
     "express-async-handler": "^1.1.4",
     "http-errors": "^1.7.3",
     "json5": "^2.1.1",
     "lodash": "^4.17.15"
   },
+  "peerDependencies": {
+    "express": ">=4.0.0"
+  },
   "devDependencies": {
-    "@babel/cli": "^7.6.2",
-    "@babel/core": "^7.6.2",
+    "@babel/cli": "^7.7.7",
+    "@babel/core": "^7.7.7",
+    "@types/express": "^4.17.2",
+    "@types/http-errors": "^1.6.3",
     "@types/json5": "^0.0.30",
-    "@types/mongodb": "^3.3.5",
-    "@types/pluralize": "^0.0.29",
-    "babel-core": "^7.0.0-bridge",
-    "babel-jest": "^24.9.0",
+    "@types/lodash": "^4.14.149",
+    "@types/mongodb": "^3.3.13",
     "jest": "^24.9.0",
-    "typescript": "^3.6.3"
+    "typescript": "^3.7.4"
   }
 }

@@ -1,11 +1,6 @@
 module.exports = {
   parser: '@typescript-eslint/parser',
-  extends: [
-    'airbnb',
-    'plugin:@typescript-eslint/recommended',
-    'prettier',
-    'prettier/@typescript-eslint',
-  ],
+  extends: ['plugin:@typescript-eslint/recommended', 'prettier', 'prettier/@typescript-eslint'],
   plugins: ['@typescript-eslint', 'prettier'],
   parserOptions: {
     project: './tsconfig.json',
@@ -31,7 +26,6 @@ module.exports = {
     'import/no-extraneous-dependencies': 'off',
     'import/no-unresolved': 'off',
     'import/prefer-default-export': 'off',
-    'react/jsx-filename-extension': ['error', {extensions: ['.js', '.jsx', '.ts', '.tsx']}],
     'jsx-a11y/accessible-emoji': 'off',
     // prettier
     'prettier/prettier': 'error'

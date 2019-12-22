@@ -35,7 +35,7 @@ interface ResourceOptions {
 }
 
 export type OperationMap = Map<string, any>;
-export type AggregationPipeline = Array<Object>;
+export type AggregationPipeline = Array<Record<string, any>>;
 export type RequestParamChecker = (s: string) => boolean;
 export type RequestParamResolver<TSchema> = (s: string, m: Model<TSchema>) => FilterQuery<TSchema>;
 
@@ -190,8 +190,7 @@ export default class Resource<TSchema> {
     // Prepare operation params
     const filter: FilterQuery<TSchema> = await this.buildRequestFilter(req);
     const options: FindOneOptions = {};
-    // @ts-ignore
-    const operation: OperationMap = new Map([
+    const operation: OperationMap = new Map<string, unknown>([
       ['method', 'getCollection'],
       ['scope', 'collection'],
       ['request', req],
@@ -212,8 +211,11 @@ export default class Resource<TSchema> {
     // Prepare operation params
     const document: TSchema = req.body;
     const options: CollectionInsertOneOptions = {};
-    // @ts-ignore
-    const operation: OperationMap = new Map([['method', 'postCollection'], ['scope', 'collection'], ['request', req]]);
+    const operation: OperationMap = new Map<string, unknown>([
+      ['method', 'postCollection'],
+      ['scope', 'collection'],
+      ['request', req]
+    ]);
     // Execute preHooks
     await this.hooks.execManyPre(['insert', 'postCollection'], [document, options, operation]);
     // Actual mongo call
@@ -230,8 +232,7 @@ export default class Resource<TSchema> {
     const filter: FilterQuery<TSchema> = await this.buildRequestFilter(req);
     const update: UpdateQuery<TSchema> = parseBodyAsUpdate(req.body);
     const options: CommonOptions = {};
-    // @ts-ignore
-    const operation: OperationMap = new Map([
+    const operation: OperationMap = new Map<string, unknown>([
       ['method', 'patchCollection'],
       ['scope', 'collection'],
       ['request', req],
@@ -253,8 +254,7 @@ export default class Resource<TSchema> {
     // Prepare operation params
     const filter: FilterQuery<TSchema> = await this.buildRequestFilter(req);
     const options: CommonOptions = {};
-    // @ts-ignore
-    const operation: OperationMap = new Map([
+    const operation: OperationMap = new Map<string, unknown>([
       ['method', 'deleteCollection'],
       ['scope', 'collection'],
       ['request', req],
@@ -276,8 +276,7 @@ export default class Resource<TSchema> {
     const filter: FilterQuery<TSchema> = await this.buildRequestFilter(req);
     assertScopedFilter(filter);
     const options: FindOneOptions = {};
-    // @ts-ignore
-    const operation: OperationMap = new Map([
+    const operation: OperationMap = new Map<string, unknown>([
       ['method', 'getDocument'],
       ['scope', 'document'],
       ['request', req],
@@ -303,8 +302,7 @@ export default class Resource<TSchema> {
     assertScopedFilter(filter);
     const update: UpdateQuery<TSchema> = parseBodyAsUpdate(req.body);
     const options: FindOneAndReplaceOption = {returnOriginal: false};
-    // @ts-ignore
-    const operation: OperationMap = new Map([
+    const operation: OperationMap = new Map<string, unknown>([
       ['method', 'patchDocument'],
       ['scope', 'document'],
       ['request', req],
@@ -329,8 +327,7 @@ export default class Resource<TSchema> {
     const filter: FilterQuery<TSchema> = await this.buildRequestFilter(req);
     assertScopedFilter(filter);
     const options: CommonOptions & {bypassDocumentValidation?: boolean} = {};
-    // @ts-ignore
-    const operation: OperationMap = new Map([
+    const operation: OperationMap = new Map<string, unknown>([
       ['method', 'deleteDocument'],
       ['scope', 'document'],
       ['request', req],

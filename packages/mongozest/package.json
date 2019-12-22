@@ -1,7 +1,7 @@
 {
-  "name": "@mgcrea/mongozest",
+  "name": "@mongozest/core",
   "private": true,
-  "version": "1.0.0",
+  "version": "0.1.0",
   "description": "",
   "main": "lib/index.js",
   "module": "src/index.ts",
@@ -12,24 +12,24 @@
     "test": "CI=true jest --runInBand --colors"
   },
   "author": "Olivier Louvignes <olivier@mgcrea.io>",
-  "license": "UNLICENSED",
+  "license": "MIT",
   "dependencies": {
-    "@mongozest/hooks": "1.0.0",
-    "chalk": "^2.4.2",
+    "@mongozest/hooks": "0.1.0",
+    "chalk": "^3.0.0",
     "faker": "^4.1.0",
     "lodash": "^4.17.15",
-    "mongodb": "^3.3.2",
     "pluralize": "^8.0.0",
     "shortid": "^2.2.15"
   },
+  "peerDependencies": {
+    "mongodb": ">=3.4.1"
+  },
   "devDependencies": {
-    "@babel/cli": "^7.6.2",
-    "@babel/core": "^7.6.2",
+    "@babel/cli": "^7.7.7",
+    "@babel/core": "^7.7.7",
     "@types/pluralize": "^0.0.29",
     "@types/shortid": "^0.0.29",
-    "babel-core": "^7.0.0-bridge",
-    "babel-jest": "^24.9.0",
     "jest": "^24.9.0",
-    "typescript": "^3.6.3"
+    "typescript": "^3.7.4"
   }
 }
