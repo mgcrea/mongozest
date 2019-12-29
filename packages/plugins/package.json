@@ -1,0 +1,30 @@
+{
+  "name": "@mongozest/plugins",
+  "private": true,
+  "version": "0.1.0",
+  "description": "",
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "module": "src/index.ts",
+  "scripts": {
+    "build": "babel --source-maps --extensions .js,.ts --out-dir lib/ --ignore **/__tests__ src/",
+    "typecheck": "tsc --pretty --noEmit",
+    "test": "CI=true jest --runInBand --colors"
+  },
+  "author": "Olivier Louvignes <olivier@mgcrea.io>",
+  "license": "MIT",
+  "dependencies": {
+    "@mongozest/core": "0.1.0",
+    "chalk": "^3.0.0",
+    "faker": "^4.1.0",
+    "lodash": "^4.17.15",
+    "pluralize": "^8.0.0",
+    "shortid": "^2.2.15"
+  },
+  "devDependencies": {
+    "@babel/cli": "^7.7.7",
+    "@babel/core": "^7.7.7",
+    "@types/jest": "^24.0.24",
+    "typescript": "^3.7.4"
+  }
+}

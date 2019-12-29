@@ -1,0 +1,25 @@
+{
+  "name": "@mongozest/hooks",
+  "private": true,
+  "version": "0.1.0",
+  "description": "",
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "module": "src/index.ts",
+  "scripts": {
+    "build": "yarn build:source && yarn build:typings",
+    "build:source": "babel --source-maps --extensions .js,.ts --out-dir lib/ --delete-dir-on-start --ignore **/__tests__ src/",
+    "build:typings": "tsc --declaration",
+    "typecheck": "tsc --pretty --noEmit",
+    "test": "CI=true jest --runInBand --colors"
+  },
+  "author": "Olivier Louvignes <olivier@mgcrea.io>",
+  "license": "MIT",
+  "dependencies": {},
+  "devDependencies": {
+    "@babel/cli": "^7.7.7",
+    "@babel/core": "^7.7.7",
+    "@types/jest": "^24.0.24",
+    "typescript": "^3.7.4"
+  }
+}

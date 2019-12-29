@@ -1,0 +1,15 @@
+{
+  "extends": "../../tsconfig",
+  "compilerOptions": {
+    "baseUrl": "./",
+    "paths": {
+      "src/*": ["./src/*"]
+    }
+  },
+  "include": ["package.json", "src/"],
+  "references": [
+    {
+      "path": "../hooks"
+    }
+  ]
+}
