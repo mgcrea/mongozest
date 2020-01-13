@@ -5,6 +5,8 @@ import {FilterQuery, UpdateQuery, ReplaceOneOptions, UpdateManyOptions, FindOneO
 const {NODE_DEBUG = '0'} = process.env;
 const IS_DEBUG = NODE_DEBUG === '1';
 
+type AggregatePipeline = Record<string, any>[];
+
 const leanOptions = options => {
   const {session, ...otherOptions} = options;
   if (session) {
@@ -35,7 +37,7 @@ export default function debugPlugin<TSchema>(model: Model, options) {
       }
     });
   }
-  model.pre('aggregate', (pipeline?: Object[], options?: CollectionAggregationOptions) => {
+  model.pre('aggregate', (pipeline?: AggregatePipeline, options?: CollectionAggregationOptions) => {
     log(`db.${collectionName}.aggregate(${inspect(pipeline)}, ${inspect(leanOptions(options))})`);
   });
   model.pre('insertOne', (document: TSchema, options: CollectionInsertOneOptions) => {
@@ -123,15 +125,21 @@ export default function debugPlugin<TSchema>(model: Model, options) {
   // ns-perf
   const NS_PER_SEC = 1e9;
   const hrtimeSymbol = Symbol('hrtime');
-  model.pre('aggregate', (pipeline?: Object[], options?: CollectionAggregationOptions, operation: OperationMap) => {
-    operation.set(hrtimeSymbol, process.hrtime());
-  });
-  model.post('aggregate', (pipeline?: Object[], options?: CollectionAggregationOptions, operation: OperationMap) => {
-    const docs = operation.get('result');
-    const diff = process.hrtime(operation.get(hrtimeSymbol));
-    const elapsed = (diff[0] * NS_PER_SEC + diff[1]) / 1e6;
-    log(`${inspect(docs.length)}-document(s) returned in ${inspect(elapsed.toPrecision(3) * 1)}ms`);
-  });
+  model.pre(
+    'aggregate',
+    (pipeline?: AggregatePipeline, options?: CollectionAggregationOptions, operation: OperationMap) => {
+      operation.set(hrtimeSymbol, process.hrtime());
+    }
+  );
+  model.post(
+    'aggregate',
+    (pipeline?: AggregatePipeline, options?: CollectionAggregationOptions, operation: OperationMap) => {
+      const docs = operation.get('result');
+      const diff = process.hrtime(operation.get(hrtimeSymbol));
+      const elapsed = (diff[0] * NS_PER_SEC + diff[1]) / 1e6;
+      log(`${inspect(docs.length)}-document(s) returned in ${inspect(elapsed.toPrecision(3) * 1)}ms`);
+    }
+  );
   model.pre('findMany', (query: FilterQuery<TSchema>, options: FindOneOptions, operation: OperationMap) => {
     operation.set(hrtimeSymbol, process.hrtime());
   });

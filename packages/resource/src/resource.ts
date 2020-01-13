@@ -1,4 +1,3 @@
-
 import assert from 'assert';
 import {snakeCase, uniq} from 'lodash';
 import pluralize from 'pluralize';

@@ -6,11 +6,11 @@ export interface LastModifiedPluginProps {
   createdAt: Date;
 }
 
-export interface LastModifiedPluginOptions {}
+// export interface LastModifiedPluginOptions {}
 
 export default function lastModifiedPlugin<TSchema extends LastModifiedPluginProps>(
-  model: Model<TSchema>,
-  _options: LastModifiedPluginOptions
+  model: Model<TSchema>
+  // _options: LastModifiedPluginOptions
 ) {
   model.addSchemaProperties({
     updatedAt: {bsonType: 'date'},

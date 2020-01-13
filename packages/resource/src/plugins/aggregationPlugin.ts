@@ -57,9 +57,8 @@ export default function aggregationPlugin<TSchema>(
   async function aggregateCollection(this: Resource<TSchema>, req: Request, res: Response) {
     const model = this.getModelFromRequest(req);
     // Prepare operation params
-    const pipeline: Array<Object> = await buildRequestPipeline.bind(this)(req);
+    const pipeline: AggregationPipeline = await buildRequestPipeline.bind(this)(req);
     const options: CollectionAggregationOptions = {};
-    // @ts-ignore
     const operation: OperationMap = new Map([
       ['method', 'aggregateCollection'],
       ['scope', 'collection'],

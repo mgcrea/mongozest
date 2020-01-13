@@ -196,7 +196,7 @@ describe('Resource', () => {
 
 describe('resource with nested paths', () => {
   let resource: Resource;
-  const PATH: string = '/devices/:device/users';
+  const PATH = '/devices/:device/users';
   it('should properly create resource', async () => {
     resource = createResource('User', {
       db: 'mongo',

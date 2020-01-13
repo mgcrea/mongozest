@@ -52,7 +52,11 @@ export const mapPathValues = (object: Record<string, unknown>, path: string, cal
     }
     if (Array.isArray(valueAtPath)) {
       if (!remainingArrayPath) {
-        set(object, foundPath, valueAtPath.map(itemValue => callback(itemValue)));
+        set(
+          object,
+          foundPath,
+          valueAtPath.map(itemValue => callback(itemValue))
+        );
         return;
       }
       valueAtPath.forEach(itemValue => {

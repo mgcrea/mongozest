@@ -20,6 +20,7 @@ module.exports = {
     '@typescript-eslint/no-use-before-define': 'off',
     '@typescript-eslint/no-non-null-assertion': 'off',
     '@typescript-eslint/explicit-member-accessibility': 'off',
+    '@typescript-eslint/no-inferrable-types': ['error', {ignoreParameters: true}],
     // airbnb
     'no-unused-expressions': 'off',
     'no-use-before-define': 'off',

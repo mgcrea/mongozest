@@ -69,7 +69,10 @@ export default function shortIdPlugin<TSchema extends DocumentWithPluginProps>(
       'insertMany',
       (documents: TSchema[], _options: CollectionInsertManyOptions = {}, operation: OperationMap) => {
         if (documents && Array.isArray(documents)) {
-          operation.set('documents', documents.map((document: TSchema) => ({[sidKey]: undefined, ...document})));
+          operation.set(
+            'documents',
+            documents.map((document: TSchema) => ({[sidKey]: undefined, ...document}))
+          );
         }
       }
     );

@@ -11,7 +11,10 @@ export default function shortIdPlugin(resource: Resource, {sidKey = '_sid'} = {}
 
   // })
 
-  resource.addIdentifierHandler((_sid: string) => SID_REGEX.test(_sid), (_sid: string) => ({_sid}));
+  resource.addIdentifierHandler(
+    (_sid: string) => SID_REGEX.test(_sid),
+    (_sid: string) => ({_sid})
+  );
 
   // resource.pre('id', (key: string, value: string, filter: {[s: string]: any}) => {
   //   const isMatch = key === '0' && SID_REGEX.test(value);
