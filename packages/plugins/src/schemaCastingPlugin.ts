@@ -13,7 +13,7 @@ import {
   FindOneAndReplaceOption
 } from 'mongodb';
 // @types
-import {Model, OperationMap, mapPathValues} from '..';
+import {Model, OperationMap, mapPathValues} from '@mongozest/core';
 
 const CASTABLE_TYPES = ['bool', 'date', 'decimal', 'double', 'int', 'long', 'objectId', 'string'];
 

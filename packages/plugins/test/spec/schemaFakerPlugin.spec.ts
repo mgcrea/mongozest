@@ -1,6 +1,8 @@
-import createMongo, {Model, jsonSchemaPlugin, schemaFakerPlugin} from './../../../src';
+import createMongo, {Model, jsonSchemaPlugin} from '@mongozest/core';
+import schemaFakerPlugin from 'src/schemaFakerPlugin';
+import {getDbName} from 'root/test/utils';
+
 import {Decimal128 as Decimal} from 'mongodb';
-import {getDbName} from './../../utils';
 
 const DB_NAME = getDbName(__filename);
 

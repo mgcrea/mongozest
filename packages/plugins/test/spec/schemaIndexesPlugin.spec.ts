@@ -1,5 +1,6 @@
-import createMongo, {Model, jsonSchemaPlugin, schemaIndexesPlugin} from './../../../src';
-import {getDbName} from './../../utils';
+import createMongo, {Model, jsonSchemaPlugin} from '@mongozest/core';
+import schemaIndexesPlugin from 'src/schemaIndexesPlugin';
+import {getDbName} from 'root/test/utils';
 
 const DB_NAME = getDbName(__filename);
 

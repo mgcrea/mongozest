@@ -1,5 +1,4 @@
 import collectionDefaultsPlugin from './collectionDefaultsPlugin';
-import jsonSchemaPlugin from './jsonSchemaPlugin';
 import createdByPlugin from './createdByPlugin';
 import caseTransformPlugin from './caseTransformPlugin';
 import populatePlugin from './populatePlugin';
@@ -18,7 +17,6 @@ export {
   caseTransformPlugin,
   createdByPlugin,
   populatePlugin,
-  jsonSchemaPlugin,
   lastModifiedPlugin,
   schemaCastingPlugin,
   schemaDefaultsPlugin,

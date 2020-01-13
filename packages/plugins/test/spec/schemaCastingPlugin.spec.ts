@@ -1,5 +1,6 @@
-import createMongo, {Model, jsonSchemaPlugin, schemaCastingPlugin} from './../../../src';
-import {getDbName} from './../../utils';
+import createMongo, {Model, jsonSchemaPlugin} from '@mongozest/core';
+import schemaCastingPlugin from 'src/schemaCastingPlugin';
+import {getDbName} from 'root/test/utils';
 import {Long, Decimal128, ObjectId} from 'mongodb';
 
 const DB_NAME = getDbName(__filename);

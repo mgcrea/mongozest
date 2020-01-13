@@ -1,5 +1,6 @@
-import createMongo, {Model, jsonSchemaPlugin} from './../../../src';
-import {getDbName} from './../../utils';
+import createMongo, {Model} from 'src/';
+import jsonSchemaPlugin from 'src/plugins/jsonSchemaPlugin';
+import {getDbName} from 'root/test/utils';
 
 const DB_NAME = getDbName(__filename);
 

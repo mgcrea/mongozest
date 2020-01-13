@@ -2,7 +2,7 @@
 
 import {isUndefined, get, isString, isFunction} from 'lodash';
 // @types
-import {Model, defaultPathValues} from '..';
+import {Model, defaultPathValues} from '@mongozest/core';
 
 const INLINE_VARIABLE_REGEX = /\$\{(.+)\}/g;
 

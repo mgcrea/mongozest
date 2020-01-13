@@ -1,5 +1,6 @@
-import createMongo, {Model, collectionDefaultsPlugin} from './../../../src';
-import {getDbName} from './../../utils';
+import createMongo, {Model} from '@mongozest/core';
+import collectionDefaultsPlugin from 'src/collectionDefaultsPlugin';
+import {getDbName} from 'root/test/utils';
 
 const DB_NAME = getDbName(__filename);
 

@@ -1,9 +1,12 @@
-import {makeFetch} from 'supertest-fetch';
+import {Model} from '@mongozest/core';
+import {populatePlugin as modelPopulatePlugin} from '@mongozest/plugins';
 import {omit} from 'lodash';
-import {populatePlugin as modelPopulatePlugin, Model} from '@mongozest/core';
-import {createTestApp, getDbName, breakdownMiddleware, fixtures} from './../../utils';
-import createResource, {Resource} from './../../../src';
-import populatePlugin from './../../../src/plugins/populatePlugin';
+import {getDbName} from 'root/test/utils';
+import createResource, {Resource} from 'src/index';
+import populatePlugin from 'src/plugins/populatePlugin';
+import {makeFetch} from 'supertest-fetch';
+import {breakdownMiddleware, createTestApp} from 'test/utils/app';
+import fixtures from 'test/utils/fixtures';
 
 const DB_NAME = getDbName(__filename);
 
@@ -37,7 +40,7 @@ beforeAll(async () => {
 });
 
 afterAll(async () => {
-  await Promise.all([redis.quit(), mongo.disconnect()]);
+  await Promise.all([app.close()]);
 });
 
 describe('populatePlugin', () => {

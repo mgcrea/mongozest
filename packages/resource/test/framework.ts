@@ -1,1 +1,1 @@
-import './../../../test/framework';
+import 'workspace/test/framework';

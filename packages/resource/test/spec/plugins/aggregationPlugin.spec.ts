@@ -1,8 +1,10 @@
-import {makeFetch} from 'supertest-fetch';
 import {ObjectId, Model} from '@mongozest/core';
-import {omit, isObject} from 'lodash';
-import {createTestApp, getDbName, breakdownMiddleware, fixtures} from './../../utils';
+import {omit} from 'lodash';
+import {getDbName} from 'root/test/utils';
 import createResource, {Resource} from 'src/';
+import {makeFetch} from 'supertest-fetch';
+import {breakdownMiddleware, createTestApp} from 'test/utils/app';
+import fixtures from 'test/utils/fixtures';
 
 const DB_NAME = getDbName(__filename);
 
@@ -36,7 +38,7 @@ beforeAll(async () => {
 });
 
 afterAll(async () => {
-  await Promise.all([redis.quit(), mongo.disconnect()]);
+  await Promise.all([app.close()]);
 });
 
 describe('Resource', () => {

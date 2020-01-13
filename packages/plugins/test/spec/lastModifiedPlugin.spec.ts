@@ -1,5 +1,6 @@
-import createMongo, {Model, lastModifiedPlugin} from './../../../src';
-import {getDbName} from './../../utils';
+import createMongo, {Model} from '@mongozest/core';
+import lastModifiedPlugin from 'src/lastModifiedPlugin';
+import {getDbName} from 'root/test/utils';
 
 const DB_NAME = getDbName(__filename);
 

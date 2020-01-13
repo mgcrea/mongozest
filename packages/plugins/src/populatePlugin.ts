@@ -1,7 +1,7 @@
 // @docs https://docs.mongodb.com/manual/reference/operator/query/type/#document-type-available-types
 
 import {get, set, isPlainObject, map, keyBy, isUndefined, isEmpty, isString} from 'lodash';
-import {uniqWithObjectIds} from './../utils/objectId';
+import {uniqWithObjectIds} from '@mongozest/core';
 // @types
 import {Model, OperationMap, mapPathValues} from '..';
 

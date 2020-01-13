@@ -23,6 +23,10 @@ export type BsonType =
   | 'minKey'
   | 'maxKey';
 
+export interface BaseSchema {
+  _id: ObjectId;
+}
+
 export interface JsonSchema<TProp = unknown> {
   bsonType: BsonType;
   pattern?: string;

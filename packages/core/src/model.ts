@@ -4,49 +4,44 @@
 // @docs http://mongodb.github.io/node-mongodb-native/3.1/reference/ecmascriptnext/crud/
 // @docs https://github.com/aljazerzen/mongodb-typescript
 
-import {cloneDeep, snakeCase, uniq} from 'lodash';
-import pluralize from 'pluralize';
-import {Schema, JsonSchema} from './schema';
 import Hooks, {HookCallback} from '@mongozest/hooks';
-
-// import jsonSchemaPlugin from './plugins/jsonSchemaPlugin';
-// import byIdPlugin from './plugins/byIdPlugin';
-// // // import schemaCastingPlugin from './plugins/schemaCastingPlugin';
-// import debugPlugin from './plugins/debugPlugin';
-
-// require('debug-utils').default();
-
+import {cloneDeep, snakeCase, uniq} from 'lodash';
 import {
-  Db as MongoDb,
+  ClientSession,
   Collection,
-  CollectionCreateOptions,
-  CollectionInsertOneOptions,
-  CollectionInsertManyOptions,
   CollectionAggregationOptions,
+  CollectionCreateOptions,
+  CollectionInsertManyOptions,
+  CollectionInsertOneOptions,
   CommonOptions,
+  Db as MongoDb,
   DeleteWriteOpResultObject,
-  InsertOneWriteOpResult,
-  InsertWriteOpResult,
   FilterQuery,
-  FindOneOptions,
   FindAndModifyWriteOpResultObject,
   FindOneAndReplaceOption,
-  UpdateQuery,
-  UpdateManyOptions,
-  UpdateWriteOpResult,
-  ReplaceWriteOpResult,
-  ReplaceOneOptions,
-  ReadPreference,
-  ClientSession,
+  FindOneOptions,
+  InsertOneWriteOpResult,
+  InsertWriteOpResult,
+  MongoCountPreferences,
   ObjectId,
-  MongoCountPreferences
+  ReadPreferenceOrMode,
+  ReplaceOneOptions,
+  ReplaceWriteOpResult,
+  UpdateManyOptions,
+  UpdateQuery,
+  UpdateWriteOpResult
 } from 'mongodb';
+import pluralize from 'pluralize';
+import byIdPlugin from './plugins/byIdPlugin';
+import debugPlugin from './plugins/debugPlugin';
+import jsonSchemaPlugin from './plugins/jsonSchemaPlugin';
+import {JsonSchema, Schema, BaseSchema} from './schema';
 
 export type OperationMap = Map<string, any>;
 type Plugin<TSchema> = (model: Model<TSchema>, options?: {[s: string]: any}) => Promise<any> | any;
 const NS_PER_SEC = 1e9;
 
-export default class Model<TSchema = any> {
+export default class Model<TSchema = BaseSchema> {
   static internalPrePlugins = [byIdPlugin];
   static internalPostPlugins = [jsonSchemaPlugin, debugPlugin];
 
@@ -58,7 +53,7 @@ export default class Model<TSchema = any> {
   public collectionName: string;
   public collectionOptions: CollectionCreateOptions = {};
   public schema: Schema<TSchema>;
-  private plugins: Array<Plugin<TSchxema>>;
+  private plugins: Array<Plugin<TSchema>>;
   private statics: Map<string, () => void> = new Map();
 
   public collection!: Collection<TSchema>;
@@ -104,9 +99,11 @@ export default class Model<TSchema = any> {
       if (hasNestedArrayItems) {
         const hasNestedArraySchemas = Array.isArray(childItems);
         if (hasNestedArraySchemas) {
-          childItems.forEach(async (childItem: Record<string, unknown>, index: number) => {
-            await this.hooks.execPost('initialize:property', [childItem, `${currentPath}[${index}]`, {isLeaf: true}]);
-          });
+          ((childItems as unknown) as Record<string, unknown>[]).forEach(
+            async (childItem: Record<string, unknown>, index: number) => {
+              await this.hooks.execPost('initialize:property', [childItem, `${currentPath}[${index}]`, {isLeaf: true}]);
+            }
+          );
         }
         const isNestedObjectInArray = childItems.bsonType === 'object' && childItems.properties;
         if (isNestedObjectInArray) {
@@ -235,7 +232,7 @@ export default class Model<TSchema = any> {
   async distinct(
     key: string,
     query: FilterQuery<TSchema>,
-    options: {readPreference?: ReadPreference | string; maxTimeMS?: number; session?: ClientSession} = {}
+    options: {readPreference?: ReadPreferenceOrMode; maxTimeMS?: number; session?: ClientSession} = {}
   ): Promise<Array<ObjectId>> {
     // Prepare operation params
     const operation: OperationMap = new Map([['method', 'distinct']]);
@@ -453,7 +450,7 @@ export default class Model<TSchema = any> {
     // const pre = process.hrtime();
     const eachPostArgs = result.reduce((soFar: Array<unknown>, document: TSchema) => {
       return soFar.concat([[query, options, new Map([...operation, ['result', document]])]]);
-    }, []);
+    }, []) as unknown[][];
     // const diff = process.hrtime(pre);
     // const elapsed = (diff[0] * NS_PER_SEC + diff[1]) / 1e6;
     // d({elapsed: `${elapsed.toPrecision(3)}ms`});

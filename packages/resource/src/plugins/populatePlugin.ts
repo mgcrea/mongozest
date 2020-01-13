@@ -3,7 +3,6 @@
 import JSON5 from 'json5';
 import createError from 'http-errors';
 import {get, pick, map, keyBy, mapValues, isString} from 'lodash';
-import {uniqWithObjectIds} from './../utils/objectId';
 // @types
 import {Resource} from '..';
 import {FilterQuery, FindOneOptions} from 'mongodb';

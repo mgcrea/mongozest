@@ -1,7 +1,5 @@
 import {find, isString, isUndefined} from 'lodash';
-import {log, inspect} from './../utils/logger';
-// @types
-import {Model} from '@mongozest/core';
+import {Model, log, inspect} from '@mongozest/core';
 
 // Handle schema defaults
 export default function schemaDefaultsPlugin(model: Model, {suffix = '_'} = {}) {
