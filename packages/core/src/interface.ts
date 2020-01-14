@@ -18,6 +18,7 @@ export default class MongoInterface<TSchema = any> {
   static defaultClientUri = DEFAULT_MONGODB_URI;
   static defaultClientOptions: MongoClientOptions = {
     loggerLevel: 'error',
+    useUnifiedTopology: true,
     useNewUrlParser: true
   };
   static create(uri: string = MongoInterface.defaultClientUri, options?: MongoClientOptions): MongoInterface {
