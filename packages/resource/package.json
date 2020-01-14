@@ -1,6 +1,6 @@
 {
   "name": "@mongozest/resource",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
@@ -15,8 +15,8 @@
   "author": "Olivier Louvignes <olivier@mgcrea.io>",
   "license": "MIT",
   "dependencies": {
-    "@mongozest/core": "0.2.1",
-    "@mongozest/hooks": "0.2.1",
+    "@mongozest/core": "0.2.2",
+    "@mongozest/hooks": "0.2.2",
     "express-async-handler": "^1.1.4",
     "http-errors": "^1.7.3",
     "json5": "^2.1.1",
