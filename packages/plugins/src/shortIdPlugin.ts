@@ -4,12 +4,13 @@ import {memoize, isEmpty} from 'lodash';
 import {Model, OperationMap} from '..';
 import {
   FindOneOptions,
+  FilterQuery,
   UpdateQuery,
   UpdateWriteOpResult,
   ReplaceOneOptions,
   ObjectId,
   CollectionInsertManyOptions,
-  CollectionInsertOneOptions
+  CollectionInsertOneOptions,
 } from 'mongodb';
 
 interface DocumentSchema {
@@ -21,7 +22,7 @@ export interface ShortIdPluginProps {
 }
 
 const isInclusiveProjection = (projection: {[s: string]: any}) =>
-  Object.keys(projection).some(key => projection[key] === 1);
+  Object.keys(projection).some((key) => projection[key] === 1);
 
 interface DocumentWithPluginProps extends DocumentSchema, ShortIdPluginProps {}
 
@@ -35,7 +36,7 @@ export default function shortIdPlugin<TSchema extends DocumentWithPluginProps>(
   {sidKey = '_sid', insertKeyOnTop = true}: ShortIdPluginOptions = {}
 ) {
   model.addSchemaProperties({
-    [sidKey]: {bsonType: 'string', minLength: 7, maxLength: 14, index: {unique: true}}
+    [sidKey]: {bsonType: 'string', minLength: 7, maxLength: 14, index: {unique: true}},
   });
   model.addStatics({
     findBySid: async (sid: string, options?: FindOneOptions): Promise<TSchema | null> => {
@@ -51,7 +52,7 @@ export default function shortIdPlugin<TSchema extends DocumentWithPluginProps>(
     lazyIdFromSid: memoize(async (sid: string) => {
       const doc = await model.findOne({[sidKey]: sid}, {projection: {_id: 1}});
       return doc ? doc._id : null;
-    })
+    }),
   });
 
   // Setup the generated key asap in the pipeline (eg. before defaults!)
@@ -76,16 +77,19 @@ export default function shortIdPlugin<TSchema extends DocumentWithPluginProps>(
         }
       }
     );
-    model.pre('replaceOne', (document: TSchema, _options: ReplaceOneOptions, operation: OperationMap) => {
-      if (document) {
-        operation.set('document', {[sidKey]: undefined, ...document});
+    model.pre(
+      'replaceOne',
+      (_filter: FilterQuery<TSchema>, document: TSchema, _options: ReplaceOneOptions, operation: OperationMap) => {
+        if (document) {
+          operation.set('document', {[sidKey]: undefined, ...document});
+        }
       }
-    });
+    );
     model.pre('replaceMany', (documents: TSchema[], _options: CollectionInsertManyOptions, operation: OperationMap) => {
       if (documents) {
         operation.set(
           'documents',
-          documents.map(document => (document ? {[sidKey]: undefined, ...document} : document))
+          documents.map((document) => (document ? {[sidKey]: undefined, ...document} : document))
         );
       }
     });
