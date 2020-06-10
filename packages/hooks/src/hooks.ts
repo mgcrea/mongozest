@@ -1,7 +1,8 @@
 export type HookCallback = (...args: unknown[]) => unknown;
 export type HookMap = Map<string, Array<HookCallback>>;
+export type AnyArgs = unknown[];
 
-interface State {
+export interface State {
   preHooks: HookMap;
   postHooks: HookMap;
 }
@@ -44,7 +45,7 @@ export default class Hooks {
     return hookMap.has(hookName);
   }
 
-  async exec(hookMap: HookMap, hookName: string, args: Array<unknown>) {
+  async exec<T extends AnyArgs>(hookMap: HookMap, hookName: string, args: T) {
     if (!hookMap.has(hookName)) {
       return [];
     }
@@ -59,7 +60,7 @@ export default class Hooks {
     }, Promise.resolve([]));
   }
 
-  execSync(hookMap: HookMap, hookName: string, args: Array<unknown>) {
+  execSync<T extends AnyArgs>(hookMap: HookMap, hookName: string, args: T) {
     if (!hookMap.has(hookName)) {
       return [];
     }
@@ -73,7 +74,7 @@ export default class Hooks {
     }, []);
   }
 
-  async execMany(hookMap: HookMap, hookNames: Array<string>, args: Array<unknown>) {
+  async execMany<T extends AnyArgs>(hookMap: HookMap, hookNames: Array<string>, args: T) {
     return await hookNames.reduce<Promise<unknown[]>>(async (promiseSoFar, hookName) => {
       const soFar = await promiseSoFar;
       const result = await this.exec(hookMap, hookName, args);
@@ -81,7 +82,7 @@ export default class Hooks {
     }, Promise.resolve([]));
   }
 
-  async execEach(hookMap: HookMap, hookName: string, arrayOfargs: Array<Array<unknown>>) {
+  async execEach<T extends AnyArgs[]>(hookMap: HookMap, hookName: string, arrayOfargs: T) {
     return await arrayOfargs.reduce<Promise<unknown[]>>(async (promiseSoFar, args) => {
       const soFar = await promiseSoFar;
       const result = await this.exec(hookMap, hookName, args);
@@ -89,43 +90,43 @@ export default class Hooks {
     }, Promise.resolve([]));
   }
 
-  async execPre(hookName: string, args: Array<unknown>) {
+  async execPre<T extends AnyArgs>(hookName: string, args: T) {
     const {preHooks: hookMap} = this.state;
-    return this.exec(hookMap, hookName, args);
+    return this.exec<T>(hookMap, hookName, args);
   }
 
-  async execPreSync(hookName: string, args: Array<unknown>) {
+  async execPreSync<T extends AnyArgs>(hookName: string, args: T) {
     const {preHooks: hookMap} = this.state;
-    return this.execSync(hookMap, hookName, args);
+    return this.execSync<T>(hookMap, hookName, args);
   }
 
-  async execManyPre(hookNames: Array<string>, args: Array<unknown>) {
+  async execManyPre<T extends AnyArgs>(hookNames: Array<string>, args: T) {
     const {preHooks: hookMap} = this.state;
-    return await this.execMany(hookMap, hookNames, args);
+    return await this.execMany<T>(hookMap, hookNames, args);
   }
 
-  async execEachPre(hookName: string, arrayOfargs: Array<Array<unknown>>) {
+  async execEachPre<T extends AnyArgs[]>(hookName: string, arrayOfargs: T) {
     const {preHooks: hookMap} = this.state;
-    return await this.execEach(hookMap, hookName, arrayOfargs);
+    return await this.execEach<T>(hookMap, hookName, arrayOfargs);
   }
 
-  async execPost(hookName: string, args: Array<unknown>) {
+  async execPost<T extends AnyArgs>(hookName: string, args: T) {
     const {postHooks: hookMap} = this.state;
-    return this.exec(hookMap, hookName, args);
+    return this.exec<T>(hookMap, hookName, args);
   }
 
-  async execPostSync(hookName: string, args: Array<unknown>) {
+  async execPostSync<T extends AnyArgs>(hookName: string, args: T) {
     const {postHooks: hookMap} = this.state;
-    return this.execSync(hookMap, hookName, args);
+    return this.execSync<T>(hookMap, hookName, args);
   }
 
-  async execManyPost(hookNames: Array<string>, args: Array<unknown>) {
+  async execManyPost<T extends AnyArgs>(hookNames: Array<string>, args: T) {
     const {postHooks: hookMap} = this.state;
-    return await this.execMany(hookMap, hookNames, args);
+    return await this.execMany<T>(hookMap, hookNames, args);
   }
 
-  async execEachPost(hookName: string, arrayOfargs: Array<Array<unknown>>) {
+  async execEachPost<T extends AnyArgs[]>(hookName: string, arrayOfargs: T) {
     const {postHooks: hookMap} = this.state;
-    return await this.execEach(hookMap, hookName, arrayOfargs);
+    return await this.execEach<T>(hookMap, hookName, arrayOfargs);
   }
 }

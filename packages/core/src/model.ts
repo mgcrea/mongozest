@@ -29,7 +29,7 @@ import {
   ReplaceWriteOpResult,
   UpdateManyOptions,
   UpdateQuery,
-  UpdateWriteOpResult
+  UpdateWriteOpResult,
 } from 'mongodb';
 import pluralize from 'pluralize';
 import byIdPlugin from './plugins/byIdPlugin';
@@ -38,14 +38,15 @@ import jsonSchemaPlugin from './plugins/jsonSchemaPlugin';
 import {JsonSchema, Schema, BaseSchema} from './schema';
 
 export type OperationMap = Map<string, any>;
-type Plugin<TSchema> = (model: Model<TSchema>, options?: {[s: string]: any}) => Promise<any> | any;
-const NS_PER_SEC = 1e9;
+type Plugin<TSchema extends BaseSchema> = (model: Model<TSchema>, options?: {[s: string]: any}) => Promise<any> | any;
+// const NS_PER_SEC = 1e9;
 
-export default class Model<TSchema = BaseSchema> {
+export default class Model<TSchema extends BaseSchema = BaseSchema> {
   static internalPrePlugins = [byIdPlugin];
   static internalPostPlugins = [jsonSchemaPlugin, debugPlugin];
 
   static readonly schema: object;
+  static readonly modelName: string;
   static readonly collectionName: string | null = null;
   static readonly collectionOptions: CollectionCreateOptions = {};
   static readonly plugins: Array<any> = [];
@@ -54,7 +55,7 @@ export default class Model<TSchema = BaseSchema> {
   public collectionOptions: CollectionCreateOptions = {};
   public schema: Schema<TSchema>;
   private plugins: Array<Plugin<TSchema>>;
-  private statics: Map<string, () => void> = new Map();
+  public statics: Map<string | number | symbol, Function> = new Map();
 
   public collection!: Collection<TSchema>;
   private hooks: Hooks = new Hooks();
@@ -143,7 +144,7 @@ export default class Model<TSchema = BaseSchema> {
     const {db, collectionName} = this;
     return await db.command({
       collMod: collectionName,
-      ...collectionOptions
+      ...collectionOptions,
     });
   }
   public async getCollectionInfo() {
@@ -170,8 +171,8 @@ export default class Model<TSchema = BaseSchema> {
 
   private async loadPlugins(this: Model<TSchema>) {
     const {plugins} = this;
-    const allPlugins = uniq([...Model.internalPrePlugins, ...plugins, ...Model.internalPostPlugins]);
-    allPlugins.forEach(pluginConfig => {
+    const allPlugins: Plugin<TSchema>[] = uniq([...Model.internalPrePlugins, ...plugins, ...Model.internalPostPlugins]);
+    allPlugins.forEach((pluginConfig) => {
       if (Array.isArray(pluginConfig)) {
         pluginConfig[0](this, pluginConfig[1]);
       } else {
@@ -180,8 +181,8 @@ export default class Model<TSchema = BaseSchema> {
     });
   }
 
-  addStatics(staticsMap: Record<string, () => void>): void {
-    Object.keys(staticsMap).forEach(key => this.statics.set(key, staticsMap[key]));
+  addStatics<T extends Function>(staticsMap: Record<string, T>): void {
+    Object.keys(staticsMap).forEach((key) => this.statics.set(key, staticsMap[key]));
   }
   addSchemaProperties(additionalProperties: Record<string, unknown>) {
     const {schema} = this;
