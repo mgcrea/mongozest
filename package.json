@@ -10,7 +10,7 @@
     "lint": "eslint --ext .ts,.tsx packages/*/src",
     "clean": "rm -rf node_modules; scripts/runPackages.sh --eval \"rm -rf node_modules\"",
     "build": "NODE_ENV=production scripts/runPackages.sh \"yarn build\"",
-    "publish": "scripts/runPackages.sh \"yarn publish --non-interactive --access public\"",
+    "publish": "scripts/runPackages.sh \"npm publish --non-interactive --access public\"",
     "website": "cd website; GIT_USER=mgcrea CURRENT_BRANCH=master USE_SSH=true yarn run publish-gh-pages; cd -",
     "version": "scripts/setVersion.sh"
   },
