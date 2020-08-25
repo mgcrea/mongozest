@@ -5,7 +5,7 @@
 // @docs https://github.com/aljazerzen/mongodb-typescript
 
 import Hooks, {HookCallback} from '@mongozest/hooks';
-import {cloneDeep, snakeCase, uniq} from 'lodash';
+import {cloneDeep, snakeCase, uniq, isPlainObject} from 'lodash';
 import {
   ClientSession,
   Collection,
@@ -29,23 +29,26 @@ import {
   ReplaceWriteOpResult,
   UpdateManyOptions,
   UpdateQuery,
-  UpdateWriteOpResult,
+  UpdateWriteOpResult
 } from 'mongodb';
 import pluralize from 'pluralize';
 import byIdPlugin from './plugins/byIdPlugin';
 import debugPlugin from './plugins/debugPlugin';
 import jsonSchemaPlugin from './plugins/jsonSchemaPlugin';
-import {JsonSchema, Schema, BaseSchema} from './schema';
+import {JsonSchema, Schema, BaseSchema, UnknownSchema} from './schema';
 
 export type OperationMap = Map<string, any>;
-type Plugin<TSchema extends BaseSchema> = (model: Model<TSchema>, options?: {[s: string]: any}) => Promise<any> | any;
+type Plugin<TSchema extends UnknownSchema> = (
+  model: Model<BaseSchema & TSchema>,
+  options?: Record<string, unknown>
+) => void;
 // const NS_PER_SEC = 1e9;
 
-export default class Model<TSchema extends BaseSchema = BaseSchema> {
+export default class Model<TSchema extends UnknownSchema = UnknownSchema> {
   static internalPrePlugins = [byIdPlugin];
   static internalPostPlugins = [jsonSchemaPlugin, debugPlugin];
 
-  static readonly schema: object;
+  static readonly schema: Record<string, unknown>;
   static readonly modelName: string;
   static readonly collectionName: string | null = null;
   static readonly collectionOptions: CollectionCreateOptions = {};
@@ -53,7 +56,7 @@ export default class Model<TSchema extends BaseSchema = BaseSchema> {
 
   public collectionName: string;
   public collectionOptions: CollectionCreateOptions = {};
-  public schema: Schema<TSchema>;
+  public schema: Schema<BaseSchema & TSchema>;
   private plugins: Array<Plugin<TSchema>>;
   public statics: Map<string | number | symbol, Function> = new Map();
 
@@ -70,7 +73,7 @@ export default class Model<TSchema extends BaseSchema = BaseSchema> {
 
   // Initialization
 
-  async initialize() {
+  async initialize(): Promise<void> {
     // Load plugins
     await this.loadPlugins();
     // PreHooks handling
@@ -98,16 +101,18 @@ export default class Model<TSchema extends BaseSchema = BaseSchema> {
       // Nested arrayItems case
       const hasNestedArrayItems = bsonType === 'array' && childItems;
       if (hasNestedArrayItems) {
-        const hasNestedArraySchemas = Array.isArray(childItems);
-        if (hasNestedArraySchemas) {
-          ((childItems as unknown) as Record<string, unknown>[]).forEach(
-            async (childItem: Record<string, unknown>, index: number) => {
-              await this.hooks.execPost('initialize:property', [childItem, `${currentPath}[${index}]`, {isLeaf: true}]);
-            }
-          );
-        }
-        const isNestedObjectInArray = childItems.bsonType === 'object' && childItems.properties;
-        if (isNestedObjectInArray) {
+        // const hasNestedArraySchemas = childItems && Array.isArray(childItems);
+        if (childItems && Array.isArray(childItems)) {
+          childItems.forEach(async (childItem: JsonSchema, index: number) => {
+            await this.hooks.execPost('initialize:property', [childItem, `${currentPath}[${index}]`, {isLeaf: true}]);
+          });
+          // isNestedObjectInArray
+        } else if (
+          childItems &&
+          isPlainObject(childItems) &&
+          childItems.bsonType === 'object' &&
+          childItems.properties
+        ) {
           await this.execPostPropertyHooks(childItems.properties, `${currentPath}[]`);
         } else {
           // Special array leaf case
@@ -124,6 +129,10 @@ export default class Model<TSchema extends BaseSchema = BaseSchema> {
 
   // Collection management
 
+  // @TODO fixme!
+  public loadModel<OSchema extends UnknownSchema = UnknownSchema>(): undefined | Model<OSchema> {
+    return;
+  }
   public async hasCollection(): Promise<boolean> {
     const {collectionName, db} = this;
     const collections = await db.listCollections({name: collectionName}, {nameOnly: true}).toArray();
@@ -144,10 +153,10 @@ export default class Model<TSchema extends BaseSchema = BaseSchema> {
     const {db, collectionName} = this;
     return await db.command({
       collMod: collectionName,
-      ...collectionOptions,
+      ...collectionOptions
     });
   }
-  public async getCollectionInfo() {
+  public async getCollectionInfo(): Promise<Record<string, unknown>> {
     const {collectionName, db} = this;
     const collections = await db.listCollections({name: collectionName}).toArray();
     if (collections.length < 1) {
@@ -155,7 +164,7 @@ export default class Model<TSchema extends BaseSchema = BaseSchema> {
     }
     return collections[0];
   }
-  get jsonSchema(): object {
+  get jsonSchema(): Record<string, unknown> {
     const {collectionOptions} = this;
     if (!collectionOptions.validator) {
       return {};
@@ -181,17 +190,17 @@ export default class Model<TSchema extends BaseSchema = BaseSchema> {
     });
   }
 
-  addStatics<T extends Function>(staticsMap: Record<string, T>): void {
+  addStatics(staticsMap: Record<string, Function>): void {
     Object.keys(staticsMap).forEach((key) => this.statics.set(key, staticsMap[key]));
   }
-  addSchemaProperties(additionalProperties: Record<string, unknown>) {
+  addSchemaProperties(additionalProperties: Record<string, unknown>): void {
     const {schema} = this;
     Object.assign(schema, additionalProperties);
   }
-  pre(hookName: string, callback: HookCallback) {
+  pre(hookName: string, callback: HookCallback): void {
     this.hooks.pre(hookName, callback);
   }
-  post(hookName: string, callback: HookCallback) {
+  post(hookName: string, callback: HookCallback): void {
     this.hooks.post(hookName, callback);
   }
 

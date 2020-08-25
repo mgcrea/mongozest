@@ -5,10 +5,10 @@ import assert from 'assert';
 import {Db as MongoDb, MongoClient, MongoClientOptions, ObjectId} from 'mongodb';
 import {parse} from 'url';
 import Model from './model';
-// import {BaseSchema} from './schema';
+import {UnknownSchema} from './schema';
 
-type ModelProxy = Model & {
-  otherModel: (modelName: string) => Model;
+type ModelProxy<TSchema extends UnknownSchema = UnknownSchema> = Model<TSchema> & {
+  otherModel: <OSchema extends UnknownSchema = UnknownSchema>(modelName: string) => Model<OSchema>;
   allModels: () => Map<string, Model>;
 };
 
@@ -75,7 +75,7 @@ export default class MongoInterface {
     assert(this.db, 'Missing db instance, please connect first');
     const model = new modelClass(this.db as MongoDb);
     const modelProxy = new Proxy(model, {
-      get: function(target, name, _receiver) {
+      get: function (target, name, _receiver) {
         // Skip proxy's constructor
         if (name === 'constructor') {
           return model.constructor;
@@ -100,10 +100,10 @@ export default class MongoInterface {
     await modelProxy.initialize();
     return modelProxy;
   }
-  public model(modelName: string): Model {
+  public model<OSchema extends UnknownSchema = UnknownSchema>(modelName: string): ModelProxy<OSchema> {
     if (!this.models.has(modelName)) {
       throw new Error(`model ${modelName} not loaded`);
     }
-    return this.models.get(modelName) as Model;
+    return (this.models.get(modelName) as unknown) as ModelProxy<OSchema>;
   }
 }

@@ -12,7 +12,7 @@ import {BaseSchema} from 'src/schema';
 
 type StringOrObjectId = string | ObjectId;
 
-export default function byIdPlugin<TSchema extends BaseSchema>(model: Model<TSchema>) {
+export default function byIdPlugin<TSchema extends BaseSchema>(model: Model<TSchema>): void {
   model.addStatics({
     findById: async (id: StringOrObjectId, options?: FindOneOptions): Promise<TSchema | null> => {
       return model.findOne({_id: new ObjectId(id)}, options);

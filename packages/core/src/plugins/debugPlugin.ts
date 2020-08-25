@@ -7,7 +7,7 @@ const IS_DEBUG = NODE_DEBUG === '1';
 
 type AggregatePipeline = Record<string, any>[];
 
-const leanOptions = options => {
+const leanOptions = (options) => {
   const {session, ...otherOptions} = options;
   if (session) {
     const {id} = session.id;

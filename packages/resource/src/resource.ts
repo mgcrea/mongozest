@@ -82,7 +82,7 @@ export default class Resource<TSchema> {
   private loadPlugins() {
     const {plugins} = this;
     const allPlugins = uniq([...Resource.internalPrePlugins, ...plugins, ...Resource.internalPostPlugins]);
-    allPlugins.forEach(pluginConfig => {
+    allPlugins.forEach((pluginConfig) => {
       if (Array.isArray(pluginConfig)) {
         pluginConfig[0](this, pluginConfig[1]);
       } else {
@@ -106,7 +106,7 @@ export default class Resource<TSchema> {
   }
   public addParams(paramsMap: {[k: string]: RequestParamResolver<TSchema>}) {
     const {params} = this;
-    Object.keys(paramsMap).forEach(key => params.set(key, paramsMap[key]));
+    Object.keys(paramsMap).forEach((key) => params.set(key, paramsMap[key]));
   }
   public getModelFromRequest(req: Request): Model<TSchema> {
     const {modelName} = this;
@@ -122,7 +122,7 @@ export default class Resource<TSchema> {
     const {router, paths, middleware} = this;
     this.hooks.execPreSync('buildRouter', [router, paths]);
     // params
-    paths.forEach(path => {
+    paths.forEach((path) => {
       const docPath = `${path}/:_id`;
       // startup
       if (middleware) {

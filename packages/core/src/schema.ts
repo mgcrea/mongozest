@@ -2,6 +2,7 @@ import {ObjectId} from 'mongodb';
 
 // @docs https://docs.mongodb.com/manual/reference/operator/query/jsonSchema/
 // @docs https://www.typescriptlang.org/docs/handbook/advanced-types.html
+// @docs https://github.com/DefinitelyTyped/DefinitelyTyped/blob/master/types/json-schema/index.d.ts
 
 export type BsonType =
   | 'double'
@@ -26,7 +27,6 @@ export type BsonType =
 export interface BaseSchema {
   _id: ObjectId;
 }
-
 export interface JsonSchema<TProp = unknown> {
   bsonType: BsonType;
   pattern?: string;
@@ -53,3 +53,4 @@ export interface JsonSchema<TProp> {
 
 export type SchemaProperties<TSchema> = {[s in keyof TSchema]: JsonSchema<TSchema[s]>};
 export type Schema<TSchema> = SchemaProperties<Partial<TSchema>>;
+export type UnknownSchema = SchemaProperties<Record<string, unknown>>;

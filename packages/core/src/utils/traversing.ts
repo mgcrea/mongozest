@@ -33,17 +33,14 @@ export const getPath = (object: Record<string, unknown>, path: string): string |
 };
 
 // @NOTE wtf about $ positional operator? and items.1 operator?
-export const mapPathValues = (object: Record<string, unknown>, path: string, callback: any) => {
+export const mapPathValues = (object: Record<string, unknown>, path: string, callback: any): void => {
   const arrayParts = path.split('[]');
   const isArrayPath = arrayParts.length === 1;
   // Get path before array as lodash won't handle it
   const pathBeforeArray = arrayParts[0];
   const foundPath = getPath(object, pathBeforeArray);
   // @NOTE recursive?
-  const remainingArrayPath = arrayParts
-    .slice(1)
-    .join('[]')
-    .substr(1);
+  const remainingArrayPath = arrayParts.slice(1).join('[]').substr(1);
   if (foundPath) {
     const valueAtPath = get(object, foundPath);
     if (isArrayPath) {
@@ -55,11 +52,11 @@ export const mapPathValues = (object: Record<string, unknown>, path: string, cal
         set(
           object,
           foundPath,
-          valueAtPath.map(itemValue => callback(itemValue))
+          valueAtPath.map((itemValue) => callback(itemValue))
         );
         return;
       }
-      valueAtPath.forEach(itemValue => {
+      valueAtPath.forEach((itemValue) => {
         mapPathValues(itemValue, remainingArrayPath, callback);
       });
     } else {
@@ -72,7 +69,7 @@ export const mapPathValues = (object: Record<string, unknown>, path: string, cal
     }
   }
   // @NOTE try to handle positional operators (eg. items.1.bar)
-  Object.keys(object).forEach(key => {
+  Object.keys(object).forEach((key) => {
     const positionalMatches = key.match(/(.+)\.([\d]+)(.*)/);
     const startsWithCurrentPath = positionalMatches && key.startsWith(`${pathBeforeArray}.`);
     if (!startsWithCurrentPath) {
@@ -82,7 +79,7 @@ export const mapPathValues = (object: Record<string, unknown>, path: string, cal
     if (!remainingArrayPath) {
       object[key] = callback(valueAtPath);
     } else {
-      mapPathValues(valueAtPath, remainingArrayPath, callback);
+      mapPathValues(valueAtPath as Record<string, unknown>, remainingArrayPath, callback);
     }
   });
 };
@@ -99,14 +96,11 @@ export const defaultPathValues = (object: any, path: string, callback: any) => {
   }
   const valueAtPath = get(object, currentPath);
   if (Array.isArray(valueAtPath)) {
-    const remainingPath = parts
-      .slice(1)
-      .join('[]')
-      .substr(1);
+    const remainingPath = parts.slice(1).join('[]').substr(1);
     if (!remainingPath) {
       return;
     }
-    valueAtPath.forEach(itemValue => {
+    valueAtPath.forEach((itemValue) => {
       defaultPathValues(itemValue, remainingPath, callback);
     });
   }

@@ -21,6 +21,7 @@ module.exports = {
     '@typescript-eslint/no-non-null-assertion': 'off',
     '@typescript-eslint/explicit-member-accessibility': 'off',
     '@typescript-eslint/no-inferrable-types': ['error', {ignoreParameters: true}],
+    '@typescript-eslint/ban-types': ['error', {types: {Function: false}}],
     // airbnb
     'no-unused-expressions': 'off',
     'no-use-before-define': 'off',
