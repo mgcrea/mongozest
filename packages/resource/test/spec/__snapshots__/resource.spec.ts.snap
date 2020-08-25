@@ -9,8 +9,8 @@ Array [
   "opTime",
   "electionId",
   "ok",
-  "operationTime",
   "$clusterTime",
+  "operationTime",
 ]
 `;
 
@@ -20,6 +20,15 @@ Object {
   "email": "john.doe@gmail.com",
   "firstName": "John",
   "lastName": "Doe",
+}
+`;
+
+exports[`Resource collection GET /users should support query 1`] = `
+Object {
+  "device": "1a1a836f1cf9087b520148df",
+  "email": "alice.garden@gmail.com",
+  "firstName": "Alice",
+  "lastName": "Garden",
 }
 `;
 
@@ -34,7 +43,7 @@ Object {
 
 exports[`Resource collection POST /users should return 400 when payload is invalid 1`] = `
 Object {
-  "error": "Document failed validation",
+  "error": "Document failed validation (db.users.insertOne)",
 }
 `;
 

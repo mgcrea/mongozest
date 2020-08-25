@@ -5,6 +5,7 @@ import {makeFetch} from 'supertest-fetch';
 import {breakdownMiddleware, createTestApp} from 'test/utils/app';
 import fixtures from 'test/utils/fixtures';
 import createResource, {Resource} from 'src/index';
+import {URLSearchParams} from 'url';
 
 const DB_NAME = getDbName(__filename);
 
@@ -60,6 +61,21 @@ describe('Resource', () => {
       it('should return 200', async () => {
         const {insertedId} = await insertFixture('User.mongozest');
         const res = await fetch(`/users`, {
+          method: 'get',
+          headers: {'Content-Type': 'application/json'}
+        })
+          .expect(200)
+          .expect('content-type', /^application\/json/);
+        const resBody = await res.json();
+        expect(Array.isArray(resBody)).toBeTruthy();
+        expect(resBody.length).toEqual(1);
+        expect(omit(resBody[0], '_id')).toMatchSnapshot();
+      });
+      it('should support query', async () => {
+        const {_id: firstId} = await insertFixture('User.mongozest');
+        const {_id: secondId} = await insertFixture('User.mongozest_2');
+        const url = `/users?${new URLSearchParams({filter: JSON.stringify({_id: secondId})})}`;
+        const res = await fetch(url, {
           method: 'get',
           headers: {'Content-Type': 'application/json'}
         })

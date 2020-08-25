@@ -5,7 +5,7 @@ import createError from 'http-errors';
 import {pick, mapValues, isString, isEmpty} from 'lodash';
 // @types
 import {Resource, OperationMap} from '..';
-import {CollectionInsertOneOptions, CommonOptions, FilterQuery, FindOneOptions, UpdateQuery} from 'mongodb';
+import {CollectionInsertOneOptions, CommonOptions, FilterQuery, FindOneOptions, UpdateQuery, ObjectId} from 'mongodb';
 import {Request} from 'express';
 
 // Handle schema defaults
@@ -35,6 +35,10 @@ export default function schemaProjectionPlugin<TSchema>(resource: Resource, {str
     const queryOptions = mapValues(mapValues(pick(req.query, whitelist), parseQueryParam), castQueryParam);
     // Apply filter
     if (queryOptions.filter) {
+      // Convert _id from string to ObjectId
+      if (queryOptions.filter._id) {
+        queryOptions.filter._id = new ObjectId(queryOptions.filter._id);
+      }
       operation.set(
         'filter',
         isEmpty(filter) ? Object.assign(filter, queryOptions.filter) : {$and: [filter, queryOptions.filter]}
