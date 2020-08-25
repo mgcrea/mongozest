@@ -19,7 +19,7 @@
     "@mongozest/core": "0.2.5",
     "chalk": "^4.1.0",
     "faker": "^4.1.0",
-    "lodash": "^4.17.15",
+    "lodash": "^4.17.19",
     "pluralize": "^8.0.0",
     "shortid": "^2.2.15"
   },
