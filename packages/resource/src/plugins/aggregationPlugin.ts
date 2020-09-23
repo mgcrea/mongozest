@@ -7,13 +7,13 @@ import {get, pick, map, keyBy, mapValues, isString, isEmpty} from 'lodash';
 import {asyncHandler} from 'src/utils/request';
 // @types
 import {Resource, OperationMap, AggregationPipeline} from '..';
-import {CollectionAggregationOptions} from 'mongodb';
+import {CollectionAggregationOptions, FilterQuery} from 'mongodb';
 import {Request, Response, Router} from 'express';
 
 export default function aggregationPlugin<TSchema>(
   resource: Resource<TSchema>,
   {strictJSON = false, pipelineParamName = 'pipeline', pathName = 'aggregate'} = {}
-) {
+): void {
   const parseQueryParam = (value: any, key: string) => {
     if (!isString(value) || !/^[\[\{]/.test(value)) {
       return value;
@@ -36,9 +36,11 @@ export default function aggregationPlugin<TSchema>(
   async function buildRequestPipeline(this: Resource<TSchema>, req: Request): Promise<AggregationPipeline> {
     // const model = this.getModelFromRequest(req);
     // const {ids, params} = this;
+    const filter: FilterQuery<TSchema> = await this.buildRequestFilter(req);
     const whitelist = [pipelineParamName];
     const queryOptions = mapValues(mapValues(pick(req.query, whitelist), parseQueryParam), castQueryParam);
-    return queryOptions[pipelineParamName] || [];
+    const queryPipeline = queryOptions[pipelineParamName] || [];
+    return !isEmpty(filter) ? [{$match: filter}].concat(queryPipeline) : queryPipeline;
   }
 
   // resource.pre(
