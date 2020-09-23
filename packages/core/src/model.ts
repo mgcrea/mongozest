@@ -38,15 +38,15 @@ import jsonSchemaPlugin from './plugins/jsonSchemaPlugin';
 import {JsonSchema, Schema, BaseSchema, UnknownSchema} from './schema';
 
 export type OperationMap = Map<string, any>;
-type Plugin<TSchema extends UnknownSchema> = (
-  model: Model<BaseSchema & TSchema>,
+type Plugin<TSchema extends BaseSchema = BaseSchema> = (
+  model: Model<TSchema>,
   options?: Record<string, unknown>
 ) => void;
 // const NS_PER_SEC = 1e9;
 
-export default class Model<TSchema extends UnknownSchema = UnknownSchema> {
-  static internalPrePlugins = [byIdPlugin];
-  static internalPostPlugins = [jsonSchemaPlugin, debugPlugin];
+export default class Model<TSchema extends BaseSchema = BaseSchema> {
+  static internalPrePlugins: Plugin[] = [byIdPlugin];
+  static internalPostPlugins: Plugin[] = [jsonSchemaPlugin, debugPlugin];
 
   static readonly schema: Record<string, unknown>;
   static readonly modelName: string;
@@ -130,7 +130,7 @@ export default class Model<TSchema extends UnknownSchema = UnknownSchema> {
   // Collection management
 
   // @TODO fixme!
-  public loadModel<OSchema extends UnknownSchema = UnknownSchema>(): undefined | Model<OSchema> {
+  public loadModel<OSchema extends BaseSchema = BaseSchema>(): undefined | Model<OSchema> {
     return;
   }
   public async hasCollection(): Promise<boolean> {
@@ -403,7 +403,7 @@ export default class Model<TSchema extends UnknownSchema = UnknownSchema> {
   async findOneAndUpdate(
     filter: FilterQuery<TSchema>,
     update: UpdateQuery<TSchema>, // | TSchema
-    options: FindOneAndReplaceOption = {}
+    options: FindOneAndReplaceOption<TSchema> = {}
   ): Promise<FindAndModifyWriteOpResultObject<TSchema>> {
     // Prepare operation params
     const operation: OperationMap = new Map([['method', 'findOneAndUpdate']]);
@@ -435,7 +435,11 @@ export default class Model<TSchema extends UnknownSchema = UnknownSchema> {
   }
 
   // @docs http://mongodb.github.io/node-mongodb-native/3.1/api/Collection.html#findOne
-  async findOne(query: FilterQuery<TSchema>, options: FindOneOptions = {}): Promise<TSchema | null> {
+  // findOne<T = TSchema>(filter: FilterQuery<TSchema>, options?: FindOneOptions<T extends TSchema ? TSchema : T>): Promise<T | null>;
+  async findOne<T = TSchema>(
+    query: FilterQuery<TSchema>,
+    options: FindOneOptions<T extends TSchema ? TSchema : T> = {}
+  ): Promise<T | null> {
     // Prepare operation params
     const operation: OperationMap = new Map([['method', 'findOne']]);
     // Execute preHooks
@@ -445,11 +449,14 @@ export default class Model<TSchema extends UnknownSchema = UnknownSchema> {
     operation.set('result', result);
     // Execute postHooks
     await this.hooks.execManyPost(['find', 'findOne'], [query, options, operation]);
-    return operation.get('result') as TSchema;
+    return operation.get('result') as T;
   }
 
   // @docs http://mongodb.github.io/node-mongodb-native/3.1/api/Collection.html#find
-  async find(query: FilterQuery<TSchema>, options: FindOneOptions = {}): Promise<Array<TSchema>> {
+  async find<T = TSchema>(
+    query: FilterQuery<TSchema>,
+    options: FindOneOptions<T extends TSchema ? TSchema : T> = {}
+  ): Promise<Array<T>> {
     // PreHooks handling
     const operation: OperationMap = new Map([['method', 'find']]);
     await this.hooks.execManyPre(['find', 'findMany'], [query, options, operation]);
@@ -466,7 +473,7 @@ export default class Model<TSchema extends UnknownSchema = UnknownSchema> {
     // d({elapsed: `${elapsed.toPrecision(3)}ms`});
     await this.hooks.execEachPost('find', eachPostArgs);
     await this.hooks.execPost('findMany', [query, options, operation]);
-    return operation.get('result') as Array<TSchema>;
+    return operation.get('result') as Array<T>;
   }
 
   // @docs http://mongodb.github.io/node-mongodb-native/3.1/api/Collection.html#deleteOne
