@@ -9,7 +9,7 @@ import {asyncHandler, parseBodyAsUpdate} from './utils/request';
 import queryPlugin from './plugins/queryPlugin';
 import populatePlugin from './plugins/populatePlugin';
 import createError from 'http-errors';
-import {Model} from '@mongozest/core';
+import {BaseSchema, Model} from '@mongozest/core';
 import {Request, RequestHandler, Response, Router} from 'express';
 import {
   CollectionInsertOneOptions,
@@ -41,7 +41,7 @@ const assertScopedFilter = <TSchema>(filter: FilterQuery<TSchema>) => {
   assert(filter && Object.keys(filter).length, 'Invalid filter');
 };
 
-export default class Resource<TSchema> {
+export default class Resource<TSchema extends BaseSchema> {
   static internalPrePlugins = [queryPlugin, populatePlugin, aggregationPlugin];
   static internalPostPlugins = [];
 
@@ -58,7 +58,7 @@ export default class Resource<TSchema> {
   private paths: Array<string>;
   public hooks: Hooks = new Hooks();
 
-  static create(modelName: string, options?: any) {
+  static create<USchema extends BaseSchema>(modelName: string, options?: ResourceOptions): Resource<USchema> {
     return new Resource(modelName, options);
   }
 
@@ -91,20 +91,20 @@ export default class Resource<TSchema> {
     });
   }
 
-  public pre(hookName: string, callback: HookCallback) {
+  public pre(hookName: string, callback: HookCallback): void {
     this.hooks.pre(hookName, callback);
   }
-  public post(hookName: string, callback: HookCallback) {
+  public post(hookName: string, callback: HookCallback): void {
     this.hooks.post(hookName, callback);
   }
 
   // urlParams -> queryFilter
 
-  public addIdentifierHandler(check: RequestParamChecker, resolve: RequestParamResolver<TSchema>) {
+  public addIdentifierHandler(check: RequestParamChecker, resolve: RequestParamResolver<TSchema>): void {
     const {ids} = this;
     ids.set(check, resolve);
   }
-  public addParams(paramsMap: {[k: string]: RequestParamResolver<TSchema>}) {
+  public addParams(paramsMap: {[k: string]: RequestParamResolver<TSchema>}): void {
     const {params} = this;
     Object.keys(paramsMap).forEach((key) => params.set(key, paramsMap[key]));
   }
@@ -113,12 +113,12 @@ export default class Resource<TSchema> {
     return req.app.locals.mongo.model(modelName);
   }
 
-  build() {
+  build(): Router {
     // console.warn('resource.build() is deprecated, please use resource.buildRouter() instead.');
     return this.buildRouter();
   }
 
-  buildRouter() {
+  buildRouter(): Router {
     const {router, paths, middleware} = this;
     this.hooks.execPreSync('buildRouter', [router, paths]);
     // params
@@ -151,12 +151,15 @@ export default class Resource<TSchema> {
 
   async buildRequestFilter(req: Request): Promise<FilterQuery<TSchema>> {
     const model = this.getModelFromRequest(req);
-    const {ids, params} = this;
-    return await Object.keys(req.params).reduce(async (promiseSoFar, key) => {
+    const {ids, params: configParams} = this;
+    const {params: reqParams, extraParams: reqExtraParams = {}} = req;
+    const allParams = Object.assign(reqParams, reqExtraParams);
+    return await Object.keys(allParams).reduce(async (promiseSoFar, key) => {
       const soFar = await promiseSoFar;
+      const value = allParams[key];
       const isIdentifier = key === '_id';
-      const value = req.params[key];
       if (isIdentifier) {
+        // Special case to handle several ids
         ids.forEach((resolve, test) => {
           if (test(value)) {
             try {
@@ -166,8 +169,9 @@ export default class Resource<TSchema> {
             }
           }
         });
-      } else if (params.has(key)) {
-        const resolve = params.get(key);
+      } else if (configParams.has(key)) {
+        // Params defined through options
+        const resolve = configParams.get(key);
         if (resolve) {
           try {
             Object.assign(soFar, await resolve(value, model));
@@ -175,16 +179,19 @@ export default class Resource<TSchema> {
             throw createError(400, 'Invalid url parameter');
           }
         }
+      } else if (reqExtraParams[key]) {
+        // Raw extra params
+        Object.assign(soFar, {[key]: value});
       }
       return soFar;
     }, Promise.resolve({}));
   }
 
-  async getCollection(req: Request, res: Response) {
+  async getCollection(req: Request, res: Response): Promise<void> {
     const model = this.getModelFromRequest(req);
     // Prepare operation params
     const filter: FilterQuery<TSchema> = await this.buildRequestFilter(req);
-    const options: FindOneOptions = {};
+    const options: FindOneOptions<TSchema> = {};
     const operation: OperationMap = new Map<string, unknown>([
       ['method', 'getCollection'],
       ['scope', 'collection'],
@@ -201,7 +208,7 @@ export default class Resource<TSchema> {
     res.json(operation.get('result'));
   }
 
-  async postCollection(req: Request, res: Response) {
+  async postCollection(req: Request, res: Response): Promise<void> {
     const model = this.getModelFromRequest(req);
     // Prepare operation params
     const document: TSchema = req.body;
@@ -221,7 +228,7 @@ export default class Resource<TSchema> {
     res.json(operation.get('result'));
   }
 
-  async patchCollection(req: Request, res: Response) {
+  async patchCollection(req: Request, res: Response): Promise<void> {
     const model = this.getModelFromRequest(req);
     // Prepare operation params
     const filter: FilterQuery<TSchema> = await this.buildRequestFilter(req);
@@ -244,7 +251,7 @@ export default class Resource<TSchema> {
     res.json(operation.get('result'));
   }
 
-  async deleteCollection(req: Request, res: Response) {
+  async deleteCollection(req: Request, res: Response): Promise<void> {
     const model = this.getModelFromRequest(req);
     // Prepare operation params
     const filter: FilterQuery<TSchema> = await this.buildRequestFilter(req);
@@ -265,12 +272,12 @@ export default class Resource<TSchema> {
     res.json(operation.get('result'));
   }
 
-  async getDocument(req: Request, res: Response) {
+  async getDocument(req: Request, res: Response): Promise<void> {
     const model = this.getModelFromRequest(req);
     // Prepare operation params
     const filter: FilterQuery<TSchema> = await this.buildRequestFilter(req);
     assertScopedFilter(filter);
-    const options: FindOneOptions = {};
+    const options: FindOneOptions<TSchema> = {};
     const operation: OperationMap = new Map<string, unknown>([
       ['method', 'getDocument'],
       ['scope', 'document'],
@@ -290,13 +297,13 @@ export default class Resource<TSchema> {
     res.json(operation.get('result'));
   }
 
-  async patchDocument(req: Request, res: Response) {
+  async patchDocument(req: Request, res: Response): Promise<void> {
     const model = this.getModelFromRequest(req);
     // Prepare operation params
     const filter: FilterQuery<TSchema> = await this.buildRequestFilter(req);
     assertScopedFilter(filter);
     const update: UpdateQuery<TSchema> = parseBodyAsUpdate(req.body);
-    const options: FindOneAndReplaceOption = {returnOriginal: false};
+    const options: FindOneAndReplaceOption<TSchema> = {returnOriginal: false};
     const operation: OperationMap = new Map<string, unknown>([
       ['method', 'patchDocument'],
       ['scope', 'document'],
@@ -316,7 +323,7 @@ export default class Resource<TSchema> {
     res.json(operation.get('result'));
   }
 
-  async deleteDocument(req: Request, res: Response) {
+  async deleteDocument(req: Request, res: Response): Promise<void> {
     const model = this.getModelFromRequest(req);
     // Prepare operation params
     const filter: FilterQuery<TSchema> = await this.buildRequestFilter(req);

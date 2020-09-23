@@ -1,7 +1,7 @@
 // @docs https://docs.mongodb.com/manual/reference/operator/query/type/#document-type-available-types
 
 import {isString, toString, lowerCase, upperFirst, startCase, isUndefined} from 'lodash';
-import {Model, mapPathValues} from '@mongozest/core';
+import {Model, mapPathValues, BaseSchema} from '@mongozest/core';
 import {FilterQuery, UpdateQuery} from 'mongodb';
 
 // @docs https://docs.mongodb.com/manual/reference/bson-types/
@@ -23,7 +23,7 @@ const transformCase = (value: any, caseTransformConfig: string[]) => {
 };
 
 // Helper recursively parsing schema to find path where values should be casted
-export default function caseTransformPlugin<TSchema>(model: Model) {
+export default function caseTransformPlugin<TSchema extends BaseSchema>(model: Model): void {
   const caseTransformProperties = new Map<string, string[]>();
   model.post('initialize:property', (property: {[s: string]: any}, path: string) => {
     if (isString(property) || isUndefined(property.caseTransform)) {
@@ -43,7 +43,7 @@ export default function caseTransformPlugin<TSchema>(model: Model) {
     });
   });
   // Handle insert
-  model.pre('insert', (doc: T) => {
+  model.pre('insert', (doc: TSchema) => {
     caseTransformProperties.forEach((caseTransformConfig, path) => {
       mapPathValues(doc, path, (value: any) => transformCase(value, caseTransformConfig));
     });

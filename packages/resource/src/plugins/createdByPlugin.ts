@@ -5,13 +5,14 @@
 import {Resource, OperationMap} from '..';
 import {Request} from 'express';
 import {CollectionInsertOneOptions, CommonOptions, FilterQuery, FindOneOptions, UpdateQuery} from 'mongodb';
+import {BaseSchema} from '@mongozest/core';
 
 // Handle schema defaults
-export default function schemaProjectionPlugin<TSchema>(
+export default function schemaProjectionPlugin<TSchema extends BaseSchema>(
   resource: Resource<TSchema>,
   {idKey = '_id', createdByKey = 'createdBy', updatedByKey = 'updatedBy'} = {}
-) {
-  resource.pre('postCollection', (document: TSchema, options: CollectionInsertOneOptions, operation: OperationMap) => {
+): void {
+  resource.pre('postCollection', (document: TSchema, _options: CollectionInsertOneOptions, operation: OperationMap) => {
     const req: Request = operation.get('request');
     if (req.user && req.user[idKey]) {
       document[createdByKey] = req.user[idKey];
@@ -20,7 +21,7 @@ export default function schemaProjectionPlugin<TSchema>(
   });
   resource.pre(
     'patchCollection',
-    (filter: FilterQuery<TSchema>, update: UpdateQuery<TSchema>, options: CommonOptions, operation: OperationMap) => {
+    (_filter: FilterQuery<TSchema>, update: UpdateQuery<TSchema>, _options: CommonOptions, operation: OperationMap) => {
       const req: Request = operation.get('request');
       if (req.user && req.user[idKey]) {
         if (!update.$set) {

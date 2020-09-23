@@ -1,4 +1,5 @@
 import {ObjectId} from 'mongodb';
+import Model from './model';
 
 // @docs https://docs.mongodb.com/manual/reference/operator/query/jsonSchema/
 // @docs https://www.typescriptlang.org/docs/handbook/advanced-types.html
@@ -24,10 +25,11 @@ export type BsonType =
   | 'minKey'
   | 'maxKey';
 
-export interface BaseSchema {
+export interface BaseSchema extends Record<string, unknown> {
   _id: ObjectId;
 }
-export interface JsonSchema<TProp = unknown> {
+// export type BaseSchema extends object = {_id: ObjectId};
+export interface JsonSchemaProperty<TProp = unknown> {
   bsonType: BsonType;
   pattern?: string;
   enum?: Array<TProp>;
@@ -39,18 +41,23 @@ export interface JsonSchema<TProp = unknown> {
   minimum?: number;
   maximum?: number;
   items?: TProp extends Array<infer UProp>
-    ? JsonSchema<UProp> | Array<JsonSchema<UProp>>
-    : JsonSchema<TProp> | Array<JsonSchema<TProp>>;
+    ? JsonSchemaProperty<UProp> | Array<JsonSchemaProperty<UProp>>
+    : JsonSchemaProperty<TProp> | Array<JsonSchemaProperty<TProp>>;
   additionalProperties?: boolean;
-  properties?: SchemaProperties<TProp>;
+  properties?: JsonSchemaProperties<TProp>;
 }
-export interface JsonSchema<TProp> {
+// test plugin extension
+export interface JsonSchemaProperty<TProp> {
   default?: TProp | string | (() => TProp | any);
 }
-export interface JsonSchema<TProp> {
+export interface JsonSchemaProperty<TProp> {
   ref?: string;
 }
+export type JsonSchemaProperties<TSchema> = {[s in keyof TSchema]: JsonSchemaProperty<TSchema[s]>};
+// export type Schema<TSchema> = JsonSchemaProperties<Partial<TSchema>>;
+// export type UnknownSchema = JsonSchemaProperties<Record<string, unknown>>;
 
-export type SchemaProperties<TSchema> = {[s in keyof TSchema]: JsonSchema<TSchema[s]>};
-export type Schema<TSchema> = SchemaProperties<Partial<TSchema>>;
-export type UnknownSchema = SchemaProperties<Record<string, unknown>>;
+export type SchemaPlugin<TSchema extends BaseSchema = BaseSchema> = (
+  model: Model<TSchema>,
+  options?: Record<string, unknown>
+) => void;
