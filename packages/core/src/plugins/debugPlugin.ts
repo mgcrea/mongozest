@@ -137,7 +137,11 @@ export default function debugPlugin<TSchema>(model: Model, options) {
       const docs = operation.get('result');
       const diff = process.hrtime(operation.get(hrtimeSymbol));
       const elapsed = (diff[0] * NS_PER_SEC + diff[1]) / 1e6;
-      log(`${inspect(docs.length)}-document(s) returned in ${inspect(elapsed.toPrecision(3) * 1)}ms`);
+      log(
+        `db.${collectionName}.aggregate: ${inspect(docs.length)}-document(s) returned in ${inspect(
+          elapsed.toPrecision(3) * 1
+        )}ms`
+      );
     }
   );
   model.pre('findMany', (query: FilterQuery<TSchema>, options: FindOneOptions, operation: OperationMap) => {
@@ -166,4 +170,24 @@ export default function debugPlugin<TSchema>(model: Model, options) {
       )}ms`
     );
   });
+
+  model.pre(
+    'aggregate',
+    (pipeline: Array<Record<string, unknown>>, options: CollectionAggregationOptions, operation: OperationMap) => {
+      operation.set(hrtimeSymbol, process.hrtime());
+    }
+  );
+  model.post(
+    'aggregate',
+    (pipeline: Array<Record<string, unknown>>, options: CollectionAggregationOptions, operation: OperationMap) => {
+      const doc = operation.get('result');
+      const diff = process.hrtime(operation.get(hrtimeSymbol));
+      const elapsed = (diff[0] * NS_PER_SEC + diff[1]) / 1e6;
+      log(
+        `db.${collectionName}.aggregate: ${chalkNumber(doc ? '1' : '0')}-result(s) returned in ${chalkNumber(
+          elapsed.toPrecision(3)
+        )}ms`
+      );
+    }
+  );
 }
