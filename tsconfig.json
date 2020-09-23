@@ -16,5 +16,6 @@
     "emitDeclarationOnly": true,
     "jsx": "react"
   },
-  "include": ["packages/", "test/"]
+  "include": ["babel.config.js", "packages/*/src"],
+  "exclude": ["node_modules", "**/*.spec.ts"]
 }
