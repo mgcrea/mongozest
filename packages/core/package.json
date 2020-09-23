@@ -1,6 +1,6 @@
 {
   "name": "@mongozest/core",
-  "version": "0.2.6",
+  "version": "0.2.7",
   "description": "",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
@@ -16,7 +16,7 @@
   "license": "MIT",
   "dependencies": {
     "@babel/runtime": "^7.11.2",
-    "@mongozest/hooks": "0.2.6",
+    "@mongozest/hooks": "0.2.7",
     "chalk": "^4.1.0",
     "faker": "^5.1.0",
     "lodash": "^4.17.20",
