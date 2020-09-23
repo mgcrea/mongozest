@@ -1,6 +1,6 @@
 {
   "name": "@mongozest/resource",
-  "version": "0.2.5",
+  "version": "0.2.6",
   "description": "",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
@@ -16,8 +16,8 @@
   "license": "MIT",
   "dependencies": {
     "@babel/runtime": "^7.11.2",
-    "@mongozest/core": "0.2.5",
-    "@mongozest/hooks": "0.2.5",
+    "@mongozest/core": "0.2.6",
+    "@mongozest/hooks": "0.2.6",
     "express-async-handler": "^1.1.4",
     "http-errors": "^1.8.0",
     "json5": "^2.1.3",
