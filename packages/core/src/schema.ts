@@ -40,11 +40,12 @@ export interface JsonSchemaProperty<TProp = unknown> {
   maxProperties?: number;
   minimum?: number;
   maximum?: number;
-  items?: TProp extends Array<infer UProp>
-    ? JsonSchemaProperty<UProp> | Array<JsonSchemaProperty<UProp>>
-    : JsonSchemaProperty<TProp> | Array<JsonSchemaProperty<TProp>>;
+  items?: TProp extends Array<infer UProp> ? JsonSchemaProperty<UProp> : JsonSchemaProperty<unknown>;
+  // items?: TProp extends Array<infer UProp>
+  //   ? JsonSchemaProperty<UProp> | Array<JsonSchemaProperty<UProp>>
+  //   : JsonSchemaProperty<TProp> | Array<JsonSchemaProperty<TProp>>;
   additionalProperties?: boolean;
-  properties?: JsonSchemaProperties<TProp>;
+  properties?: TProp extends Record<string, infer UProp> ? JsonSchemaProperties<UProp> : JsonSchemaProperties<unknown>;
 }
 // test plugin extension
 export interface JsonSchemaProperty<TProp> {
@@ -54,6 +55,7 @@ export interface JsonSchemaProperty<TProp> {
   ref?: string;
 }
 export type JsonSchemaProperties<TSchema> = {[s in keyof TSchema]: JsonSchemaProperty<TSchema[s]>};
+export type JsonSchema<TSchema> = JsonSchemaProperties<TSchema>;
 // export type Schema<TSchema> = JsonSchemaProperties<Partial<TSchema>>;
 // export type UnknownSchema = JsonSchemaProperties<Record<string, unknown>>;
 

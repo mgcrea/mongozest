@@ -5,7 +5,7 @@
 // @docs https://github.com/aljazerzen/mongodb-typescript
 
 import Hooks, {HookCallback} from '@mongozest/hooks';
-import {cloneDeep, snakeCase, uniq, isPlainObject} from 'lodash';
+import {cloneDeep, isPlainObject, snakeCase, uniq} from 'lodash';
 import {
   ClientSession,
   Collection,
@@ -35,7 +35,7 @@ import pluralize from 'pluralize';
 import byIdPlugin from './plugins/byIdPlugin';
 import debugPlugin from './plugins/debugPlugin';
 import jsonSchemaPlugin from './plugins/jsonSchemaPlugin';
-import {JsonSchema, Schema, BaseSchema, UnknownSchema} from './schema';
+import {BaseSchema, JsonSchema, JsonSchemaProperties} from './schema';
 
 export type OperationMap = Map<string, any>;
 type Plugin<TSchema extends BaseSchema = BaseSchema> = (
@@ -56,8 +56,8 @@ export default class Model<TSchema extends BaseSchema = BaseSchema> {
 
   public collectionName: string;
   public collectionOptions: CollectionCreateOptions = {};
-  public schema: Schema<BaseSchema & TSchema>;
-  private plugins: Array<Plugin<TSchema>>;
+  public schema: JsonSchema<TSchema>;
+  private plugins: Plugin<TSchema>[];
   public statics: Map<string | number | symbol, Function> = new Map();
 
   public collection!: Collection<TSchema>;
@@ -88,22 +88,25 @@ export default class Model<TSchema extends BaseSchema = BaseSchema> {
   }
 
   // Helper recursively parsing schema
-  private async execPostPropertyHooks(properties: Record<string, JsonSchema>, prevPath: string = ''): Promise<void> {
+  private async execPostPropertyHooks<USchema = TSchema>(
+    properties: JsonSchemaProperties<USchema>,
+    prevPath: string = ''
+  ): Promise<void> {
     return Object.keys(properties).reduce(async (promiseSoFar, key) => {
       const soFar = await promiseSoFar;
       const currentPath = prevPath ? `${prevPath}.${key}` : key;
-      const {bsonType, properties: childProperties, items: childItems} = properties[key];
+      const {bsonType, properties: childProperties, items: childItems} = properties[key as keyof USchema];
       // Nested object case
-      const isNestedObject = bsonType === 'object' && childProperties;
-      if (isNestedObject) {
-        await this.execPostPropertyHooks(childProperties as Record<string, JsonSchema<unknown>>, currentPath);
+      const isNestedObject = bsonType === 'object';
+      if (childProperties && isNestedObject) {
+        await this.execPostPropertyHooks<unknown>(childProperties, currentPath);
       }
       // Nested arrayItems case
       const hasNestedArrayItems = bsonType === 'array' && childItems;
       if (hasNestedArrayItems) {
         // const hasNestedArraySchemas = childItems && Array.isArray(childItems);
         if (childItems && Array.isArray(childItems)) {
-          childItems.forEach(async (childItem: JsonSchema, index: number) => {
+          childItems.forEach(async (childItem, index: number) => {
             await this.hooks.execPost('initialize:property', [childItem, `${currentPath}[${index}]`, {isLeaf: true}]);
           });
           // isNestedObjectInArray
@@ -113,7 +116,7 @@ export default class Model<TSchema extends BaseSchema = BaseSchema> {
           childItems.bsonType === 'object' &&
           childItems.properties
         ) {
-          await this.execPostPropertyHooks(childItems.properties, `${currentPath}[]`);
+          await this.execPostPropertyHooks<unknown>(childItems.properties, `${currentPath}[]`);
         } else {
           // Special array leaf case
           await this.hooks.execPost('initialize:property', [childItems, `${currentPath}[]`, {isLeaf: true}]);
@@ -122,7 +125,7 @@ export default class Model<TSchema extends BaseSchema = BaseSchema> {
       }
       // Generic leaf case
       const isLeaf = !isNestedObject && !hasNestedArrayItems;
-      await this.hooks.execPost('initialize:property', [properties[key], currentPath, {isLeaf}]);
+      await this.hooks.execPost('initialize:property', [properties[key as keyof USchema], currentPath, {isLeaf}]);
       return soFar;
     }, Promise.resolve());
   }
@@ -180,7 +183,12 @@ export default class Model<TSchema extends BaseSchema = BaseSchema> {
 
   private async loadPlugins(this: Model<TSchema>) {
     const {plugins} = this;
-    const allPlugins: Plugin<TSchema>[] = uniq([...Model.internalPrePlugins, ...plugins, ...Model.internalPostPlugins]);
+    const allPlugins: Plugin<TSchema>[] = uniq([
+      ...((Model.internalPrePlugins as unknown) as Plugin<TSchema>[]),
+      ...plugins,
+      ...((Model.internalPostPlugins as unknown) as Plugin<TSchema>[])
+    ]);
+    // d({name: this.collectionName, allPlugins});
     allPlugins.forEach((pluginConfig) => {
       if (Array.isArray(pluginConfig)) {
         pluginConfig[0](this, pluginConfig[1]);
@@ -429,7 +437,7 @@ export default class Model<TSchema extends BaseSchema = BaseSchema> {
     }
     operation.set('result', result);
     // Execute postHooks
-    // await this.hooks.execManyPost(['find', 'findOne'], [filter, options, operation]); // @NOTE should fix: operation.get('result').value
+    await this.hooks.execManyPost(['find', 'findOne'], [filter, options, operation]);
     await this.hooks.execManyPost(['update', 'updateOne', 'findOneAndUpdate'], [filter, update, options, operation]);
     return operation.get('result') as FindAndModifyWriteOpResultObject<TSchema>;
   }
@@ -465,12 +473,11 @@ export default class Model<TSchema extends BaseSchema = BaseSchema> {
     operation.set('result', result);
     // Execute postHooks
     // const pre = process.hrtime();
-    const eachPostArgs = result.reduce((soFar: Array<unknown>, document: TSchema) => {
+    const eachPostArgs = result.reduce<Array<[typeof query, typeof options, OperationMap]>>((soFar, document) => {
       return soFar.concat([[query, options, new Map([...operation, ['result', document]])]]);
-    }, []) as unknown[][];
+    }, []);
     // const diff = process.hrtime(pre);
     // const elapsed = (diff[0] * NS_PER_SEC + diff[1]) / 1e6;
-    // d({elapsed: `${elapsed.toPrecision(3)}ms`});
     await this.hooks.execEachPost('find', eachPostArgs);
     await this.hooks.execPost('findMany', [query, options, operation]);
     return operation.get('result') as Array<T>;

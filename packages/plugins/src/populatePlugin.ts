@@ -13,7 +13,7 @@ interface FindOneOptions {
 
 // @NOTE hybrid projection is allowed with _id field
 const isExcludingProjection = (projection: {[s: string]: any}) =>
-  Object.keys(projection).some(key => key !== '_id' && !projection[key]);
+  Object.keys(projection).some((key) => key !== '_id' && !projection[key]);
 
 // Helper recursively parsing schema to find path where values should be casted
 export default function autoCastingPlugin<TSchema>(model: Model<TSchema>) {
@@ -33,7 +33,7 @@ export default function autoCastingPlugin<TSchema>(model: Model<TSchema>) {
     if (!projection || isEmpty(projection) || isExcludingProjection(projection)) {
       return;
     }
-    Object.keys(population).forEach(key => {
+    Object.keys(population).forEach((key) => {
       if (get(projection, key) !== 1) {
         set(projection, key, 1);
       }
@@ -59,12 +59,12 @@ export default function autoCastingPlugin<TSchema>(model: Model<TSchema>) {
       const resolvedChildrenMap = keyBy(resolvedChildren, '_id');
       // Tweak references to exclude _ids
       if (childProjectionExcludesIds) {
-        resolvedChildren.forEach(resolvedChild => {
+        resolvedChildren.forEach((resolvedChild) => {
           delete resolvedChild._id;
         });
       }
       // Actually populate
-      result.map(doc => {
+      result.map((doc) => {
         if (doc[key]) {
           doc[key] = resolvedChildrenMap[doc[key].toString()] || null;
         }
@@ -100,7 +100,7 @@ export default function autoCastingPlugin<TSchema>(model: Model<TSchema>) {
       // Tweak references to exclude _ids
       if (childProjectionExcludesIds) {
         if (isArrayValue && Array.isArray(resolvedChildren)) {
-          resolvedChildren.forEach(resolvedChild => {
+          resolvedChildren.forEach((resolvedChild) => {
             delete resolvedChild._id;
           });
         } else if (resolvedChildren) {

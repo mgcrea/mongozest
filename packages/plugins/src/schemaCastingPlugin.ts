@@ -65,12 +65,12 @@ const castFilterValueForType = (value: any, type: string) => {
     return castValueForType(value, type);
   }
   if (isPlainObject(value)) {
-    SINGLE_VALUE_QUERY_OPERATORS.forEach(operator => {
+    SINGLE_VALUE_QUERY_OPERATORS.forEach((operator) => {
       if (value[operator]) {
         value[operator] = castValueForType(value[operator], type);
       }
     });
-    ARRAY_VALUE_QUERY_OPERATORS.forEach(operator => {
+    ARRAY_VALUE_QUERY_OPERATORS.forEach((operator) => {
       if (value[operator]) {
         value[operator] = value[operator].map((_value: any) => castValueForType(_value, type));
       }
