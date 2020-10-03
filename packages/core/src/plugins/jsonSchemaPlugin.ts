@@ -1,6 +1,16 @@
 // @docs https://docs.mongodb.com/manual/reference/operator/query/jsonSchema/
 
 import {isString, pick, omit} from 'lodash';
+import {
+  BsonType,
+  CollectionCreateOptions,
+  JsonSchema,
+  JsonSchemaProperty,
+  MongoJsonSchemaProperties,
+  MongoJsonSchemaProperty,
+  UnknownSchema
+} from 'src/schema';
+import {BaseSchema, Model} from '..';
 
 const JSON_SCHEMA_VALID_KEYS = [
   'bsonType', // Accepts same string aliases used for the $type operator
@@ -34,18 +44,22 @@ const JSON_SCHEMA_VALID_KEYS = [
   'description' // A string that describes the schema and has no effect
 ];
 
-export default function jsonSchemaPlugin(model, options) {
+export const jsonSchemaPlugin = <USchema extends BaseSchema = BaseSchema>(model: Model<USchema>): void => {
   // @TODO refactor to decouple initialSchema override
-  const buildJsonSchemaFromObject = (schema, options = {}) => {
+  const buildJsonSchemaFromObject = <TSchema extends UnknownSchema = UnknownSchema>(
+    schema: JsonSchema<TSchema>,
+    options: Partial<JsonSchemaProperty<TSchema>> = {}
+  ): MongoJsonSchemaProperty<TSchema> => {
     const initialObjectSchema = {
       bsonType: 'object',
       additionalProperties: false,
       properties: {},
       ...options
-    };
-    return Object.keys(schema).reduce((soFar, key) => {
+    } as MongoJsonSchemaProperty<TSchema>;
+    return Object.keys(schema).reduce<MongoJsonSchemaProperty<TSchema>>((soFar, key) => {
       // Add support for string shortcut
-      const value = isString(schema[key]) ? {bsonType: schema[key]} : schema[key];
+      const value = isString(schema[key]) ? {bsonType: (schema[key] as unknown) as BsonType} : schema[key];
+      const properties = soFar.properties!;
       const {bsonType, required, properties: childProperties, items: childItems, ...otherProps} = value;
       // Add support for required
       if (required === true) {
@@ -59,34 +73,34 @@ export default function jsonSchemaPlugin(model, options) {
       const validJsonKeys = pick(otherProps, JSON_SCHEMA_VALID_KEYS);
       // Nested object case
       const isNestedObjectSchema = bsonType === 'object' && childProperties;
-      if (isNestedObjectSchema) {
-        soFar.properties[key] = buildJsonSchemaFromObject(childProperties, validJsonKeys);
+      if (isNestedObjectSchema && childProperties) {
+        properties[key] = buildJsonSchemaFromObject(childProperties!, validJsonKeys);
         return soFar;
       }
       // Nested arrayItems case
       const isNestedArrayItems = bsonType === 'array' && childItems;
-      if (isNestedArrayItems) {
+      if (isNestedArrayItems && childItems) {
         const isNestedObjectInArray = childItems.bsonType === 'object' && childItems.properties;
-        const validItemsJsonKeys = pick(omit(childItems, 'properties'), JSON_SCHEMA_VALID_KEYS);
+        const validItemsJsonKeys = pick(omit(childItems, 'properties'), JSON_SCHEMA_VALID_KEYS) as JsonSchemaProperty;
         if (isNestedObjectInArray) {
-          soFar.properties[key] = {
+          properties[key] = {
             bsonType,
-            items: buildJsonSchemaFromObject(childItems.properties, validItemsJsonKeys),
+            items: buildJsonSchemaFromObject(childItems.properties!, validItemsJsonKeys),
             ...validJsonKeys
           };
           return soFar;
         } else {
           // Special array leaf case
-          soFar.properties[key] = {
+          properties[key] = {
             bsonType,
-            items: validItemsJsonKeys,
+            items: validItemsJsonKeys as MongoJsonSchemaProperty,
             ...validJsonKeys
           };
           return soFar;
         }
       }
       // Generic leaf case
-      soFar.properties[key] = {bsonType, ...validJsonKeys};
+      properties[key as keyof TSchema] = {bsonType, ...validJsonKeys};
       return soFar;
     }, initialObjectSchema);
   };
@@ -103,10 +117,16 @@ export default function jsonSchemaPlugin(model, options) {
     }
     // Set model validator schema
     try {
-      validator.$jsonSchema = buildJsonSchemaFromObject(model.schema);
+      // @ts-expect-error $jsonSchema missing in CollectionCreateOptions
+      validator.$jsonSchema = buildJsonSchemaFromObject<USchema>(model.schema);
     } catch (err) {
-      d(model.schema);
+      console.log(
+        `Failed to build $jsonSchema for collection ${model.collectionName} with shema:\n${JSON.stringify(
+          model.schema
+        )}`
+      );
+      throw err;
     }
     // d(validator.$jsonSchema);
   });
-}
+};

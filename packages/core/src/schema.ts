@@ -1,5 +1,5 @@
+/* eslint-disable @typescript-eslint/no-empty-interface */
 import {ObjectId} from 'mongodb';
-import Model from './model';
 
 // @docs https://docs.mongodb.com/manual/reference/operator/query/jsonSchema/
 // @docs https://www.typescriptlang.org/docs/handbook/advanced-types.html
@@ -25,41 +25,48 @@ export type BsonType =
   | 'minKey'
   | 'maxKey';
 
+export type UnknownSchema = Record<string, unknown>;
 export interface BaseSchema extends Record<string, unknown> {
   _id: ObjectId;
 }
-// export type BaseSchema extends object = {_id: ObjectId};
-export interface JsonSchemaProperty<TProp = unknown> {
+
+export interface MongoJsonSchemaProperty<TProp = any> {
   bsonType: BsonType;
   pattern?: string;
   enum?: Array<TProp>;
-  required?: boolean;
+  required?: (keyof TProp)[];
   minItems?: number;
   maxItems?: number;
   minProperties?: number;
   maxProperties?: number;
   minimum?: number;
   maximum?: number;
-  items?: TProp extends Array<infer UProp> ? JsonSchemaProperty<UProp> : JsonSchemaProperty<unknown>;
-  // items?: TProp extends Array<infer UProp>
-  //   ? JsonSchemaProperty<UProp> | Array<JsonSchemaProperty<UProp>>
-  //   : JsonSchemaProperty<TProp> | Array<JsonSchemaProperty<TProp>>;
+  items?: TProp extends Array<infer UProp> ? MongoJsonSchemaProperty<UProp> : never;
+  // items?: MongoJsonSchemaProperty<any>;
   additionalProperties?: boolean;
-  properties?: TProp extends Record<string, infer UProp> ? JsonSchemaProperties<UProp> : JsonSchemaProperties<unknown>;
+  // properties?: TProp extends Record<infer KProp, infer UProp> ? {[s in KProp]: MongoJsonSchemaProperty<UProp>} : never;
+  properties?: MongoJsonSchemaProperties<any>;
 }
+export type MongoJsonSchemaProperties<TSchema> = {[s in keyof TSchema]: MongoJsonSchemaProperty<TSchema[s]>};
+export interface CollectionCreateOptions {
+  $jsonSchema?: MongoJsonSchemaProperty<Record<string, any>>;
+}
+
+export interface JsonSchemaProperty<TProp = any>
+  extends Omit<MongoJsonSchemaProperty<TProp>, 'items' | 'properties' | 'required'> {
+  items?: TProp extends Array<infer UProp> ? JsonSchemaProperty<UProp> : never;
+  // items?: JsonSchemaProperty<any>;
+  // properties?: TProp extends Record<string, infer UProp> ? JsonSchemaProperties<UProp> : never;
+  properties?: JsonSchemaProperties<any>;
+  required?: boolean;
+}
+export type JsonSchemaProperties<TSchema> = {[s in keyof TSchema]: JsonSchemaProperty<TSchema[s]>};
+export type JsonSchema<TSchema> = JsonSchemaProperties<TSchema>;
+
 // test plugin extension
 export interface JsonSchemaProperty<TProp> {
-  default?: TProp | string | (() => TProp | any);
+  default?: TProp | string | (() => TProp | string);
 }
 export interface JsonSchemaProperty<TProp> {
   ref?: string;
 }
-export type JsonSchemaProperties<TSchema> = {[s in keyof TSchema]: JsonSchemaProperty<TSchema[s]>};
-export type JsonSchema<TSchema> = JsonSchemaProperties<TSchema>;
-// export type Schema<TSchema> = JsonSchemaProperties<Partial<TSchema>>;
-// export type UnknownSchema = JsonSchemaProperties<Record<string, unknown>>;
-
-export type SchemaPlugin<TSchema extends BaseSchema = BaseSchema> = (
-  model: Model<TSchema>,
-  options?: Record<string, unknown>
-) => void;

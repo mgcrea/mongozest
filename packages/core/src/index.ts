@@ -1,15 +1,8 @@
-export * from './utils/objectId';
-export * from './utils/logger';
+export * from './utils';
+export * from './schema';
+export * from './typings';
 
-import Model, {OperationMap} from './model';
-import {BaseSchema, Schema, SchemaProperties, JsonSchema} from './schema';
-import jsonSchemaPlugin from './plugins/jsonSchemaPlugin';
+import Model from './model';
 import Interface from './interface';
-
-export {Interface, Model, BaseSchema, Schema, SchemaProperties, JsonSchema, OperationMap};
-export {ObjectId, MongoError} from 'mongodb';
-
-export {mapPathValues, defaultPathValues} from './utils/traversing';
-export {jsonSchemaPlugin};
-
+export {Interface, Model};
 export default Interface.create;

@@ -32,17 +32,9 @@ import {
   UpdateWriteOpResult
 } from 'mongodb';
 import pluralize from 'pluralize';
-import byIdPlugin from './plugins/byIdPlugin';
-import debugPlugin from './plugins/debugPlugin';
-import jsonSchemaPlugin from './plugins/jsonSchemaPlugin';
-import {BaseSchema, JsonSchema, JsonSchemaProperties} from './schema';
-
-export type OperationMap = Map<string, any>;
-type Plugin<TSchema extends BaseSchema = BaseSchema> = (
-  model: Model<TSchema>,
-  options?: Record<string, unknown>
-) => void;
-// const NS_PER_SEC = 1e9;
+import {byIdPlugin, debugPlugin, jsonSchemaPlugin} from 'src/plugins';
+import {BaseSchema, JsonSchema, JsonSchemaProperties} from 'src/schema';
+import type {Plugin, OperationMap} from 'src/typings';
 
 export default class Model<TSchema extends BaseSchema = BaseSchema> {
   static internalPrePlugins: Plugin[] = [byIdPlugin];
@@ -213,22 +205,22 @@ export default class Model<TSchema extends BaseSchema = BaseSchema> {
   }
 
   // @docs http://mongodb.github.io/node-mongodb-native/3.1/api/Collection.html#aggregate
-  async aggregate(
+  async aggregate<T = TSchema>(
     pipeline: Array<Record<string, unknown>> = [],
     options: CollectionAggregationOptions = {}
-  ): Promise<Array<TSchema | null>> {
+  ): Promise<T[]> {
     // Prepare operation params
     const operation: OperationMap = new Map([['method', 'aggregate']]);
     // Execute preHooks
     await this.hooks.execPre('aggregate', [pipeline, options, operation]);
     // Actual mongodb operation
-    const result = await this.collection.aggregate(pipeline, options).toArray();
+    const result = await this.collection.aggregate<T>(pipeline, options).toArray();
     /* ['result', 'connection', 'message', 'ops', 'insertedCount', 'insertedId'] */
     /* {result: ['n', 'opTime', 'electionId', 'ok', 'operationTime', '$clusterTime']} */
     operation.set('result', result);
     // Execute postHooks
     await this.hooks.execPost('aggregate', [pipeline, options, operation]);
-    return operation.get('result') as Array<TSchema | null>;
+    return operation.get('result');
   }
 
   // @docs http://mongodb.github.io/node-mongodb-native/3.1/api/Collection.html#countDocuments
@@ -262,7 +254,7 @@ export default class Model<TSchema extends BaseSchema = BaseSchema> {
     operation.set('result', result);
     // Execute postHooks
     await this.hooks.execPost('distinct', [key, query, options, operation]);
-    return operation.get('result') as Array<ObjectId>;
+    return operation.get('result');
   }
 
   // @docs http://mongodb.github.io/node-mongodb-native/3.1/api/Collection.html#insertOne
@@ -293,7 +285,7 @@ export default class Model<TSchema extends BaseSchema = BaseSchema> {
     operation.set('result', result);
     // Execute postHooks
     await this.hooks.execManyPost(['insert', 'insertOne'], [document, options, operation]);
-    return operation.get('result') as InsertOneWriteOpResult<TSchema>;
+    return operation.get('result');
   }
 
   // @docs http://mongodb.github.io/node-mongodb-native/3.1/api/Collection.html#insertOne
@@ -320,7 +312,7 @@ export default class Model<TSchema extends BaseSchema = BaseSchema> {
     // Execute postHooks
     await this.hooks.execPost('insert', [document, options, operation]);
     await this.hooks.execPost('replaceOne', [filter, document, options, operation]);
-    return operation.get('result') as ReplaceWriteOpResult;
+    return operation.get('result');
   }
 
   // @docs http://mongodb.github.io/node-mongodb-native/3.1/api/Collection.html#insertMany
@@ -352,7 +344,7 @@ export default class Model<TSchema extends BaseSchema = BaseSchema> {
     }, []);
     await this.hooks.execEachPost('insert', eachPostArgs);
     await this.hooks.execPost('insertMany', [documents, options, operation]);
-    return operation.get('result') as InsertWriteOpResult<TSchema>;
+    return operation.get('result');
   }
 
   // @docs http://mongodb.github.io/node-mongodb-native/3.1/api/Collection.html#updateOne
@@ -382,7 +374,7 @@ export default class Model<TSchema extends BaseSchema = BaseSchema> {
     operation.set('result', result);
     // Execute postHooks
     await this.hooks.execManyPost(['update', 'updateOne'], [filter, update, options, operation]);
-    return operation.get('result') as UpdateWriteOpResult;
+    return operation.get('result');
   }
 
   // @docs http://mongodb.github.io/node-mongodb-native/3.1/api/Collection.html#updateMany
@@ -403,7 +395,7 @@ export default class Model<TSchema extends BaseSchema = BaseSchema> {
     operation.set('result', result);
     // Execute postHooks
     await this.hooks.execManyPost(['update', 'updateMany'], [filter, update, options, operation]);
-    return operation.get('result') as UpdateWriteOpResult;
+    return operation.get('result');
   }
 
   // @docs http://mongodb.github.io/node-mongodb-native/3.1/api/Collection.html#findOneAndUpdate
@@ -439,7 +431,7 @@ export default class Model<TSchema extends BaseSchema = BaseSchema> {
     // Execute postHooks
     await this.hooks.execManyPost(['find', 'findOne'], [filter, options, operation]);
     await this.hooks.execManyPost(['update', 'updateOne', 'findOneAndUpdate'], [filter, update, options, operation]);
-    return operation.get('result') as FindAndModifyWriteOpResultObject<TSchema>;
+    return operation.get('result');
   }
 
   // @docs http://mongodb.github.io/node-mongodb-native/3.1/api/Collection.html#findOne
@@ -453,11 +445,11 @@ export default class Model<TSchema extends BaseSchema = BaseSchema> {
     // Execute preHooks
     await this.hooks.execManyPre(['find', 'findOne'], [query, options, operation]);
     // Actual mongodb operation
-    const result = await this.collection.findOne(query, options);
+    const result = await this.collection.findOne<T>(query, options);
     operation.set('result', result);
     // Execute postHooks
     await this.hooks.execManyPost(['find', 'findOne'], [query, options, operation]);
-    return operation.get('result') as T;
+    return operation.get('result');
   }
 
   // @docs http://mongodb.github.io/node-mongodb-native/3.1/api/Collection.html#find
@@ -469,7 +461,7 @@ export default class Model<TSchema extends BaseSchema = BaseSchema> {
     const operation: OperationMap = new Map([['method', 'find']]);
     await this.hooks.execManyPre(['find', 'findMany'], [query, options, operation]);
     // Actual mongodb operation
-    const result = await this.collection.find(query, options).toArray();
+    const result = await this.collection.find<T>(query, options).toArray();
     operation.set('result', result);
     // Execute postHooks
     // const pre = process.hrtime();
@@ -480,7 +472,7 @@ export default class Model<TSchema extends BaseSchema = BaseSchema> {
     // const elapsed = (diff[0] * NS_PER_SEC + diff[1]) / 1e6;
     await this.hooks.execEachPost('find', eachPostArgs);
     await this.hooks.execPost('findMany', [query, options, operation]);
-    return operation.get('result') as Array<T>;
+    return operation.get('result');
   }
 
   // @docs http://mongodb.github.io/node-mongodb-native/3.1/api/Collection.html#deleteOne
@@ -496,7 +488,7 @@ export default class Model<TSchema extends BaseSchema = BaseSchema> {
     operation.set('result', result);
     // Execute postHooks
     await this.hooks.execManyPost(['delete', 'deleteOne'], [result, filter, options, operation]);
-    return operation.get('result') as DeleteWriteOpResultObject;
+    return operation.get('result');
   }
 
   // @docs http://mongodb.github.io/node-mongodb-native/3.1/api/Collection.html#deleteMany
@@ -509,6 +501,6 @@ export default class Model<TSchema extends BaseSchema = BaseSchema> {
     operation.set('result', result);
     // Execute postHooks
     await this.hooks.execManyPost(['delete', 'deleteMany'], [result, filter, options, operation]);
-    return operation.get('result') as DeleteWriteOpResultObject;
+    return operation.get('result');
   }
 }

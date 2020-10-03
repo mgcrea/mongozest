@@ -5,10 +5,10 @@ import assert from 'assert';
 import {Db as MongoDb, MongoClient, MongoClientOptions, ObjectId} from 'mongodb';
 import {parse} from 'url';
 import Model from './model';
-import {UnknownSchema} from './schema';
+import {BaseSchema} from './schema';
 
-type ModelProxy<TSchema extends UnknownSchema = UnknownSchema> = Model<TSchema> & {
-  otherModel: <OSchema extends UnknownSchema = UnknownSchema>(modelName: string) => Model<OSchema>;
+type ModelProxy<TSchema extends BaseSchema = BaseSchema> = Model<TSchema> & {
+  otherModel: <OSchema extends BaseSchema = BaseSchema>(modelName: string) => Model<OSchema>;
   allModels: () => Map<string, Model>;
 };
 
@@ -100,7 +100,7 @@ export default class MongoInterface {
     await modelProxy.initialize();
     return modelProxy;
   }
-  public model<OSchema extends UnknownSchema = UnknownSchema>(modelName: string): ModelProxy<OSchema> {
+  public model<OSchema extends BaseSchema = BaseSchema>(modelName: string): ModelProxy<OSchema> {
     if (!this.models.has(modelName)) {
       throw new Error(`model ${modelName} not loaded`);
     }

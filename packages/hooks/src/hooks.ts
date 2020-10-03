@@ -1,5 +1,5 @@
-export type HookCallback = (...args: unknown[]) => unknown;
-export type HookMap = Map<string, Array<HookCallback>>;
+export type HookCallback = (...args: any[]) => void | Promise<void>;
+export type HookMap = Map<string, HookCallback[]>;
 export type AnyArgs = unknown[];
 
 export interface State {
