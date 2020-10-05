@@ -1,7 +1,7 @@
 import {ClientSession, CollectionCreateOptions} from 'mongodb';
-import {ModelHookName} from '../model';
+import {Model, ModelHookName} from '../model';
 import {DefaultSchema} from '../schema';
-import {Model, OperationMap} from '..';
+import {OperationMap} from '../operation';
 import {chalk, chalkNumber, chalkString, inspect, log} from './../utils/logger';
 
 const {NODE_DEBUG = '0'} = process.env;

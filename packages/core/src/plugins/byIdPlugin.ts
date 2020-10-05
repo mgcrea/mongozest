@@ -8,7 +8,7 @@ import {
   UpdateQuery,
   UpdateWriteOpResult
 } from 'mongodb';
-import Model from '../model';
+import {Model} from '../model';
 import {DefaultSchema} from '../schema';
 
 type StringOrObjectId = string | ObjectId;

@@ -4,7 +4,7 @@
 import assert from 'assert';
 import {Db as MongoDb, MongoClient, MongoClientOptions, ObjectId} from 'mongodb';
 import {parse} from 'url';
-import Model, {ModelConstructor} from './model';
+import {Model, ModelConstructor} from './model';
 import {UnknownSchema} from './schema';
 
 const DEFAULT_MONGODB_URI = 'mongodb://mongo:27017';
@@ -12,8 +12,7 @@ const DEFAULT_MONGODB_URI = 'mongodb://mongo:27017';
 const interfaces: Map<string, MongoInterface> = new Map();
 
 // @TODO type global model store
-
-export default class MongoInterface {
+export class MongoInterface {
   static defaultClientUri = DEFAULT_MONGODB_URI;
   static defaultClientOptions: MongoClientOptions = {
     loggerLevel: 'error',
@@ -51,6 +50,9 @@ export default class MongoInterface {
     return this.db;
   }
   public async disconnect(): Promise<void> {
+    if (!this.client.isConnected()) {
+      return;
+    }
     await this.client.close();
   }
   public async loadModels(modelClasses: Record<string, ModelConstructor>): Promise<Record<string, Model>> {

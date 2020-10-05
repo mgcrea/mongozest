@@ -1,5 +1,5 @@
 export {ObjectId, OptionalId, WithId, MongoError} from 'mongodb';
-import type Model from '../model';
+import type {Model} from '../model';
 import type {DefaultSchema} from '../schema';
 
 export type AggregationPipeline = Record<string, any>[];

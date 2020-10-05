@@ -3,7 +3,8 @@
 import {isString, omit, pick} from 'lodash';
 import {CollectionCreateOptions} from 'mongodb';
 import {BsonType, JsonSchemaProperties, JsonSchemaProperty, MongoJsonSchemaProperty, UnknownSchema} from '../schema';
-import {DefaultSchema, Model} from '..';
+import {DefaultSchema} from '../schema';
+import {Model} from '../model';
 
 const JSON_SCHEMA_VALID_KEYS = [
   'bsonType', // Accepts same string aliases used for the $type operator

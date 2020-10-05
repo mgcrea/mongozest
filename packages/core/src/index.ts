@@ -4,8 +4,7 @@ export * from './model';
 export * from './schema';
 export * from './typings';
 export * from './utils';
-
-import Model from './model';
-import Interface from './interface';
-export {Interface, Model};
-export default Interface.create;
+export * from './model';
+export * from './interface';
+import {MongoInterface} from './interface';
+export default MongoInterface.create;

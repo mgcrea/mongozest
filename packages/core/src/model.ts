@@ -37,7 +37,7 @@ export interface ModelConstructor<TSchema extends OptionalId<DefaultSchema> = De
   modelName: string;
 }
 
-class Model<TSchema extends OptionalId<DefaultSchema> = DefaultSchema> {
+export class Model<TSchema extends OptionalId<DefaultSchema> = DefaultSchema> {
   static internalPrePlugins: Plugin[] = [byIdPlugin];
   static internalPostPlugins: Plugin[] = [jsonSchemaPlugin, debugPlugin];
 
@@ -533,7 +533,7 @@ export type ModelHookName =
   | 'updateOneError'
   | 'validate';
 
-interface Model<TSchema extends OptionalId<DefaultSchema> = DefaultSchema> {
+export interface Model<TSchema extends OptionalId<DefaultSchema> = DefaultSchema> {
   otherModel: <OSchema extends DefaultSchema = DefaultSchema>(modelName: string) => Model<OSchema>;
   allModels: () => Map<string, Model>;
 }
@@ -542,7 +542,7 @@ interface Model<TSchema extends OptionalId<DefaultSchema> = DefaultSchema> {
 //   fakeOne: (document: OptionalId<TSchema>) => OptionalId<TSchema>;
 // }
 
-interface Model<TSchema extends OptionalId<DefaultSchema> = DefaultSchema> {
+export interface Model<TSchema extends OptionalId<DefaultSchema> = DefaultSchema> {
   // pre
   pre(
     hookName: 'aggregate',
@@ -636,5 +636,3 @@ interface Model<TSchema extends OptionalId<DefaultSchema> = DefaultSchema> {
   post(hookName: 'initialize', callback: () => void): void;
   post(hookName: 'initialize:property', callback: (property: JsonSchemaProperty, path: string) => void): void;
 }
-
-export default Model;
