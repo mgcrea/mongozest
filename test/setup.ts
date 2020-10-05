@@ -1,8 +1,19 @@
-// import {configure} from 'enzyme';
-// import Adapter from 'enzyme-adapter-react-16';
+/* eslint-disable @typescript-eslint/no-namespace */
 
-// configure({adapter: new Adapter()});
+import {warn} from 'console';
+import {inspect} from 'util';
 
-import console from 'console';
+declare global {
+  namespace NodeJS {
+    interface Global {
+      d: Console['warn'];
+      dd: Console['warn'];
+    }
+  }
+}
 
-global.d = (obj: any) => console.dir(obj, {colors: true, depth: 10});
+global.d = (...args: unknown[]) => warn(inspect(args.length > 1 ? args : args[0], {colors: true, depth: 10}));
+global.dd = (...args: unknown[]) => {
+  global.d(...args);
+  expect(1).toEqual(2);
+};

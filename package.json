@@ -8,8 +8,9 @@
     "typecheck": "tsc --noEmit",
     "prettycheck": "prettier --check 'packages/*/{src,test}/*.{ts,tsx}'",
     "lint": "eslint --ext .ts,.tsx packages/*/src",
-    "clean": "rm -rf node_modules; scripts/runPackages.sh --eval \"rm -rf node_modules\"",
-    "build": "NODE_ENV=production scripts/runPackages.sh \"yarn build\"",
+    "clean": "scripts/runPackages.sh --eval \"rm -rf *.tsbuildinfo lib/\"",
+    "clean:modules": "rm -rf node_modules; scripts/runPackages.sh --eval \"rm -rf node_modules\"",
+    "build": "NODE_ENV=production tsc --build --verbose",
     "build:sources": "NODE_ENV=production bash scripts/runPackages.sh \"yarn build:sources\"",
     "publish": "scripts/runPackages.sh \"npm publish --non-interactive --access public\"",
     "website": "cd website; GIT_USER=mgcrea CURRENT_BRANCH=master USE_SSH=true yarn run publish-gh-pages; cd -",
@@ -17,34 +18,22 @@
   },
   "dependencies": {},
   "devDependencies": {
-    "@babel/core": "^7.11.6",
-    "@babel/plugin-proposal-class-properties": "^7.10.4",
-    "@babel/preset-env": "^7.11.5",
-    "@babel/preset-typescript": "^7.10.4",
-    "@babel/runtime": "^7.11.2",
+    "@types/jest": "^26.0.14",
     "@typescript-eslint/eslint-plugin": "^4.2.0",
     "@typescript-eslint/parser": "^4.2.0",
-    "babel-eslint": "^10.1.0",
-    "babel-jest": "^26.3.0",
-    "babel-plugin-module-name-mapper": "^1.2.0",
     "eslint": "^7.9.0",
     "eslint-config-prettier": "^6.11.0",
     "eslint-plugin-import": "^2.22.0",
     "eslint-plugin-prettier": "^3.1.4",
     "jest": "^26.4.2",
     "lodash": "^4.17.20",
-    "metro-react-native-babel-preset": "^0.63.0",
     "prettier": "^2.1.2",
+    "ts-jest": "^26.4.1",
     "typescript": "^4.0.3"
   },
   "workspaces": {
     "packages": [
       "packages/*"
-    ]
-  },
-  "jest": {
-    "projects": [
-      "<rootDir>/packages/*"
     ]
   }
 }

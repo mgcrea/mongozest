@@ -29,6 +29,7 @@ export type UnknownSchema = Record<string, unknown>;
 export interface DefaultSchema extends UnknownSchema {
   _id?: ObjectId;
 }
+export type ForeignRef<T extends DefaultSchema> = ObjectId | T;
 
 export interface MongoJsonSchemaProperty<UProp = any, TProp = NonNullable<UProp>> {
   bsonType: BsonType;

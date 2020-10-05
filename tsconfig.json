@@ -1,21 +1,18 @@
 {
-  "compilerOptions": {
-    "target": "esnext",
-    "lib": ["dom", "dom.iterable", "esnext"],
-    "allowJs": false,
-    "skipLibCheck": true,
-    "declaration": true,
-    "esModuleInterop": true,
-    "allowSyntheticDefaultImports": true,
-    "strict": true,
-    "forceConsistentCasingInFileNames": true,
-    "module": "esnext",
-    "moduleResolution": "node",
-    "resolveJsonModule": true,
-    "isolatedModules": false,
-    "emitDeclarationOnly": true,
-    "jsx": "react"
-  },
-  "include": ["babel.config.js", "packages/*/src"],
-  "exclude": ["node_modules", "**/*.spec.ts"]
+  "extends": "@tsconfig/node14/tsconfig.json",
+  "references": [
+    {
+      "path": "packages/core"
+    },
+    {
+      "path": "packages/hooks"
+    },
+    {
+      "path": "packages/resource"
+    },
+    {
+      "path": "packages/plugins"
+    }
+  ],
+  "include": []
 }

@@ -1,7 +1,6 @@
-// export {ObjectId, MongoError} from 'mongodb';
+export {ObjectId, OptionalId, WithId, MongoError} from 'mongodb';
 import type Model from '../model';
 import type {DefaultSchema} from '../schema';
-// export type {OptionalId} from 'mongodb';
 
 export type AggregationPipeline = Record<string, any>[];
 export type Plugin<TSchema extends DefaultSchema = DefaultSchema> = (

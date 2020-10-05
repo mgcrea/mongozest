@@ -1,7 +1,7 @@
 import {basename, relative} from 'path';
 import {kebabCase} from 'lodash';
 
-export const getDbName = (fileName: string) => {
+export const getDbName = (fileName: string): string => {
   const baseName = basename(fileName, '.ts');
   const packageName = relative(__dirname, fileName)
     .replace('../packages/', '')

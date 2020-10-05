@@ -8,6 +8,6 @@
       "src/*": ["./../src/*"]
     }
   },
-  "include": ["setup.ts", "spec/"],
+  "include": ["spec/"],
   "references": [{"path": "../"}]
 }
