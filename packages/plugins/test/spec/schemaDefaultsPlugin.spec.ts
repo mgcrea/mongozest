@@ -1,4 +1,4 @@
-import createMongo, {JsonSchema, jsonSchemaPlugin, Model} from '@mongozest/core';
+import createMongo, {Schema, jsonSchemaPlugin, Model} from '@mongozest/core';
 import {Decimal128 as Decimal} from 'mongodb';
 import {getDbName} from 'root/test/utils';
 import {schemaCastingPlugin} from 'src/schemaCastingPlugin';
@@ -27,7 +27,7 @@ describe('schemaDefaultsPlugin', () => {
       refValue?: string;
     };
     class TestModel extends Model<Test> {
-      static schema: JsonSchema<Test> = {
+      static schema: Schema<Test> = {
         name: {bsonType: 'string'},
         stringValue: {bsonType: 'string', default: 'bar'},
         dateValue: {bsonType: 'date', default: (Date.now as unknown) as () => Date}, // @NOTE schemaCasting
@@ -70,7 +70,7 @@ describe('schemaDefaultsPlugin', () => {
       nestedObject?: {latitude?: Decimal; longitude?: Decimal};
     };
     class TestModel extends Model<Test> {
-      static schema: JsonSchema<Test> = {
+      static schema: Schema<Test> = {
         name: {bsonType: 'string'},
         nestedObject: {
           bsonType: 'object',
@@ -109,7 +109,7 @@ describe('schemaDefaultsPlugin', () => {
       nestedArray?: {title?: string; createdAt?: Date}[];
     };
     class TestModel extends Model<Test> {
-      static schema: JsonSchema<Test> = {
+      static schema: Schema<Test> = {
         name: {bsonType: 'string'},
         nestedArray: {
           bsonType: 'array',

@@ -1,4 +1,4 @@
-import createMongo, {JsonSchema, jsonSchemaPlugin, Model} from '@mongozest/core';
+import createMongo, {Schema, jsonSchemaPlugin, Model} from '@mongozest/core';
 import {Decimal128 as Decimal} from 'mongodb';
 import {getDbName} from 'root/test/utils';
 import {schemaFakerPlugin} from 'src/schemaFakerPlugin';
@@ -19,7 +19,7 @@ type Test = {
   };
 };
 class TestModel extends Model<Test> {
-  static schema: JsonSchema<Test> = {
+  static schema: Schema<Test> = {
     firstName: {bsonType: 'string', faker: 'name.firstName'},
     lastName: {bsonType: 'string', faker: 'name.lastName'},
     dateValue: {bsonType: 'date', faker: 'date.soon'},

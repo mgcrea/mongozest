@@ -1,8 +1,8 @@
 // @docs https://docs.mongodb.com/manual/reference/operator/query/type/#document-type-available-types
 
-import {DefaultSchema, Model, ObjectId, uniqWithObjectIds, UnknownSchema} from '@mongozest/core';
+import {DefaultSchema, Model, uniqWithObjectIds, UnknownSchema} from '@mongozest/core';
 import {get, isEmpty, isPlainObject, isString, isUndefined, keyBy, map, set} from 'lodash';
-import {SchemaMember} from 'mongodb';
+import {SchemaMember, ObjectId} from 'mongodb';
 
 export type Population<T> = SchemaMember<T, number | boolean | any>;
 

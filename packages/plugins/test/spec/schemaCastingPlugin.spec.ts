@@ -1,4 +1,4 @@
-import createMongo, {JsonSchema, jsonSchemaPlugin, Model} from '@mongozest/core';
+import createMongo, {Schema, jsonSchemaPlugin, Model} from '@mongozest/core';
 import {Decimal128, Long, ObjectId} from 'mongodb';
 import {getDbName} from 'root/test/utils';
 import {schemaCastingPlugin} from 'src/schemaCastingPlugin';
@@ -27,7 +27,7 @@ describe('schemaCastingPlugin', () => {
       dateValue?: Date;
     };
     class TestModel extends Model<Test> {
-      static schema: JsonSchema<Test> = {
+      static schema: Schema<Test> = {
         name: {bsonType: 'string'},
         objectIdValue: {bsonType: 'objectId'},
         intValue: {bsonType: 'int'},
@@ -165,7 +165,7 @@ describe('schemaCastingPlugin', () => {
       };
     };
     class TestModel extends Model<Test> {
-      static schema: JsonSchema<Test> = {
+      static schema: Schema<Test> = {
         nestedObject: {
           bsonType: 'object',
           properties: {decimal: {bsonType: 'decimal'}, long: {bsonType: 'long'}, date: {bsonType: 'date'}}
@@ -234,7 +234,7 @@ describe('schemaCastingPlugin', () => {
       nestedArrayDeep?: {dates?: Date[]}[];
     };
     class TestModel extends Model<Test> {
-      static schema: JsonSchema<Test> = {
+      static schema: Schema<Test> = {
         nestedArray: {bsonType: 'array', items: {bsonType: 'date'}},
         nestedArrayBis: {
           bsonType: 'array',

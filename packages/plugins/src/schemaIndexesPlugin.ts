@@ -5,10 +5,10 @@ import {IndexOptions, SchemaMember, OptionalId} from 'mongodb';
 export type SchemaIndexesConfig<TSchema> = [SchemaMember<TSchema, number | boolean>, IndexOptions][];
 
 declare module '@mongozest/core' {
-  interface ModelConstructor<TSchema extends OptionalId<UnknownSchema> = UnknownSchema> {
+  export interface ModelConstructor<TSchema extends OptionalId<UnknownSchema> = UnknownSchema> {
     indexes?: SchemaIndexesConfig<TSchema>;
   }
-  interface JsonSchemaProperty<TProp = any> {
+  export interface JsonSchemaProperty<TProp = any> {
     index?: IndexOptions;
   }
 }
@@ -56,7 +56,11 @@ export const schemaIndexesPlugin = <TSchema extends UnknownSchema>(
         soFar.set(index, indexName);
         return soFar;
       }, Promise.resolve(new Map()));
-      log(`db.${collectionName} successfully initialized ${createdIndexesFromConfig.size}-indexe(s) from model config`);
+      if (createdIndexesFromConfig.size) {
+        log(
+          `db.${collectionName} successfully initialized ${createdIndexesFromConfig.size}-indexe(s) from model config`
+        );
+      }
     }
 
     // Create indexes from schema props
@@ -85,6 +89,8 @@ export const schemaIndexesPlugin = <TSchema extends UnknownSchema>(
       soFar.set(path, indexName);
       return soFar;
     }, Promise.resolve(new Map()));
-    log(`db.${collectionName} successfully initialized ${createdIndexesFromProps.size}-indexe(s) from schema props`);
+    if (createdIndexesFromProps.size) {
+      log(`db.${collectionName} successfully initialized ${createdIndexesFromProps.size}-indexe(s) from schema props`);
+    }
   });
 };

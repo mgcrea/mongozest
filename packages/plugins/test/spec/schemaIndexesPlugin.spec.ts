@@ -1,4 +1,4 @@
-import createMongo, {JsonSchema, jsonSchemaPlugin, Model} from '@mongozest/core';
+import createMongo, {Schema, jsonSchemaPlugin, Model} from '@mongozest/core';
 import {getDbName} from 'root/test/utils';
 import {schemaIndexesPlugin} from 'src/schemaIndexesPlugin';
 
@@ -12,7 +12,7 @@ type Test = {
   email?: string;
 };
 class TestModel extends Model<Test> {
-  static schema: JsonSchema<Test> = {
+  static schema: Schema<Test> = {
     username: {bsonType: 'string', index: {unique: true}},
     phoneNumber: {bsonType: 'string', index: {unique: false, name: undefined}},
     email: {bsonType: 'string', index: {unique: false, name: 'email'}}

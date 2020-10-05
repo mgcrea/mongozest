@@ -1,4 +1,4 @@
-import createMongo, {JsonSchema, Model} from '@mongozest/core';
+import createMongo, {Schema, Model} from '@mongozest/core';
 import {getDbName} from 'root/test/utils';
 import {lastModifiedPlugin, LastModifiedPluginSchema} from 'src/lastModifiedPlugin';
 
@@ -11,7 +11,7 @@ type Test = LastModifiedPluginSchema & {
 };
 
 class TestModel extends Model<Test> {
-  static schema: JsonSchema<Test> = {
+  static schema: Schema<Test> = {
     name: {bsonType: 'string', required: true}
   };
   static plugins = [lastModifiedPlugin];

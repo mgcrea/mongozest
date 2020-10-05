@@ -5,7 +5,7 @@ import {Model, defaultPathValues, UnknownSchema} from '@mongozest/core';
 import {OptionalId} from 'mongodb';
 
 declare module '@mongozest/core' {
-  interface JsonSchemaProperty<TProp = any> {
+  export interface JsonSchemaProperty<TProp = any> {
     default?: TProp | (() => TProp) | string;
   }
 }

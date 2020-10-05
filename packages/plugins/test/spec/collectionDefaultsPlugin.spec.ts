@@ -1,4 +1,4 @@
-import createMongo, {JsonSchema, Model} from '@mongozest/core';
+import createMongo, {Schema, Model} from '@mongozest/core';
 import {getDbName} from 'root/test/utils';
 import {collectionDefaultsPlugin} from 'src/collectionDefaultsPlugin';
 
@@ -11,7 +11,7 @@ type Test = {
 };
 
 class TestModel extends Model<Test> {
-  static schema: JsonSchema<Test> = {
+  static schema: Schema<Test> = {
     name: {bsonType: 'string', required: true}
   };
   static defaults = [{name: 'workers'}, {name: 'clients'}, {name: 'admins'}];

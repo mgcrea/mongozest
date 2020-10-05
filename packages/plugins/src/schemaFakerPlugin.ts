@@ -8,14 +8,14 @@ import {CollectionInsertOneOptions, InsertOneWriteOpResult, OptionalId, WithId} 
 faker.locale = 'fr';
 
 declare module '@mongozest/core' {
-  // interface Model<TSchema extends OptionalId<DefaultSchema> = DefaultSchema> {
+  // export interface Model<TSchema extends OptionalId<DefaultSchema> = DefaultSchema> {
   //   fakeOne: (document: OptionalId<TSchema>) => OptionalId<TSchema>;
   //   insertFakeOne: (
   //     document: OptionalId<TSchema>,
   //     options?: CollectionInsertOneOptions
   //   ) => Promise<InsertOneWriteOpResult<WithId<TSchema>>>;
   // }
-  interface JsonSchemaProperty<TProp = any> {
+  export interface JsonSchemaProperty<TProp = any> {
     faker?: string;
   }
 }

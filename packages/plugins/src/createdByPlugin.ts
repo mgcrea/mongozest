@@ -1,4 +1,5 @@
-import {ObjectId, BsonType, Model, UnknownSchema} from '@mongozest/core';
+import {BsonType, Model, UnknownSchema} from '@mongozest/core';
+import {ObjectId} from 'mongodb';
 
 export type CreatedByPluginSchema<TProp = ObjectId> = {
   ownedBy: TProp;
