@@ -1,7 +1,8 @@
 // @docs https://docs.mongodb.com/manual/reference/operator/query/jsonSchema/
 
 import {isString, omit, pick} from 'lodash';
-import {BsonType, JsonSchema, JsonSchemaProperty, MongoJsonSchemaProperty, UnknownSchema} from 'src/schema';
+import {CollectionCreateOptions} from 'mongodb';
+import {BsonType, JsonSchemaProperties, JsonSchemaProperty, MongoJsonSchemaProperty, UnknownSchema} from '../schema';
 import {DefaultSchema, Model} from '..';
 
 const JSON_SCHEMA_VALID_KEYS = [
@@ -38,8 +39,8 @@ const JSON_SCHEMA_VALID_KEYS = [
 
 export const jsonSchemaPlugin = <USchema extends DefaultSchema = DefaultSchema>(model: Model<USchema>): void => {
   // @TODO refactor to decouple initialSchema override
-  const buildJsonSchemaFromObject = <TSchema extends UnknownSchema = UnknownSchema>(
-    schema: JsonSchema<TSchema>,
+  const buildJsonSchema = <TSchema extends UnknownSchema = UnknownSchema>(
+    schema: JsonSchemaProperties<TSchema>,
     options: Partial<JsonSchemaProperty<TSchema>> = {}
   ): MongoJsonSchemaProperty<TSchema> => {
     const initialObjectSchema = {
@@ -66,7 +67,7 @@ export const jsonSchemaPlugin = <USchema extends DefaultSchema = DefaultSchema>(
       // Nested object case
       const isNestedObjectSchema = bsonType === 'object' && childProperties;
       if (isNestedObjectSchema && childProperties) {
-        properties[key] = buildJsonSchemaFromObject(childProperties!, validJsonKeys);
+        properties[key] = buildJsonSchema(childProperties!, validJsonKeys);
         return soFar;
       }
       // Nested arrayItems case
@@ -79,7 +80,7 @@ export const jsonSchemaPlugin = <USchema extends DefaultSchema = DefaultSchema>(
         if (isNestedObjectInArray) {
           properties[key] = {
             bsonType,
-            items: buildJsonSchemaFromObject(childItems.properties!, validItemsJsonKeys),
+            items: buildJsonSchema(childItems.properties!, validItemsJsonKeys),
             ...validJsonKeys
           };
           return soFar;
@@ -104,15 +105,15 @@ export const jsonSchemaPlugin = <USchema extends DefaultSchema = DefaultSchema>(
     if (!model.collectionOptions.validator) {
       model.collectionOptions.validator = {};
     }
-    const {validator} = model.collectionOptions;
+    const {validator} = model.collectionOptions as CollectionCreateOptions;
     // Add _id unique key if missing
     if (!model.schema._id) {
       model.schema._id = {bsonType: 'objectId'};
     }
     // Set model validator schema
     try {
-      // @ts-expect-error $jsonSchema missing in CollectionCreateOptions
-      validator.$jsonSchema = buildJsonSchemaFromObject<USchema>(model.schema);
+      // @ts-expect-error missing prop
+      validator!.$jsonSchema = buildJsonSchema<USchema>(model.schema);
     } catch (err) {
       console.log(
         `Failed to build $jsonSchema for collection ${model.collectionName} with shema:\n${JSON.stringify(

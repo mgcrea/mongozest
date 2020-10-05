@@ -1,6 +1,6 @@
 import {get, has, set} from 'lodash';
 import {OptionalId} from 'mongodb';
-import {DefaultSchema} from 'src/schema';
+import {DefaultSchema} from '../schema';
 
 // Check a leaf path (eg. `{foo.bar: {baz: 1}}`)
 export const hasLeafPath = (object: Record<string, unknown>, path: string): boolean => {

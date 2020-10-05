@@ -11,7 +11,7 @@ import {
   DeleteWriteOpResultObject,
   FilterQuery,
   FindAndModifyWriteOpResultObject,
-  FindOneAndReplaceOption,
+  FindOneAndUpdateOption,
   FindOneOptions,
   InsertOneWriteOpResult,
   InsertWriteOpResult,
@@ -27,9 +27,9 @@ import {
   WithId
 } from 'mongodb';
 import pluralize from 'pluralize';
-import {byIdPlugin, debugPlugin, jsonSchemaPlugin} from 'src/plugins';
-import {JsonSchema, JsonSchemaProperties, JsonSchemaProperty, DefaultSchema} from 'src/schema';
-import type {Plugin, UnwrapPromise} from 'src/typings';
+import {byIdPlugin, debugPlugin, jsonSchemaPlugin} from './plugins';
+import {DefaultSchema, JsonSchemaProperties, JsonSchemaProperty, Schema} from './schema';
+import type {AggregationPipeline, Plugin, UnwrapPromise} from './typings';
 import {cloneOperationMap, createOperationMap, OperationMap} from './operation';
 
 export interface ModelConstructor<TSchema extends OptionalId<DefaultSchema> = DefaultSchema> {
@@ -41,7 +41,7 @@ class Model<TSchema extends OptionalId<DefaultSchema> = DefaultSchema> {
   static internalPrePlugins: Plugin[] = [byIdPlugin];
   static internalPostPlugins: Plugin[] = [jsonSchemaPlugin, debugPlugin];
 
-  static readonly schema: JsonSchema;
+  static readonly schema: Schema;
   static readonly modelName: string;
   static readonly collectionName: string | null = null;
   static readonly collectionOptions: CollectionCreateOptions = {};
@@ -49,7 +49,7 @@ class Model<TSchema extends OptionalId<DefaultSchema> = DefaultSchema> {
 
   public collectionName: string;
   public collectionOptions: CollectionCreateOptions = {};
-  public schema: JsonSchema<TSchema>;
+  public schema: Schema<TSchema>;
   private plugins: Plugin<TSchema>[];
   public statics: Map<string | number | symbol, Function> = new Map();
 
@@ -61,7 +61,7 @@ class Model<TSchema extends OptionalId<DefaultSchema> = DefaultSchema> {
       .constructor as typeof Model;
     this.collectionName = collectionName ? collectionName : snakeCase(pluralize(modelName || className));
     this.collectionOptions = cloneDeep(collectionOptions);
-    this.schema = cloneDeep(schema) as JsonSchema<TSchema>;
+    this.schema = cloneDeep(schema) as Schema<TSchema>;
     this.plugins = plugins;
   }
 
@@ -148,13 +148,13 @@ class Model<TSchema extends OptionalId<DefaultSchema> = DefaultSchema> {
       ...collectionOptions
     });
   }
-  public async getCollectionInfo(): Promise<Record<string, unknown>> {
+  public async getCollectionInfo<T extends Record<string, unknown>>(): Promise<T> {
     const {collectionName, db} = this;
     const collections = await db.listCollections({name: collectionName}).toArray();
     if (collections.length < 1) {
       throw new Error(`Collection "${collectionName}" not found`);
     }
-    return collections[0];
+    return collections[0] as T;
   }
   get jsonSchema(): Record<string, unknown> {
     const {collectionOptions} = this;
@@ -178,7 +178,7 @@ class Model<TSchema extends OptionalId<DefaultSchema> = DefaultSchema> {
       ...((Model.internalPostPlugins as unknown) as Plugin<TSchema>[])
     ]);
     // d({name: this.collectionName, allPlugins});
-    allPlugins.forEach((pluginConfig) => {
+    allPlugins.forEach((pluginConfig, _index) => {
       if (Array.isArray(pluginConfig)) {
         pluginConfig[0](this, pluginConfig[1]);
       } else {
@@ -203,7 +203,7 @@ class Model<TSchema extends OptionalId<DefaultSchema> = DefaultSchema> {
 
   // @docs http://mongodb.github.io/node-mongodb-native/3.1/api/Collection.html#aggregate
   async aggregate<T = TSchema>(
-    pipeline: Array<Record<string, unknown>> = [],
+    pipeline: AggregationPipeline = [],
     options: CollectionAggregationOptions = {}
   ): Promise<T[]> {
     // Prepare operation params
@@ -398,7 +398,7 @@ class Model<TSchema extends OptionalId<DefaultSchema> = DefaultSchema> {
   async findOneAndUpdate(
     filter: FilterQuery<TSchema>,
     update: UpdateQuery<TSchema>, // | TSchema
-    options: FindOneAndReplaceOption<TSchema> = {}
+    options: FindOneAndUpdateOption<TSchema> = {}
   ): Promise<FindAndModifyWriteOpResultObject<TSchema>> {
     // Prepare operation params
     const operation = createOperationMap<TSchema>('findOneAndUpdate');
@@ -537,9 +537,10 @@ interface Model<TSchema extends OptionalId<DefaultSchema> = DefaultSchema> {
   otherModel: <OSchema extends DefaultSchema = DefaultSchema>(modelName: string) => Model<OSchema>;
   allModels: () => Map<string, Model>;
 }
-interface Model<TSchema extends OptionalId<DefaultSchema> = DefaultSchema> {
-  fakeOne: (document: OptionalId<TSchema>) => OptionalId<TSchema>;
-}
+// @NOTE fixme
+// interface Model<TSchema extends OptionalId<DefaultSchema> = DefaultSchema> {
+//   fakeOne: (document: OptionalId<TSchema>) => OptionalId<TSchema>;
+// }
 
 interface Model<TSchema extends OptionalId<DefaultSchema> = DefaultSchema> {
   // pre

@@ -1,6 +1,6 @@
 import {ClientSession, CollectionCreateOptions} from 'mongodb';
-import {ModelHookName} from 'src/model';
-import {DefaultSchema} from 'src/schema';
+import {ModelHookName} from '../model';
+import {DefaultSchema} from '../schema';
 import {Model, OperationMap} from '..';
 import {chalk, chalkNumber, chalkString, inspect, log} from './../utils/logger';
 
@@ -26,7 +26,7 @@ export const debugPlugin = <TSchema extends DefaultSchema = DefaultSchema>(model
       return;
     }
     const stringifiedOptions = stringifyOptions(args[args.length - 1]);
-    log(`db.${collectionName}.${method}(${args.slice(0, -1).map(inspect).join(', ')}, ${stringifiedOptions})`);
+    log(`db.${collectionName}.${method}(${args.slice(0, -1).map(inspect).join(', ')}, ${inspect(stringifiedOptions)})`);
   };
 
   const handleMongoError = (operation: OperationMap<TSchema>) => {
