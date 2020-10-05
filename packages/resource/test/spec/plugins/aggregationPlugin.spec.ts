@@ -1,28 +1,28 @@
-import {ObjectId, Model} from '@mongozest/core';
+import {AggregationPipeline, Model, ObjectId, Schema} from '@mongozest/core';
+import createResource, {Resource} from '@mongozest/resource';
 import {omit} from 'lodash';
 import {getDbName} from 'root/test/utils';
-import createResource, {Resource} from 'src/';
 import {makeFetch} from 'supertest-fetch';
-import {breakdownMiddleware, createTestApp} from 'test/utils/app';
-import fixtures from 'test/utils/fixtures';
+import {breakdownMiddleware, createTestApp, fixtures} from '../../utils/';
 
 const DB_NAME = getDbName(__filename);
 
 const app = createTestApp({routers: []});
-const {mongo, redis, insertFixture} = app.locals;
+const {mongo, insertFixture} = app.locals;
 app.locals.fixtures = fixtures;
 const fetch = makeFetch(app);
 
-interface UserSchema {
+type User = {
   firstName?: string;
   lastName?: string;
   email: string;
   nationality?: string;
   device?: ObjectId;
-}
+};
 
-class User extends Model<UserSchema> {
-  static schema = {
+class UserModel extends Model<User> {
+  static modelName = 'User';
+  static schema: Schema<User> = {
     firstName: {bsonType: 'string'},
     lastName: {bsonType: 'string'},
     email: {bsonType: 'string', required: true},
@@ -34,7 +34,7 @@ class User extends Model<UserSchema> {
 beforeAll(async () => {
   const db = await mongo.connect(DB_NAME);
   await db.dropDatabase();
-  await mongo.loadModel(User);
+  await mongo.loadModel(UserModel);
 });
 
 afterAll(async () => {
@@ -42,12 +42,12 @@ afterAll(async () => {
 });
 
 describe('Resource', () => {
-  let resource: Resource;
+  let resource: Resource<User>;
+  beforeAll(async () => {
+    resource = createResource('User');
+    expect(resource instanceof Resource).toBeTruthy();
+  });
   describe('resource', () => {
-    it('should properly create resource', async () => {
-      resource = createResource('User', {db: 'mongo'});
-      expect(resource instanceof Resource).toBeTruthy();
-    });
     it('should properly serve resource', async () => {
       const router = resource.buildRouter();
       app.use(router);
@@ -58,7 +58,7 @@ describe('Resource', () => {
     describe('GET /users/aggregate', () => {
       it('should return 200', async () => {
         const {insertedId} = await insertFixture('User.mongozest');
-        const pipeline = [];
+        const pipeline: AggregationPipeline = [];
         const query = `pipeline=${JSON.stringify(pipeline)}`;
         const res = await fetch(`/users/aggregate?${query}`, {
           method: 'get',

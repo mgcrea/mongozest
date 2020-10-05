@@ -1,27 +1,17 @@
-// @docs http://expressjs.com/en/4x/api.html#express
-
-import {inspect, promisify} from 'util';
-import express from 'express';
-import createError from 'http-errors';
-// import {createClient as createRedis} from 'redis';
-import createMongo, {ObjectId, Model} from '@mongozest/core';
-import {Application, Request, Response, NextFunction} from 'express';
-import {upperFirst, camelCase, cloneDeep} from 'lodash';
-// import {AUTH_USER_PROJECTION} from './../../packages/core-auth/src/models/behaviors/userLogInBehavior';
-
-import * as fixtures from './fixtures';
+import createMongo, {Model} from '@mongozest/core';
 import assert from 'assert';
+import express, {Application, ErrorRequestHandler} from 'express';
+import type {Express} from 'express-serve-static-core';
+import {camelCase, cloneDeep, upperFirst} from 'lodash';
+import {inspect} from 'util';
+import * as fixtures from './fixtures';
 
 interface TestAppOptions {
   config?: (app: Application) => void;
   routers: express.Router[];
 }
 
-interface ConnectedExpress extends express.Express {
-  close: () => void;
-}
-
-export const breakdownMiddleware = (err: any, req: Request, res: Response, next: NextFunction) => {
+export const breakdownMiddleware: ErrorRequestHandler = (err, _req, res, _next) => {
   if (!err.status || err.status === 500) {
     console.log(inspect(err, {compact: true, colors: true, depth: Infinity, breakLength: Infinity}));
   }
@@ -32,15 +22,20 @@ export const breakdownMiddleware = (err: any, req: Request, res: Response, next:
   res.status(err.status || 500).json({error: err.message || 'Internal Error'});
 };
 
-export const getFixture = (name: string, payload = {}) => {
+export const getFixture = (name: string, payload = {}): Record<string, unknown> => {
   const [model, fixture] = name.split('.');
   const key = fixture ? `${model.toLowerCase()}_${fixture}` : model.toLowerCase();
-  const eligibleFixture = fixtures[key] || fixtures[fixture];
+  // @ts-expect-error import-related
+  const eligibleFixture = (fixtures[key] || fixtures[fixture]) as Record<string, unknown>;
   assert(eligibleFixture, `Fixture "${key}" not found`);
   return cloneDeep(Object.assign(eligibleFixture, payload));
 };
 
-export const createTestApp = ({config, routers = []}: TestAppOptions) => {
+type TestExpress = Express & {
+  close: () => Promise<void>;
+};
+
+export const createTestApp = ({config, routers = []}: TestAppOptions): TestExpress => {
   const app = express();
   // generic middlewares
   app.use(express.json());
@@ -66,7 +61,7 @@ export const createTestApp = ({config, routers = []}: TestAppOptions) => {
   //   }
   //   next();
   // });
-  routers.forEach(router => app.use(router));
+  routers.forEach((router) => app.use(router));
   // Test breakdown middleware
   app.use(breakdownMiddleware);
 
@@ -80,9 +75,9 @@ export const createTestApp = ({config, routers = []}: TestAppOptions) => {
     return operation.ops[0];
   };
 
-  (app as ConnectedExpress).close = async () => {
-    await Promise.all([/*redis.quit(), */ mongo.disconnect()]);
-  };
-
-  return app as ConnectedExpress;
+  return Object.assign(app, {
+    close: async () => {
+      await Promise.all([/*redis.quit(), */ mongo.disconnect()]);
+    }
+  });
 };

@@ -1,22 +1,29 @@
-import {Model} from '@mongozest/core';
+import {Model, ObjectId, Schema} from '@mongozest/core';
 import {shortIdPlugin as modelShortIdPlugin} from '@mongozest/plugins';
+import createResource, {Resource, shortIdPlugin} from '@mongozest/resource';
 import {isObject, omit} from 'lodash';
 import {getDbName} from 'root/test/utils';
-import createResource, {Resource} from 'src/index';
-import shortIdPlugin from 'src/plugins/shortIdPlugin';
 import {makeFetch} from 'supertest-fetch';
-import {breakdownMiddleware, createTestApp} from 'test/utils/app';
-import fixtures from 'test/utils/fixtures';
+import {breakdownMiddleware, createTestApp, fixtures} from '../../utils/';
 
 const DB_NAME = getDbName(__filename);
 
 const app = createTestApp({routers: []});
-const {mongo, redis, insertFixture} = app.locals;
+const {mongo, insertFixture} = app.locals;
 app.locals.fixtures = fixtures;
 const fetch = makeFetch(app);
 
-class User extends Model {
-  static schema = {
+type User = {
+  firstName?: string;
+  lastName?: string;
+  email: string;
+  nationality?: string;
+  device?: ObjectId;
+};
+
+class UserModel extends Model<User> {
+  static modelName = 'User';
+  static schema: Schema<User> = {
     firstName: {bsonType: 'string'},
     lastName: {bsonType: 'string'},
     email: {bsonType: 'string', required: true},
@@ -29,7 +36,7 @@ class User extends Model {
 beforeAll(async () => {
   const db = await mongo.connect(DB_NAME);
   await db.dropDatabase();
-  await mongo.loadModel(User);
+  await mongo.loadModel(UserModel);
 });
 
 afterAll(async () => {
@@ -37,10 +44,10 @@ afterAll(async () => {
 });
 
 describe('shortIdPlugin', () => {
-  let resource: Resource;
+  let resource: Resource<User>;
   describe('resource', () => {
     it('should properly create resource', async () => {
-      resource = createResource('User', {db: 'mongo', plugins: [shortIdPlugin]});
+      resource = createResource('User', {plugins: [shortIdPlugin]});
       expect(resource instanceof Resource).toBeTruthy();
     });
     it('should properly build and serve resource', async () => {

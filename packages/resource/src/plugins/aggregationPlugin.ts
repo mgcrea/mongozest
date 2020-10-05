@@ -4,8 +4,9 @@ import createError from 'http-errors';
 import JSON5 from 'json5';
 import {isEmpty, isString, mapValues, pick} from 'lodash';
 import {CollectionAggregationOptions, FilterQuery} from 'mongodb';
-import {asyncHandler} from 'src/utils/request';
-import {createOperationMap, Resource} from '..';
+import {createOperationMap} from '../operation';
+import {Resource} from '../resource';
+import {asyncHandler} from '../utils/request';
 
 export const aggregationPlugin = <TSchema extends DefaultSchema = DefaultSchema>(
   resource: Resource<TSchema>,

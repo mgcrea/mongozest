@@ -1,11 +1,10 @@
-import {Model, ObjectId} from '@mongozest/core';
+import {Model, ObjectId, Schema} from '@mongozest/core';
+import createResource, {Resource} from '@mongozest/resource';
 import {isObject, omit} from 'lodash';
 import {getDbName} from 'root/test/utils';
 import {makeFetch} from 'supertest-fetch';
-import {breakdownMiddleware, createTestApp} from 'test/utils/app';
-import fixtures from 'test/utils/fixtures';
-import createResource, {Resource} from 'src/index';
 import {URLSearchParams} from 'url';
+import {breakdownMiddleware, createTestApp, fixtures} from '../utils/';
 
 const DB_NAME = getDbName(__filename);
 
@@ -14,16 +13,17 @@ const {mongo, insertFixture} = app.locals;
 app.locals.fixtures = fixtures;
 const fetch = makeFetch(app);
 
-interface UserSchema {
+type User = {
   firstName?: string;
   lastName?: string;
   email: string;
   nationality?: string;
   device?: ObjectId;
-}
+};
 
-class User extends Model<UserSchema> {
-  static schema = {
+class UserModel extends Model<User> {
+  static modelName = 'User';
+  static schema: Schema<User> = {
     firstName: {bsonType: 'string'},
     lastName: {bsonType: 'string'},
     email: {bsonType: 'string', required: true},
@@ -35,7 +35,7 @@ class User extends Model<UserSchema> {
 beforeAll(async () => {
   const db = await mongo.connect(DB_NAME);
   await db.dropDatabase();
-  await mongo.loadModel(User);
+  await mongo.loadModel(UserModel);
 });
 
 afterAll(async () => {
@@ -43,10 +43,10 @@ afterAll(async () => {
 });
 
 describe('Resource', () => {
-  let resource: Resource;
+  let resource: Resource<User>;
   describe('resource', () => {
     it('should properly create resource', async () => {
-      resource = createResource('User', {db: 'mongo'});
+      resource = createResource('User');
       expect(resource instanceof Resource).toBeTruthy();
     });
     it('should properly serve resource', async () => {
@@ -211,11 +211,10 @@ describe('Resource', () => {
 });
 
 describe('resource with nested paths', () => {
-  let resource: Resource;
+  let resource: Resource<User>;
   const PATH = '/devices/:device/users';
   it('should properly create resource', async () => {
     resource = createResource('User', {
-      db: 'mongo',
       paths: [PATH],
       params: {
         device: (_id: string) => {

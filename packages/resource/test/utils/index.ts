@@ -1,2 +1,2 @@
-import * as fixtures from './fixtures';
-export {fixtures};
+export * from './app';
+export * as fixtures from './fixtures';

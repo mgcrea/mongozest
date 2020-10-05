@@ -1,6 +1,6 @@
 import {DefaultSchema} from '@mongozest/core';
-import {Resource} from '..';
 import {FilterQuery} from 'mongodb';
+import {Resource} from '../resource';
 
 const SID_REGEX = /^[a-z0-9\-\_]{7,14}$/i;
 

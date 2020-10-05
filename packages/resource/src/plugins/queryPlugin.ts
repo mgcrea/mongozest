@@ -3,7 +3,7 @@ import createError from 'http-errors';
 import JSON5 from 'json5';
 import {isEmpty, isString, mapValues, pick} from 'lodash';
 import {ObjectId} from 'mongodb';
-import {Resource} from '..';
+import {Resource} from '../resource';
 
 export const queryPlugin = <TSchema extends DefaultSchema = DefaultSchema>(
   resource: Resource<TSchema>,

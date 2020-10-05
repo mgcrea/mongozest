@@ -1,22 +1,29 @@
-import {Model} from '@mongozest/core';
-import {populatePlugin as modelPopulatePlugin} from '@mongozest/plugins';
+import {ForeignRef, Model, ObjectId, Schema} from '@mongozest/core';
+import {populationPlugin as modelPopulationPlugin} from '@mongozest/plugins';
+import createResource, {populatePlugin, Resource} from '@mongozest/resource';
 import {omit} from 'lodash';
 import {getDbName} from 'root/test/utils';
-import createResource, {Resource} from 'src/index';
-import populatePlugin from 'src/plugins/populatePlugin';
 import {makeFetch} from 'supertest-fetch';
-import {breakdownMiddleware, createTestApp} from 'test/utils/app';
-import fixtures from 'test/utils/fixtures';
+import {breakdownMiddleware, createTestApp, fixtures} from '../../utils/';
 
 const DB_NAME = getDbName(__filename);
 
 const app = createTestApp({routers: []});
-const {mongo, redis, insertFixture} = app.locals;
+const {mongo, insertFixture} = app.locals;
 app.locals.fixtures = fixtures;
 const fetch = makeFetch(app);
 
-class User extends Model {
-  static schema = {
+type User = {
+  firstName?: string;
+  lastName?: string;
+  email: string;
+  nationality?: string;
+  device?: ObjectId;
+};
+
+class UserModel extends Model<User> {
+  static modelName = 'User';
+  static schema: Schema<User> = {
     firstName: {bsonType: 'string'},
     lastName: {bsonType: 'string'},
     email: {bsonType: 'string', required: true},
@@ -25,18 +32,24 @@ class User extends Model {
   };
 }
 
-class Comment extends Model {
-  static schema = {
+type Comment = {
+  text?: string;
+  user?: ForeignRef<User>;
+};
+
+class CommentModel extends Model<Comment> {
+  static modelName = 'Comment';
+  static schema: Schema<Comment> = {
     text: {bsonType: 'string'},
     user: {bsonType: 'objectId', ref: 'User'}
   };
-  static plugins = [modelPopulatePlugin];
+  static plugins = [modelPopulationPlugin];
 }
 
 beforeAll(async () => {
   const db = await mongo.connect(DB_NAME);
   await db.dropDatabase();
-  await mongo.loadModels({User, Comment});
+  await mongo.loadModels({User: UserModel, Comment: CommentModel});
 });
 
 afterAll(async () => {
@@ -46,9 +59,9 @@ afterAll(async () => {
 describe('populatePlugin', () => {
   describe('resources', () => {
     describe('User', () => {
-      let resource: Resource;
+      let resource: Resource<User>;
       it('should properly create resources', async () => {
-        resource = createResource('User', {db: 'mongo'});
+        resource = createResource('User');
         expect(resource instanceof Resource).toBeTruthy();
       });
       it('should properly serve resource', async () => {
@@ -57,9 +70,9 @@ describe('populatePlugin', () => {
       });
     });
     describe('Comment', () => {
-      let resource: Resource;
+      let resource: Resource<Comment>;
       it('should properly create resources', async () => {
-        resource = createResource('Comment', {db: 'mongo', plugins: [populatePlugin]});
+        resource = createResource('Comment', {plugins: [populatePlugin]});
         expect(resource instanceof Resource).toBeTruthy();
       });
       it('should properly serve resource', async () => {

@@ -3,9 +3,10 @@ import {Request} from 'express';
 import createError from 'http-errors';
 import JSON5 from 'json5';
 import {isString, mapValues, pick} from 'lodash';
-import {SchemaMember, FilterQuery, FindOneOptions} from 'mongodb';
-import {OperationMap} from 'src/operation';
-import {Resource} from '..';
+import 'mongodb';
+import {FilterQuery, FindOneOptions, SchemaMember} from 'mongodb';
+import {OperationMap} from '../operation';
+import {Resource} from '../resource';
 
 export type Population<T> = SchemaMember<T, number | boolean | any>;
 

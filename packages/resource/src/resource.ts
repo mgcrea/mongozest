@@ -3,7 +3,7 @@ import Hooks, {HookCallback} from '@mongozest/hooks';
 import assert from 'assert';
 import {Request, RequestHandler, Response, Router as createRouter, Router} from 'express';
 import createError from 'http-errors';
-import {snakeCase, uniq} from 'lodash';
+import {pick, snakeCase, uniq} from 'lodash';
 import {
   CollectionInsertOneOptions,
   CommonOptions,
@@ -44,7 +44,7 @@ const assertScopedFilter = <TSchema>(filter: FilterQuery<TSchema>) => {
   assert(filter && Object.keys(filter).length, 'Invalid filter');
 };
 
-class Resource<TSchema extends DefaultSchema> {
+export class Resource<TSchema extends DefaultSchema> {
   static internalPrePlugins = [queryPlugin, populatePlugin, aggregationPlugin];
   static internalPostPlugins = [];
 
@@ -353,7 +353,7 @@ class Resource<TSchema extends DefaultSchema> {
     if (result.n === 0) {
       throw createError(404);
     }
-    operation.set('result', result);
+    operation.set('result', pick(result, 'ok', 'n'));
     // Execute postHooks
     await this.hooks.execPost('deleteDocument', [operation, operation.get('filter'), options]);
     res.json(operation.get('result'));
@@ -374,7 +374,7 @@ export type ResourceHookName =
   | 'deleteDocument'
   | 'aggregateCollection';
 
-interface Resource<TSchema extends DefaultSchema> {
+export interface Resource<TSchema extends DefaultSchema> {
   // pre
   pre(hookName: 'filter', callback: (operation: OperationMap<TSchema>, filter: FilterQuery<TSchema>) => void): void;
   pre(
