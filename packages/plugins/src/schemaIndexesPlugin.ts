@@ -1,10 +1,28 @@
 import {find, isString, isUndefined} from 'lodash';
-import {Model, log, inspect} from '@mongozest/core';
+import {Model, log, inspect, UnknownSchema, ModelConstructor} from '@mongozest/core';
+import {IndexOptions, SchemaMember, OptionalId} from 'mongodb';
 
-// Handle schema defaults
-export default function schemaDefaultsPlugin(model: Model, {suffix = '_'} = {}) {
+export type SchemaIndexesConfig<TSchema> = [SchemaMember<TSchema, number | boolean>, IndexOptions][];
+
+declare module '@mongozest/core' {
+  interface ModelConstructor<TSchema extends OptionalId<UnknownSchema> = UnknownSchema> {
+    indexes?: SchemaIndexesConfig<TSchema>;
+  }
+  interface JsonSchemaProperty<TProp = any> {
+    index?: IndexOptions;
+  }
+}
+
+export type SchemaIndexesPluginOptions = {
+  suffix?: string;
+};
+
+export const schemaIndexesPlugin = <TSchema extends UnknownSchema>(
+  model: Model<TSchema>,
+  {suffix = '_'}: SchemaIndexesPluginOptions = {}
+): void => {
   const {collectionName} = model;
-  const propsWithIndexes: Map<string, any> = new Map();
+  const propsWithIndexes: Map<string, IndexOptions> = new Map();
   model.post('initialize:property', (prop: {[s: string]: any} | string, path: string) => {
     if (isString(prop) || isUndefined(prop.index)) {
       return;
@@ -12,21 +30,21 @@ export default function schemaDefaultsPlugin(model: Model, {suffix = '_'} = {}) 
     propsWithIndexes.set(path, prop.index);
   });
   // Handle document insertion
-  model.post('initialize', async (doc: T) => {
-    // Create indexes from static config
-    const {indexes: indexesFromConfig} = model.constructor;
+  model.post('initialize', async () => {
+    // Create indexes from static model config
+    const {indexes: indexesFromConfig} = model.constructor as {indexes?: SchemaIndexesConfig<TSchema>};
     if (indexesFromConfig) {
       const createdIndexesFromConfig = await indexesFromConfig.reduce(async (promiseSoFar, entry, index) => {
         const soFar = await promiseSoFar;
         const [key, options] = entry;
-        const indexOptions = {name: Object.keys(key).join('_'), ...options};
+        const indexOptions: IndexOptions = {name: Object.keys(key).join('_'), ...options};
         const {name} = indexOptions;
         // Do we have a named index?
-        if (indexOptions.name) {
+        if (name) {
           const indexExists = await model.collection.indexExists(name);
           if (indexExists) {
             // Do we have an exact match?
-            const matchingIndex = find(await model.collection.indexes(), {key, name, ...indexOptions});
+            const matchingIndex = find(await model.collection.indexes(), {key, ...indexOptions});
             if (matchingIndex) {
               // Nothing more to do!
               return soFar;
@@ -38,16 +56,17 @@ export default function schemaDefaultsPlugin(model: Model, {suffix = '_'} = {}) 
         soFar.set(index, indexName);
         return soFar;
       }, Promise.resolve(new Map()));
+      log(`db.${collectionName} successfully initialized ${createdIndexesFromConfig.size}-indexe(s) from model config`);
     }
 
-    // Create indexes from props
+    // Create indexes from schema props
     // const existingIndexes = await model.collection.indexes();
     const indexesFromProps = Array.from(propsWithIndexes.entries());
     const createdIndexesFromProps = await indexesFromProps.reduce(async (promiseSoFar, entry) => {
       const soFar = await promiseSoFar;
       const [path, options] = entry;
-      const indexOptions = {name: `${path}${suffix}`, ...options};
-      const {name} = indexOptions;
+      const name = `${path}${suffix}`;
+      const indexOptions: IndexOptions = {name, ...options};
       const key = {[path]: 1};
       // Do we have a named index?
       if (indexOptions.name) {
@@ -66,5 +85,6 @@ export default function schemaDefaultsPlugin(model: Model, {suffix = '_'} = {}) 
       soFar.set(path, indexName);
       return soFar;
     }, Promise.resolve(new Map()));
+    log(`db.${collectionName} successfully initialized ${createdIndexesFromProps.size}-indexe(s) from schema props`);
   });
-}
+};

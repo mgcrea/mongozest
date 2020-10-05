@@ -6,16 +6,13 @@
   "types": "lib/index.d.ts",
   "module": "src/index.ts",
   "scripts": {
-    "build": "yarn build:sources && yarn build:typings",
-    "build:sources": "babel --source-maps --extensions .js,.ts --out-dir lib/ --delete-dir-on-start --ignore **/__tests__ src/",
-    "build:typings": "tsc --declaration",
+    "build": "NODE_ENV=production tsc --build --verbose",
     "typecheck": "tsc --pretty --noEmit",
     "test": "CI=true jest --runInBand --colors"
   },
   "author": "Olivier Louvignes <olivier@mgcrea.io>",
   "license": "MIT",
   "dependencies": {
-    "@babel/runtime": "^7.11.2",
     "@mongozest/core": "0.2.8",
     "chalk": "^4.1.0",
     "faker": "^5.1.0",
@@ -24,9 +21,9 @@
     "shortid": "^2.2.15"
   },
   "devDependencies": {
-    "@babel/cli": "^7.11.6",
-    "@babel/core": "^7.11.6",
+    "@types/faker": "^5.1.2",
     "@types/jest": "^26.0.14",
+    "@types/shortid": "^0.0.29",
     "typescript": "^4.0.3"
   }
 }

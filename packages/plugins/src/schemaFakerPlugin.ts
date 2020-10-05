@@ -2,24 +2,34 @@
 
 import {isUndefined, get, set, isString, shuffle} from 'lodash';
 import faker from 'faker';
-// @types
-import {Model} from '@mongozest/core';
-import {CollectionInsertOneOptions, InsertOneWriteOpResult} from 'mongodb';
+import {DefaultSchema, Model, JsonSchemaProperty} from '@mongozest/core';
+import {CollectionInsertOneOptions, InsertOneWriteOpResult, OptionalId, WithId} from 'mongodb';
 
 faker.locale = 'fr';
 
-// Handle schema defaults
-export default function schemaFakerPlugin(model: Model, {ignoredKeys = ['_id']} = {}) {
+declare module '@mongozest/core' {
+  // interface Model<TSchema extends OptionalId<DefaultSchema> = DefaultSchema> {
+  //   fakeOne: (document: OptionalId<TSchema>) => OptionalId<TSchema>;
+  //   insertFakeOne: (
+  //     document: OptionalId<TSchema>,
+  //     options?: CollectionInsertOneOptions
+  //   ) => Promise<InsertOneWriteOpResult<WithId<TSchema>>>;
+  // }
+  interface JsonSchemaProperty<TProp = any> {
+    faker?: string;
+  }
+}
+
+export const schemaFakerPlugin = <TSchema extends DefaultSchema>(model: Model<TSchema>): void => {
   const propsWithFaker: Map<string, any> = new Map();
-  model.post('initialize:property', (prop: {[s: string]: any} | string, path: string) => {
+  model.post('initialize:property', (prop: JsonSchemaProperty, path: string) => {
     if (isString(prop) || isUndefined(prop.faker)) {
       return;
     }
-    //
     propsWithFaker.set(path, prop.faker);
   });
   model.addStatics({
-    fakeOne: (document: TSchema = {}) => {
+    fakeOne: (document: OptionalId<TSchema>): OptionalId<TSchema> => {
       const fake = {};
       propsWithFaker.forEach((fakerOption, path) => {
         // if (isString(fakerOption)) {
@@ -31,24 +41,14 @@ export default function schemaFakerPlugin(model: Model, {ignoredKeys = ['_id']} 
           set(fake, path, fakeFunction());
         }
       });
-      return {...fake, ...document};
+      return {...fake, ...document} as OptionalId<TSchema>;
     },
     insertFakeOne: async (
-      document: TSchema,
-      options: CollectionInsertOneOptions = {}
-    ): Promise<InsertOneWriteOpResult> => {
+      document: OptionalId<TSchema>,
+      options?: CollectionInsertOneOptions
+    ): Promise<InsertOneWriteOpResult<WithId<TSchema>>> => {
       const fake = model.fakeOne(document);
       return await model.insertOne(fake, options);
     }
   });
-
-  // Handle document insertion
-  // model.pre('insert', (doc: T) => {
-  //   propsWithFaker.forEach((defaultOption, path) => {
-  //     if (!has(doc, path)) {
-  //       const defaultValue = isFunction(defaultOption) ? defaultOption.call(null) : defaultOption;
-  //       set(doc, path, defaultValue);
-  //     }
-  //   });
-  // });
-}
+};

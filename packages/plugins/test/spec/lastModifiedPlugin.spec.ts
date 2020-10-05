@@ -1,13 +1,17 @@
-import createMongo, {Model} from '@mongozest/core';
-import lastModifiedPlugin from 'src/lastModifiedPlugin';
+import createMongo, {JsonSchema, Model} from '@mongozest/core';
 import {getDbName} from 'root/test/utils';
+import {lastModifiedPlugin, LastModifiedPluginSchema} from 'src/lastModifiedPlugin';
 
 const DB_NAME = getDbName(__filename);
 
 const mongo = createMongo();
 
-class Test extends Model {
-  static schema = {
+type Test = LastModifiedPluginSchema & {
+  name: string;
+};
+
+class TestModel extends Model<Test> {
+  static schema: JsonSchema<Test> = {
     name: {bsonType: 'string', required: true}
   };
   static plugins = [lastModifiedPlugin];
@@ -23,13 +27,13 @@ afterAll(async () => {
 });
 
 describe('lastModifiedPlugin', () => {
-  let TestModel: Model;
+  let testModel: Model<Test>;
   it('should properly loadModel', async () => {
-    TestModel = await mongo.loadModel(Test);
-    expect(TestModel instanceof Model).toBeTruthy();
+    testModel = await mongo.loadModel(TestModel);
+    expect(testModel instanceof Model).toBeTruthy();
   });
   it('should properly add `createdAt` and `updatedAt` on insertOne', async () => {
-    const {ops, insertedId} = await TestModel.insertOne({name: 'insertOne'});
+    const {ops, insertedId} = await testModel.insertOne({name: 'insertOne'});
     // Check op result
     const insertedDoc = ops[0];
     expect(Object.keys(insertedDoc)).toMatchObject(['name', 'createdAt', 'updatedAt', '_id']);
@@ -37,16 +41,16 @@ describe('lastModifiedPlugin', () => {
     expect(insertedDoc.updatedAt instanceof Date).toBeTruthy();
     expect(insertedDoc.updatedAt).toEqual(insertedDoc.createdAt);
     // Check findOne result
-    const foundDoc = await TestModel.findOne({_id: insertedId});
+    const foundDoc = await testModel.findOne({_id: insertedId});
     expect(foundDoc.createdAt instanceof Date).toBeTruthy();
     expect(foundDoc.updatedAt instanceof Date).toBeTruthy();
     expect(foundDoc.updatedAt).toEqual(foundDoc.createdAt);
   });
   it('should properly update `updatedAt` on updateOne', async () => {
-    const {insertedId} = await TestModel.insertOne({name: 'insertOne'});
-    const {result} = await TestModel.updateOne({_id: insertedId}, {$set: {name: 'updateOne'}});
+    const {insertedId} = await testModel.insertOne({name: 'insertOne'});
+    const {result} = await testModel.updateOne({_id: insertedId}, {$set: {name: 'updateOne'}});
     expect(result).toMatchObject({n: 1, nModified: 1, ok: 1});
-    const foundDoc = await TestModel.findOne({_id: insertedId});
+    const foundDoc = await testModel.findOne({_id: insertedId});
     expect(foundDoc.createdAt instanceof Date).toBeTruthy();
     expect(foundDoc.updatedAt instanceof Date).toBeTruthy();
     expect(foundDoc.updatedAt > foundDoc.createdAt).toBeTruthy();

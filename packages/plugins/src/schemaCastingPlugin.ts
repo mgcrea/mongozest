@@ -1,21 +1,8 @@
-// @docs https://docs.mongodb.com/manual/reference/operator/query/type/#document-type-available-types
+import {BsonType, DefaultSchema, JsonSchemaProperty, mapPathValues, Model} from '@mongozest/core';
+import {isPlainObject, isString, toNumber, toSafeInteger, toString} from 'lodash';
+import {Decimal128 as Decimal, Double, Int32 as Int, Long, ObjectId, OptionalId} from 'mongodb';
 
-import {get, set, isString, isPlainObject, toString, toNumber, toSafeInteger, omitBy} from 'lodash';
-import {
-  Long,
-  ObjectId,
-  Decimal128 as Decimal,
-  Int32 as Int,
-  Double,
-  FilterQuery,
-  FindOneOptions,
-  UpdateQuery,
-  FindOneAndReplaceOption
-} from 'mongodb';
-// @types
-import {Model, OperationMap, mapPathValues} from '@mongozest/core';
-
-const CASTABLE_TYPES = ['bool', 'date', 'decimal', 'double', 'int', 'long', 'objectId', 'string'];
+const CASTABLE_TYPES: BsonType[] = ['bool', 'date', 'decimal', 'double', 'int', 'long', 'objectId', 'string'];
 
 // @docs https://docs.mongodb.com/manual/reference/bson-types/
 const castValueForType = (value: any, type: string) => {
@@ -79,30 +66,34 @@ const castFilterValueForType = (value: any, type: string) => {
   return value;
 };
 
-// Helper recursively parsing schema to find path where values should be casted
-export default function autoCastingPlugin<TSchema>(
-  model: Model,
-  {ignoredKeys = ['_id'], castableTypes = CASTABLE_TYPES, castDecimalsAsFloats = false} = {}
-) {
+export type SchemaCastingPluginOptions = {
+  castableTypes?: BsonType[];
+  castDecimalsAsFloats?: boolean;
+};
+
+export const schemaCastingPlugin = <TSchema extends DefaultSchema>(
+  model: Model<TSchema>,
+  {castableTypes = CASTABLE_TYPES, castDecimalsAsFloats = false}: SchemaCastingPluginOptions = {}
+): void => {
   const castableProperties = new Map();
-  model.post('initialize:property', (property: {[s: string]: any}, path: string) => {
-    const bsonType = isString(property) ? property : property.bsonType;
+  model.post('initialize:property', (property, path: string) => {
+    const bsonType = isString(property) ? (property as BsonType) : property.bsonType;
     if (bsonType && castableTypes.includes(bsonType)) {
       castableProperties.set(path, bsonType);
     }
   });
   // Handle find
   // @TODO TEST-ME!
-  model.pre('find', (filter: FilterQuery<TSchema>) => {
+  model.pre('find', (_operation, filter) => {
     // Check if we have results
     if (!filter) {
       return;
     }
     castableProperties.forEach((bsonType, path) => {
-      mapPathValues(filter, path, (value: any) => castFilterValueForType(value, bsonType));
+      mapPathValues(filter as OptionalId<TSchema>, path, (value) => castFilterValueForType(value, bsonType));
     });
   });
-  model.post('find', (filter: FilterQuery<TSchema>, options: FindOneOptions, operation: OperationMap) => {
+  model.post('find', (operation) => {
     const doc = operation.get('result');
     // Check if we have results
     if (!doc) {
@@ -112,39 +103,31 @@ export default function autoCastingPlugin<TSchema>(
       mapPathValues(doc, path, (value: any) => parseValueForType(value, bsonType));
     });
   });
-  model.post(
-    'findOneAndUpdate',
-    (
-      filter: FilterQuery<TSchema>,
-      update: UpdateQuery<TSchema>,
-      options: FindOneAndReplaceOption,
-      operation: OperationMap
-    ) => {
-      const doc = operation.get('result').value;
-      // Check if we have results
-      if (!doc) {
-        return;
-      }
-      castableProperties.forEach((bsonType, path) => {
-        mapPathValues(doc, path, (value: any) => parseValueForType(value, bsonType));
-      });
+  model.post('findOneAndUpdate', (operation) => {
+    const doc = operation.get('result').value;
+    // Check if we have results
+    if (!doc) {
+      return;
     }
-  );
+    castableProperties.forEach((bsonType, path) => {
+      mapPathValues(doc, path, (value: any) => parseValueForType(value, bsonType));
+    });
+  });
   // @TODO TEST-ME!
-  model.pre('update', (filter: FilterQuery<TSchema>, update: UpdateQuery<TSchema>) => {
+  model.pre('update', (_operation, filter, update) => {
     castableProperties.forEach((bsonType, path) => {
       // d(`update ${path}: ${bsonType}`);
-      mapPathValues(filter, path, (value: any) => castFilterValueForType(value, bsonType));
+      mapPathValues(filter as OptionalId<TSchema>, path, (value: any) => castFilterValueForType(value, bsonType));
       if (update.$set) {
-        mapPathValues(update.$set, path, (value: any) => castValueForType(value, bsonType));
+        mapPathValues(update.$set as OptionalId<TSchema>, path, (value: any) => castValueForType(value, bsonType));
       }
       if (update.$push) {
-        mapPathValues(update.$push, path, (value: any) => castValueForType(value, bsonType));
+        mapPathValues(update.$push as OptionalId<TSchema>, path, (value: any) => castValueForType(value, bsonType));
       }
     });
   });
   // Handle insert
-  model.pre('insert', (doc: T) => {
+  model.pre('insert', (_operation, doc) => {
     castableProperties.forEach((bsonType, path) => {
       mapPathValues(doc, path, (value: any) => {
         // try {
@@ -157,4 +140,4 @@ export default function autoCastingPlugin<TSchema>(
     });
   });
   // @TODO Handle document update
-}
+};

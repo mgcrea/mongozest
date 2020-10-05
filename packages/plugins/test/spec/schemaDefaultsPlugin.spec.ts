@@ -1,8 +1,8 @@
-import createMongo, {Model, jsonSchemaPlugin} from '@mongozest/core';
-import schemaCastingPlugin from 'src/schemaCastingPlugin';
-import schemaDefaultsPlugin from 'src/schemaDefaultsPlugin';
-import {getDbName} from 'root/test/utils';
+import createMongo, {JsonSchema, jsonSchemaPlugin, Model} from '@mongozest/core';
 import {Decimal128 as Decimal} from 'mongodb';
+import {getDbName} from 'root/test/utils';
+import {schemaCastingPlugin} from 'src/schemaCastingPlugin';
+import {schemaDefaultsPlugin} from 'src/schemaDefaultsPlugin';
 
 const DB_NAME = getDbName(__filename);
 
@@ -17,26 +17,34 @@ afterAll(async () => {
   await mongo.disconnect();
 });
 
-describe('schemaCastingPlugin', () => {
+describe('schemaDefaultsPlugin', () => {
   describe('schema with basic properties', () => {
-    class Test1 extends Model {
-      static schema = {
+    type Test = {
+      name?: string;
+      stringValue?: string;
+      dateValue?: Date;
+      boolValue?: boolean;
+      refValue?: string;
+    };
+    class TestModel extends Model<Test> {
+      static schema: JsonSchema<Test> = {
         name: {bsonType: 'string'},
         stringValue: {bsonType: 'string', default: 'bar'},
-        dateValue: {bsonType: 'date', default: Date.now},
+        dateValue: {bsonType: 'date', default: (Date.now as unknown) as () => Date}, // @NOTE schemaCasting
         boolValue: {bsonType: 'bool', default: false},
         refValue: {bsonType: 'string', default: '${name}bar'}
       };
       static plugins = [jsonSchemaPlugin, schemaDefaultsPlugin, schemaCastingPlugin];
     }
-    let TestModel: Model;
+    let testModel: TestModel;
+
     it('should properly loadModel', async () => {
-      TestModel = await mongo.loadModel(Test1);
-      expect(TestModel instanceof Model).toBeTruthy();
+      testModel = await mongo.loadModel(TestModel);
+      expect(testModel instanceof Model).toBeTruthy();
     });
     describe('should properly handle a schema prop default', () => {
       it('from a `string`', async () => {
-        const {ops, insertedId} = await TestModel.insertOne({
+        const {ops, insertedId} = await testModel.insertOne({
           name: 'foo'
         });
         // Check op result
@@ -47,7 +55,7 @@ describe('schemaCastingPlugin', () => {
         expect(insertedDoc.boolValue).toEqual(false);
         expect(insertedDoc.refValue).toEqual('foobar');
         // Check findOne result
-        const foundDoc = await TestModel.findOne({_id: insertedId});
+        const foundDoc = await testModel.findOne({_id: insertedId});
         expect(foundDoc.stringValue).toEqual('bar');
         expect(foundDoc.dateValue instanceof Date).toBeTruthy();
         expect(foundDoc.dateValue.getTime() > 0).toBeTruthy();
@@ -57,25 +65,30 @@ describe('schemaCastingPlugin', () => {
     });
   });
   describe('schema with nestedObject properties', () => {
-    class Test2 extends Model {
-      static schema = {
+    type Test = {
+      name?: string;
+      nestedObject?: {latitude?: Decimal; longitude?: Decimal};
+    };
+    class TestModel extends Model<Test> {
+      static schema: JsonSchema<Test> = {
         name: {bsonType: 'string'},
         nestedObject: {
           bsonType: 'object',
-          properties: {latitude: 'decimal', longitude: 'decimal'},
+          properties: {latitude: {bsonType: 'decimal'}, longitude: {bsonType: 'decimal'}},
           default: {latitude: Decimal.fromString('0'), longitude: Decimal.fromString('0')}
         }
       };
       static plugins = [jsonSchemaPlugin, schemaDefaultsPlugin];
     }
-    let TestModel: Model;
+    let testModel: TestModel;
+
     it('should properly loadModel', async () => {
-      TestModel = await mongo.loadModel(Test2);
-      expect(TestModel instanceof Model).toBeTruthy();
+      testModel = await mongo.loadModel(TestModel);
+      expect(testModel instanceof Model).toBeTruthy();
     });
     describe('should properly handle a schema prop default', () => {
       it('from a `string`', async () => {
-        const {ops, insertedId} = await TestModel.insertOne({
+        const {ops, insertedId} = await testModel.insertOne({
           name: 'foo'
         });
         // Check op result
@@ -85,33 +98,38 @@ describe('schemaCastingPlugin', () => {
           longitude: Decimal.fromString('0')
         });
         // Check findOne result
-        const foundDoc = await TestModel.findOne({_id: insertedId});
+        const foundDoc = await testModel.findOne({_id: insertedId});
         expect(foundDoc.nestedObject).toEqual({latitude: Decimal.fromString('0'), longitude: Decimal.fromString('0')});
       });
     });
   });
   describe('schema with nestedArray properties', () => {
-    class Test3 extends Model {
-      static schema = {
+    type Test = {
+      name?: string;
+      nestedArray?: {title?: string; createdAt?: Date}[];
+    };
+    class TestModel extends Model<Test> {
+      static schema: JsonSchema<Test> = {
         name: {bsonType: 'string'},
         nestedArray: {
           bsonType: 'array',
           items: {
             bsonType: 'object',
-            properties: {title: 'string', createdAt: {bsonType: 'date', default: Date.now}}
+            properties: {title: {bsonType: 'string'}, createdAt: {bsonType: 'date', default: Date.now}}
           }
         }
       };
       static plugins = [jsonSchemaPlugin, schemaDefaultsPlugin, schemaCastingPlugin];
     }
-    let TestModel: Model;
+    let testModel: TestModel;
+
     it('should properly loadModel', async () => {
-      TestModel = await mongo.loadModel(Test3);
-      expect(TestModel instanceof Model).toBeTruthy();
+      testModel = await mongo.loadModel(TestModel);
+      expect(testModel instanceof Model).toBeTruthy();
     });
     describe('should properly handle a schema prop default', () => {
       it('from a `string`', async () => {
-        const {ops, insertedId} = await TestModel.insertOne({
+        const {ops, insertedId} = await testModel.insertOne({
           name: 'foo',
           nestedArray: [{title: 'bar'}]
         });
@@ -120,7 +138,7 @@ describe('schemaCastingPlugin', () => {
         expect(Object.keys(insertedDoc.nestedArray[0])).toEqual(['title', 'createdAt']);
         expect(insertedDoc.nestedArray[0].createdAt instanceof Date).toBeTruthy();
         // Check findOne result
-        const foundDoc = await TestModel.findOne({_id: insertedId});
+        const foundDoc = await testModel.findOne({_id: insertedId});
         expect(foundDoc.nestedArray[0].createdAt instanceof Date).toBeTruthy();
       });
     });

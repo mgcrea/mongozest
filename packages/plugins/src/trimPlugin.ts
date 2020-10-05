@@ -1,13 +1,13 @@
 // @docs https://docs.mongodb.com/manual/reference/operator/query/type/#document-type-available-types
 
+import {BsonType, DefaultSchema, mapPathValues, Model} from '@mongozest/core';
 import {isString, toString} from 'lodash';
-import {Model, mapPathValues} from '@mongozest/core';
-import {FilterQuery, UpdateQuery} from 'mongodb';
+import {OptionalId} from 'mongodb';
 
-const TRIMMABLE_TYPES = ['string'];
+const TRIMMABLE_TYPES: BsonType[] = ['string'];
 
 // @docs https://docs.mongodb.com/manual/reference/bson-types/
-const trimValueForType = (value: any, type: string) => {
+const trimValueForType = (value: any, type: string): any => {
   switch (type) {
     case 'string':
       return toString(value).trim();
@@ -16,30 +16,37 @@ const trimValueForType = (value: any, type: string) => {
   }
 };
 
+export type TrimPluginOptions = {
+  trimmableTypes?: BsonType[];
+};
+
 // Helper recursively parsing schema to find path where values should be casted
-export default function trimPlugin<TSchema>(model: Model, {trimmableTypes = TRIMMABLE_TYPES} = {}) {
+export const trimPlugin = <TSchema extends DefaultSchema>(
+  model: Model<TSchema>,
+  {trimmableTypes = TRIMMABLE_TYPES}: TrimPluginOptions = {}
+): void => {
   const trimmableProperties = new Map();
-  model.post('initialize:property', (property: {[s: string]: any}, path: string) => {
-    const bsonType = isString(property) ? property : property.bsonType;
+  model.post('initialize:property', (property, path) => {
+    const bsonType = isString(property) ? (property as BsonType) : property.bsonType;
     if (bsonType && trimmableTypes.includes(bsonType)) {
       trimmableProperties.set(path, bsonType);
     }
   });
   // @TODO TEST-ME!
-  model.pre('update', (_filter: FilterQuery<TSchema>, update: UpdateQuery<TSchema> | TSchema) => {
+  model.pre('update', (_operation, _filter, update) => {
     trimmableProperties.forEach((bsonType, path) => {
       if (update.$set) {
-        mapPathValues(update.$set, path, (value: any) => trimValueForType(value, bsonType));
+        mapPathValues(update.$set as OptionalId<TSchema>, path, (value) => trimValueForType(value, bsonType));
       }
       if (update.$push) {
-        mapPathValues(update.$push, path, (value: any) => trimValueForType(value, bsonType));
+        mapPathValues(update.$push as OptionalId<TSchema>, path, (value) => trimValueForType(value, bsonType));
       }
     });
   });
   // Handle insert
-  model.pre('insert', (doc: T) => {
+  model.pre('insert', (_operation, document) => {
     trimmableProperties.forEach((bsonType, path) => {
-      mapPathValues(doc, path, (value: any) => trimValueForType(value, bsonType));
+      mapPathValues(document, path, (value: any) => trimValueForType(value, bsonType));
     });
   });
-}
+};

@@ -1,13 +1,17 @@
-import createMongo, {Model} from '@mongozest/core';
-import collectionDefaultsPlugin from 'src/collectionDefaultsPlugin';
+import createMongo, {JsonSchema, Model} from '@mongozest/core';
 import {getDbName} from 'root/test/utils';
+import {collectionDefaultsPlugin} from 'src/collectionDefaultsPlugin';
 
 const DB_NAME = getDbName(__filename);
 
 const mongo = createMongo();
 
-class Test extends Model {
-  static schema = {
+type Test = {
+  name: string;
+};
+
+class TestModel extends Model<Test> {
+  static schema: JsonSchema<Test> = {
     name: {bsonType: 'string', required: true}
   };
   static defaults = [{name: 'workers'}, {name: 'clients'}, {name: 'admins'}];
@@ -24,11 +28,11 @@ afterAll(async () => {
 });
 
 describe('jsonSchemaPlugin', () => {
-  let TestModel: Model;
+  let testModel: Model<Test>;
   it('should properly loadModel ans insert defaults', async () => {
-    TestModel = await mongo.loadModel(Test);
-    expect(TestModel instanceof Model).toBeTruthy();
-    const docs = await TestModel.find({});
-    expect(docs).toMatchObject(Test.defaults);
+    testModel = await mongo.loadModel(TestModel);
+    expect(testModel instanceof Model).toBeTruthy();
+    const docs = await testModel.find({});
+    expect(docs).toMatchObject(TestModel.defaults);
   });
 });

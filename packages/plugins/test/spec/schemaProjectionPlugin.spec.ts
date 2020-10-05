@@ -1,6 +1,6 @@
-import createMongo, {Model, jsonSchemaPlugin} from '@mongozest/core';
-import schemaProjectionPlugin from 'src/schemaProjectionPlugin';
+import createMongo, {jsonSchemaPlugin, Model} from '@mongozest/core';
 import {getDbName} from 'root/test/utils';
+import {schemaProjectionPlugin} from 'src/schemaProjectionPlugin';
 
 const DB_NAME = getDbName(__filename);
 
@@ -82,7 +82,7 @@ describe('schemaProjectionPlugin', () => {
       });
       // Check findOne result
       const foundDocs = await TestModel.find({});
-      foundDocs.forEach(foundDoc => {
+      foundDocs.forEach((foundDoc) => {
         expect(foundDoc.username).toEqual('foo');
         expect(typeof foundDoc.password).toEqual('undefined');
         expect(typeof foundDoc.code).toEqual('undefined');
@@ -97,7 +97,7 @@ describe('schemaProjectionPlugin', () => {
       });
       // Check findOne result
       const foundDocs = await TestModel.find({}, {projection: {username: 1}});
-      foundDocs.forEach(foundDoc => {
+      foundDocs.forEach((foundDoc) => {
         expect(foundDoc.username).toEqual('foo');
         expect(typeof foundDoc.password).toEqual('undefined');
         expect(typeof foundDoc.code).toEqual('undefined');
@@ -112,7 +112,7 @@ describe('schemaProjectionPlugin', () => {
       });
       // Check findOne result
       const foundDocs = await TestModel.find({}, {projection: {email: 0}});
-      foundDocs.forEach(foundDoc => {
+      foundDocs.forEach((foundDoc) => {
         expect(foundDoc.username).toEqual('foo');
         expect(typeof foundDoc.password).toEqual('undefined');
         expect(typeof foundDoc.code).toEqual('undefined');

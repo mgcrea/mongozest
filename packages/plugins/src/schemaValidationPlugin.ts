@@ -1,13 +1,8 @@
 // @docs https://docs.mongodb.com/manual/reference/operator/query/type/#document-type-available-types
 
-import {isUndefined, has, get, difference, isString, isFunction} from 'lodash';
+import {DefaultSchema, Model} from '@mongozest/core';
+import {difference, get, has, isFunction, isString, isUndefined} from 'lodash';
 import {MongoError} from 'mongodb';
-// @types
-import {Model, defaultPathValues} from '..';
-
-const getDefault = (defaultOption: any) => {
-  return isFunction(defaultOption) ? defaultOption.call(null) : defaultOption;
-};
 
 type ValidationErrors = Array<{error: string; path: string; message?: string}>;
 
@@ -30,8 +25,15 @@ const formatValidationErrors = (errors: ValidationErrors) => {
     .join('\n');
 };
 
+export type SchemaValidationPluginOptions = {
+  validateJsonSchema?: boolean;
+};
+
 // Handle schema defaults
-export default function schemaValidationPlugin(model: Model, {validateJsonSchema = true} = {}) {
+export const schemaValidationPlugin = <TSchema extends DefaultSchema>(
+  model: Model<TSchema>,
+  {validateJsonSchema = true}: SchemaValidationPluginOptions = {}
+): void => {
   const propsWithValidation: Map<string, any> = new Map();
   const propsWithPattern: Map<string, any> = new Map();
   model.post('initialize:property', (prop: {[s: string]: any} | string, path: string) => {
@@ -50,7 +52,7 @@ export default function schemaValidationPlugin(model: Model, {validateJsonSchema
     }
   });
   // Handle document insertion
-  model.pre('validate', (doc: T, options, operation) => {
+  model.pre('validate', (operation, doc) => {
     const validationErrors: ValidationErrors = [];
 
     const isUpdate = ['updateOne', 'updateMany', 'findOneAndUpdate'].includes(operation.get('method'));
@@ -59,11 +61,13 @@ export default function schemaValidationPlugin(model: Model, {validateJsonSchema
     if (validateJsonSchema) {
       // Check required props
       const {validator} = model.collectionOptions;
+      // @ts-expect-error $jsonSchema missing in CollectionCreateOptions
       if (validator && validator.$jsonSchema) {
         const {
           required: requiredProps,
           additionalProperties: allowsAdditionalProps,
           properties: props
+          // @ts-expect-error $jsonSchema missing in CollectionCreateOptions
         } = validator.$jsonSchema;
         if (!isUpdate) {
           requiredProps.forEach((path: string) => {
@@ -76,7 +80,7 @@ export default function schemaValidationPlugin(model: Model, {validateJsonSchema
           // @TODO support isUpdate with $set positional in arrays
           const additionalProps = difference(Object.keys(doc), Object.keys(props));
           if (additionalProps.length) {
-            additionalProps.forEach(path => {
+            additionalProps.forEach((path) => {
               validationErrors.push({error: 'extraneous', path});
             });
           }
@@ -104,11 +108,12 @@ export default function schemaValidationPlugin(model: Model, {validateJsonSchema
 
     if (validationErrors.length) {
       const message = formatValidationErrors(validationErrors);
-      const error = new Error(`Document failed validation on collection "${model.collectionName}" :\n${message}\n`);
       // Fake MongoError for now...
-      error.name = 'MongoError';
+      const error = new MongoError(
+        `Document failed validation on collection "${model.collectionName}" :\n${message}\n`
+      );
       error.code = 121;
       throw error;
     }
   });
-}
+};

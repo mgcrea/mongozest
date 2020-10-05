@@ -1,12 +1,18 @@
 // @docs https://docs.mongodb.com/manual/reference/operator/query/type/#document-type-available-types
 
 import {isUndefined, get, isString, isFunction} from 'lodash';
-// @types
-import {Model, defaultPathValues} from '@mongozest/core';
+import {Model, defaultPathValues, UnknownSchema} from '@mongozest/core';
+import {OptionalId} from 'mongodb';
+
+declare module '@mongozest/core' {
+  interface JsonSchemaProperty<TProp = any> {
+    default?: TProp | (() => TProp) | string;
+  }
+}
 
 const INLINE_VARIABLE_REGEX = /\$\{(.+)\}/g;
 
-const getDefault = (defaultOption: any, doc: any) => {
+const getDefault = <TSchema extends UnknownSchema>(defaultOption: any, doc: OptionalId<TSchema>) => {
   if (isFunction(defaultOption)) {
     return defaultOption.call(null);
   }
@@ -27,7 +33,7 @@ const getDefault = (defaultOption: any, doc: any) => {
 };
 
 // Handle schema defaults
-export default function schemaDefaultsPlugin(model: Model, {ignoredKeys = ['_id']} = {}) {
+export const schemaDefaultsPlugin = <TSchema extends UnknownSchema>(model: Model<TSchema>): void => {
   const propsWithDefaults: Map<string, any> = new Map();
   model.post('initialize:property', (prop: {[s: string]: any} | string, path: string) => {
     if (isString(prop) || isUndefined(prop.default)) {
@@ -36,9 +42,9 @@ export default function schemaDefaultsPlugin(model: Model, {ignoredKeys = ['_id'
     propsWithDefaults.set(path, prop.default);
   });
   // Handle document insertion
-  model.pre('insert', (doc: T) => {
+  model.pre('insert', (_operation, document) => {
     propsWithDefaults.forEach((defaultOption, path) => {
-      defaultPathValues(doc, path, () => getDefault(defaultOption, doc));
+      defaultPathValues(document, path, () => getDefault<TSchema>(defaultOption, document));
     });
   });
-}
+};

@@ -1,32 +1,35 @@
-import {FilterQuery, UpdateQuery} from 'mongodb';
-import {Model} from '@mongozest/core';
+import {DefaultSchema, Model} from '@mongozest/core';
 
-export interface LastModifiedPluginProps {
-  updatedAt: Date;
-  createdAt: Date;
-}
+export type LastModifiedPluginSchema = {
+  updatedAt?: Date;
+  createdAt?: Date;
+};
 
-// export interface LastModifiedPluginOptions {}
-
-export default function lastModifiedPlugin<TSchema extends LastModifiedPluginProps>(
+export const lastModifiedPlugin = <TSchema extends DefaultSchema & LastModifiedPluginSchema>(
   model: Model<TSchema>
-  // _options: LastModifiedPluginOptions
-) {
+): void => {
   model.addSchemaProperties({
     updatedAt: {bsonType: 'date'},
     createdAt: {bsonType: 'date'}
   });
-  model.pre('insert', (insert: TSchema) => {
+  model.pre('insert', (_operation, insert) => {
     const currentDate = new Date();
     insert.createdAt = currentDate;
     insert.updatedAt = currentDate;
   });
-  model.pre('update', (filter: FilterQuery<TSchema>, update: UpdateQuery<TSchema>) => {
+  model.pre('update', (_operation, _filter, update) => {
     const currentDate = new Date();
     if (update.$set) {
-      update.$set.updatedAt = currentDate;
+      Object.assign(update.$set, {updatedAt: currentDate});
     } else {
-      update.$set = {updatedAt: currentDate};
+      update.$set = {updatedAt: currentDate} as typeof update.$set;
     }
   });
-}
+};
+
+// declare module '@mongozest/core' {
+//   interface DefaultSchema {
+//     updatedAt: Date;
+//     createdAt: Date;
+//   }
+// }

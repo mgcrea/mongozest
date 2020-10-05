@@ -1,6 +1,6 @@
 import createMongo, {Model} from '@mongozest/core';
-import shortIdPlugin from 'src/shortIdPlugin';
 import {getDbName} from 'root/test/utils';
+import {shortIdPlugin} from 'src/shortIdPlugin';
 
 const DB_NAME = getDbName(__filename);
 

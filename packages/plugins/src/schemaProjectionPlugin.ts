@@ -1,15 +1,10 @@
-// @docs https://docs.mongodb.com/manual/reference/operator/query/type/#document-type-available-types
+import {DefaultSchema, Model} from '@mongozest/core';
+import {has, isString, isUndefined, set} from 'lodash';
 
-import {get, has, set, isString, isUndefined, isFunction} from 'lodash';
-// @types
-import {Model} from '@mongozest/core';
-import {FilterQuery, FindOneOptions} from 'mongodb';
+const isInclusiveProjection = (projection: Record<string, string | number | any>) =>
+  Object.keys(projection).some((key) => projection[key] === 1);
 
-const isInclusiveProjection = (projection: {[s: string]: any}) =>
-  Object.keys(projection).some(key => projection[key] === 1);
-
-// Handle schema defaults
-export default function schemaProjectionPlugin(model: Model, {ignoredKeys = ['_id']} = {}) {
+export const schemaProjectionPlugin = <TSchema extends DefaultSchema>(model: Model<TSchema>): void => {
   const propsWithProjection: Map<string, number> = new Map();
   model.post('initialize:property', (prop: {[s: string]: any} | string, path: string) => {
     if (isString(prop) || isUndefined(prop.select)) {
@@ -18,7 +13,7 @@ export default function schemaProjectionPlugin(model: Model, {ignoredKeys = ['_i
     propsWithProjection.set(path, prop.select ? 1 : 0);
   });
   // preFind options overrides
-  model.pre('find', (query: FilterQuery<TSchema>, options: FindOneOptions) => {
+  model.pre('find', (_operation, _query, options = {}) => {
     // Nothing to do if we don't have props with projection
     if (!propsWithProjection.size) {
       return;
@@ -34,8 +29,8 @@ export default function schemaProjectionPlugin(model: Model, {ignoredKeys = ['_i
     // Define a default projection if we have none
     propsWithProjection.forEach((defaultProjection, path) => {
       if (!has(options.projection, path)) {
-        set(options.projection, path, defaultProjection);
+        set<any>(options.projection, path, defaultProjection);
       }
     });
   });
-}
+};
