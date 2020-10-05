@@ -1,13 +1,14 @@
-import {Model, ModelConstructor, UnknownSchema} from '@mongozest/core';
+import '@mongozest/core';
+import {Model, ModelConstructor, DefaultSchema} from '@mongozest/core';
 import {MongoCountPreferences, OptionalId} from 'mongodb';
 
 declare module '@mongozest/core' {
-  interface ModelConstructor<TSchema extends OptionalId<UnknownSchema> = UnknownSchema> {
+  export interface ModelConstructor<TSchema extends OptionalId<DefaultSchema> = DefaultSchema> {
     defaults?: OptionalId<TSchema>[];
   }
 }
 
-export const collectionDefaultsPlugin = <TSchema extends UnknownSchema>(
+export const collectionDefaultsPlugin = <TSchema extends DefaultSchema>(
   model: Model<TSchema>,
   {maxTimeMS = 5000}: MongoCountPreferences = {}
 ): void => {

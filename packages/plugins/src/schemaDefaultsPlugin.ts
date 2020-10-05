@@ -1,7 +1,6 @@
-// @docs https://docs.mongodb.com/manual/reference/operator/query/type/#document-type-available-types
-
+import '@mongozest/core';
 import {isUndefined, get, isString, isFunction} from 'lodash';
-import {Model, defaultPathValues, UnknownSchema} from '@mongozest/core';
+import {Model, defaultPathValues, DefaultSchema} from '@mongozest/core';
 import {OptionalId} from 'mongodb';
 
 declare module '@mongozest/core' {
@@ -12,7 +11,7 @@ declare module '@mongozest/core' {
 
 const INLINE_VARIABLE_REGEX = /\$\{(.+)\}/g;
 
-const getDefault = <TSchema extends UnknownSchema>(defaultOption: any, doc: OptionalId<TSchema>) => {
+const getDefault = <TSchema extends DefaultSchema>(defaultOption: any, doc: OptionalId<TSchema>) => {
   if (isFunction(defaultOption)) {
     return defaultOption.call(null);
   }
@@ -33,7 +32,7 @@ const getDefault = <TSchema extends UnknownSchema>(defaultOption: any, doc: Opti
 };
 
 // Handle schema defaults
-export const schemaDefaultsPlugin = <TSchema extends UnknownSchema>(model: Model<TSchema>): void => {
+export const schemaDefaultsPlugin = <TSchema extends DefaultSchema>(model: Model<TSchema>): void => {
   const propsWithDefaults: Map<string, any> = new Map();
   model.post('initialize:property', (prop: {[s: string]: any} | string, path: string) => {
     if (isString(prop) || isUndefined(prop.default)) {

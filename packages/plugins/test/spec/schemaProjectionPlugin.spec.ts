@@ -1,13 +1,20 @@
-import createMongo, {jsonSchemaPlugin, Model} from '@mongozest/core';
+import createMongo, {jsonSchemaPlugin, Model, Schema} from '@mongozest/core';
 import {getDbName} from 'root/test/utils';
-import {schemaProjectionPlugin} from 'src/schemaProjectionPlugin';
+import {schemaProjectionPlugin} from '@mongozest/plugins';
 
 const DB_NAME = getDbName(__filename);
 
 const mongo = createMongo();
 
-class Test extends Model {
-  static schema = {
+type Test = {
+  username: string;
+  password: string;
+  code: string;
+  email: string;
+};
+
+class TestModel extends Model<Test> {
+  static schema: Schema<Test> = {
     username: {bsonType: 'string'},
     password: {bsonType: 'string', select: false},
     code: {bsonType: 'string', select: false},
@@ -26,96 +33,96 @@ afterAll(async () => {
 });
 
 describe('schemaProjectionPlugin', () => {
-  let TestModel: Model;
+  let testModel: TestModel;
   it('should properly loadModel', async () => {
-    TestModel = await mongo.loadModel(Test);
-    expect(TestModel instanceof Model).toBeTruthy();
+    testModel = await mongo.loadModel(TestModel);
+    expect(testModel instanceof Model).toBeTruthy();
   });
   describe('should properly adapt projection on findOne', () => {
     it('without initial projection', async () => {
-      const {insertedId} = await TestModel.insertOne({
+      const {insertedId} = await testModel.insertOne({
         username: 'foo',
         password: 'bar',
         code: 'baz',
         email: 'qux'
       });
       // Check findOne result
-      const foundDoc = await TestModel.findOne({_id: insertedId});
-      expect(foundDoc.username).toEqual('foo');
-      expect(typeof foundDoc.password).toEqual('undefined');
-      expect(typeof foundDoc.code).toEqual('undefined');
+      const foundDoc = await testModel.findOne({_id: insertedId});
+      expect(foundDoc?.username).toEqual('foo');
+      expect(typeof foundDoc?.password).toEqual('undefined');
+      expect(typeof foundDoc?.code).toEqual('undefined');
     });
     it('with initial inclusive projection', async () => {
-      const {insertedId} = await TestModel.insertOne({
+      const {insertedId} = await testModel.insertOne({
         username: 'foo',
         password: 'bar',
         code: 'baz',
         email: 'qux'
       });
       // Check findOne result
-      const foundDoc = await TestModel.findOne({_id: insertedId}, {projection: {username: 1}});
-      expect(foundDoc.username).toEqual('foo');
-      expect(typeof foundDoc.password).toEqual('undefined');
-      expect(typeof foundDoc.code).toEqual('undefined');
+      const foundDoc = await testModel.findOne({_id: insertedId}, {projection: {username: 1}});
+      expect(foundDoc?.username).toEqual('foo');
+      expect(typeof foundDoc?.password).toEqual('undefined');
+      expect(typeof foundDoc?.code).toEqual('undefined');
     });
     it('with initial exclusive projection', async () => {
-      const {insertedId} = await TestModel.insertOne({
+      const {insertedId} = await testModel.insertOne({
         username: 'foo',
         password: 'bar',
         code: 'baz',
         email: 'qux'
       });
       // Check findOne result
-      const foundDoc = await TestModel.findOne({_id: insertedId}, {projection: {email: 0}});
-      expect(foundDoc.username).toEqual('foo');
-      expect(typeof foundDoc.password).toEqual('undefined');
-      expect(typeof foundDoc.code).toEqual('undefined');
+      const foundDoc = await testModel.findOne({_id: insertedId}, {projection: {email: 0}});
+      expect(foundDoc?.username).toEqual('foo');
+      expect(typeof foundDoc?.password).toEqual('undefined');
+      expect(typeof foundDoc?.code).toEqual('undefined');
     });
   });
   describe('should properly adapt projection on find', () => {
     it('without initial projection', async () => {
-      const {insertedId} = await TestModel.insertOne({
+      const {insertedId} = await testModel.insertOne({
         username: 'foo',
         password: 'bar',
         code: 'baz',
         email: 'qux'
       });
       // Check findOne result
-      const foundDocs = await TestModel.find({});
+      const foundDocs = await testModel.find({});
       foundDocs.forEach((foundDoc) => {
-        expect(foundDoc.username).toEqual('foo');
-        expect(typeof foundDoc.password).toEqual('undefined');
-        expect(typeof foundDoc.code).toEqual('undefined');
+        expect(foundDoc?.username).toEqual('foo');
+        expect(typeof foundDoc?.password).toEqual('undefined');
+        expect(typeof foundDoc?.code).toEqual('undefined');
       });
     });
     it('with initial inclusive projection', async () => {
-      const {insertedId} = await TestModel.insertOne({
+      const {insertedId} = await testModel.insertOne({
         username: 'foo',
         password: 'bar',
         code: 'baz',
         email: 'qux'
       });
       // Check findOne result
-      const foundDocs = await TestModel.find({}, {projection: {username: 1}});
+      const foundDocs = await testModel.find({}, {projection: {username: 1}});
       foundDocs.forEach((foundDoc) => {
-        expect(foundDoc.username).toEqual('foo');
-        expect(typeof foundDoc.password).toEqual('undefined');
-        expect(typeof foundDoc.code).toEqual('undefined');
+        expect(foundDoc?.username).toEqual('foo');
+        expect(typeof foundDoc?.password).toEqual('undefined');
+        expect(typeof foundDoc?.code).toEqual('undefined');
       });
     });
     it('with initial exclusive projection', async () => {
-      const {insertedId} = await TestModel.insertOne({
+      const {insertedId} = await testModel.insertOne({
         username: 'foo',
         password: 'bar',
         code: 'baz',
         email: 'qux'
       });
       // Check findOne result
-      const foundDocs = await TestModel.find({}, {projection: {email: 0}});
+      const foundDocs = await testModel.find({}, {projection: {email: 0}});
       foundDocs.forEach((foundDoc) => {
-        expect(foundDoc.username).toEqual('foo');
-        expect(typeof foundDoc.password).toEqual('undefined');
-        expect(typeof foundDoc.code).toEqual('undefined');
+        expect(foundDoc?.username).toEqual('foo');
+        expect(typeof foundDoc?.password).toEqual('undefined');
+        expect(typeof foundDoc?.code).toEqual('undefined');
       });
     });
   });

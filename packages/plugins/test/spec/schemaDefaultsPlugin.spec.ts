@@ -1,8 +1,7 @@
-import createMongo, {Schema, jsonSchemaPlugin, Model} from '@mongozest/core';
+import createMongo, {jsonSchemaPlugin, Model, Schema} from '@mongozest/core';
+import {schemaCastingPlugin, schemaDefaultsPlugin} from '@mongozest/plugins';
 import {Decimal128 as Decimal} from 'mongodb';
 import {getDbName} from 'root/test/utils';
-import {schemaCastingPlugin} from 'src/schemaCastingPlugin';
-import {schemaDefaultsPlugin} from 'src/schemaDefaultsPlugin';
 
 const DB_NAME = getDbName(__filename);
 
@@ -26,7 +25,7 @@ describe('schemaDefaultsPlugin', () => {
       boolValue?: boolean;
       refValue?: string;
     };
-    class TestModel extends Model<Test> {
+    class TestModelOne extends Model<Test> {
       static schema: Schema<Test> = {
         name: {bsonType: 'string'},
         stringValue: {bsonType: 'string', default: 'bar'},
@@ -36,10 +35,10 @@ describe('schemaDefaultsPlugin', () => {
       };
       static plugins = [jsonSchemaPlugin, schemaDefaultsPlugin, schemaCastingPlugin];
     }
-    let testModel: TestModel;
+    let testModel: TestModelOne;
 
     it('should properly loadModel', async () => {
-      testModel = await mongo.loadModel(TestModel);
+      testModel = await mongo.loadModel(TestModelOne);
       expect(testModel instanceof Model).toBeTruthy();
     });
     describe('should properly handle a schema prop default', () => {
@@ -51,16 +50,16 @@ describe('schemaDefaultsPlugin', () => {
         const insertedDoc = ops[0];
         expect(insertedDoc.stringValue).toEqual('bar');
         expect(insertedDoc.dateValue instanceof Date).toBeTruthy();
-        expect(insertedDoc.dateValue.getTime() > 0).toBeTruthy();
+        expect(insertedDoc.dateValue!.getTime() > 0).toBeTruthy();
         expect(insertedDoc.boolValue).toEqual(false);
         expect(insertedDoc.refValue).toEqual('foobar');
         // Check findOne result
         const foundDoc = await testModel.findOne({_id: insertedId});
-        expect(foundDoc.stringValue).toEqual('bar');
-        expect(foundDoc.dateValue instanceof Date).toBeTruthy();
-        expect(foundDoc.dateValue.getTime() > 0).toBeTruthy();
-        expect(foundDoc.boolValue).toEqual(false);
-        expect(foundDoc.refValue).toEqual('foobar');
+        expect(foundDoc?.stringValue).toEqual('bar');
+        expect(foundDoc?.dateValue instanceof Date).toBeTruthy();
+        expect(foundDoc!.dateValue!.getTime() > 0).toBeTruthy();
+        expect(foundDoc?.boolValue).toEqual(false);
+        expect(foundDoc?.refValue).toEqual('foobar');
       });
     });
   });
@@ -69,7 +68,7 @@ describe('schemaDefaultsPlugin', () => {
       name?: string;
       nestedObject?: {latitude?: Decimal; longitude?: Decimal};
     };
-    class TestModel extends Model<Test> {
+    class TestModelTwo extends Model<Test> {
       static schema: Schema<Test> = {
         name: {bsonType: 'string'},
         nestedObject: {
@@ -80,10 +79,10 @@ describe('schemaDefaultsPlugin', () => {
       };
       static plugins = [jsonSchemaPlugin, schemaDefaultsPlugin];
     }
-    let testModel: TestModel;
+    let testModel: TestModelTwo;
 
     it('should properly loadModel', async () => {
-      testModel = await mongo.loadModel(TestModel);
+      testModel = await mongo.loadModel(TestModelTwo);
       expect(testModel instanceof Model).toBeTruthy();
     });
     describe('should properly handle a schema prop default', () => {
@@ -99,7 +98,7 @@ describe('schemaDefaultsPlugin', () => {
         });
         // Check findOne result
         const foundDoc = await testModel.findOne({_id: insertedId});
-        expect(foundDoc.nestedObject).toEqual({latitude: Decimal.fromString('0'), longitude: Decimal.fromString('0')});
+        expect(foundDoc?.nestedObject).toEqual({latitude: Decimal.fromString('0'), longitude: Decimal.fromString('0')});
       });
     });
   });
@@ -108,7 +107,7 @@ describe('schemaDefaultsPlugin', () => {
       name?: string;
       nestedArray?: {title?: string; createdAt?: Date}[];
     };
-    class TestModel extends Model<Test> {
+    class TestModelThree extends Model<Test> {
       static schema: Schema<Test> = {
         name: {bsonType: 'string'},
         nestedArray: {
@@ -121,10 +120,10 @@ describe('schemaDefaultsPlugin', () => {
       };
       static plugins = [jsonSchemaPlugin, schemaDefaultsPlugin, schemaCastingPlugin];
     }
-    let testModel: TestModel;
+    let testModel: TestModelThree;
 
     it('should properly loadModel', async () => {
-      testModel = await mongo.loadModel(TestModel);
+      testModel = await mongo.loadModel(TestModelThree);
       expect(testModel instanceof Model).toBeTruthy();
     });
     describe('should properly handle a schema prop default', () => {
@@ -135,11 +134,11 @@ describe('schemaDefaultsPlugin', () => {
         });
         // Check op result
         const insertedDoc = ops[0];
-        expect(Object.keys(insertedDoc.nestedArray[0])).toEqual(['title', 'createdAt']);
-        expect(insertedDoc.nestedArray[0].createdAt instanceof Date).toBeTruthy();
+        expect(Object.keys(insertedDoc?.nestedArray![0])).toEqual(['title', 'createdAt']);
+        expect(insertedDoc?.nestedArray![0].createdAt instanceof Date).toBeTruthy();
         // Check findOne result
         const foundDoc = await testModel.findOne({_id: insertedId});
-        expect(foundDoc.nestedArray[0].createdAt instanceof Date).toBeTruthy();
+        expect(foundDoc?.nestedArray![0].createdAt instanceof Date).toBeTruthy();
       });
     });
   });

@@ -1,4 +1,4 @@
-import {BsonType, DefaultSchema, JsonSchemaProperty, mapPathValues, Model} from '@mongozest/core';
+import {BsonType, DefaultSchema, mapPathValues, Model} from '@mongozest/core';
 import {isPlainObject, isString, toNumber, toSafeInteger, toString} from 'lodash';
 import {Decimal128 as Decimal, Double, Int32 as Int, Long, ObjectId, OptionalId} from 'mongodb';
 

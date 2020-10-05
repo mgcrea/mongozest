@@ -1,4 +1,5 @@
 {
+  "extends": "@tsconfig/node14/tsconfig.json",
   "compilerOptions": {
     "rootDir": "./",
     "baseUrl": "./",
@@ -7,6 +8,6 @@
       "src/*": ["./../src/*"]
     }
   },
-  "include": ["spec/"],
+  "include": ["setup.ts", "spec/"],
   "references": [{"path": "../"}]
 }

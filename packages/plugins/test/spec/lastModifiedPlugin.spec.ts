@@ -1,6 +1,6 @@
 import createMongo, {Schema, Model} from '@mongozest/core';
 import {getDbName} from 'root/test/utils';
-import {lastModifiedPlugin, LastModifiedPluginSchema} from 'src/lastModifiedPlugin';
+import {lastModifiedPlugin, LastModifiedPluginSchema} from '@mongozest/plugins';
 
 const DB_NAME = getDbName(__filename);
 
@@ -41,7 +41,7 @@ describe('lastModifiedPlugin', () => {
     expect(insertedDoc.updatedAt instanceof Date).toBeTruthy();
     expect(insertedDoc.updatedAt).toEqual(insertedDoc.createdAt);
     // Check findOne result
-    const foundDoc = await testModel.findOne({_id: insertedId});
+    const foundDoc = (await testModel.findOne({_id: insertedId})) as Test;
     expect(foundDoc.createdAt instanceof Date).toBeTruthy();
     expect(foundDoc.updatedAt instanceof Date).toBeTruthy();
     expect(foundDoc.updatedAt).toEqual(foundDoc.createdAt);
@@ -50,9 +50,9 @@ describe('lastModifiedPlugin', () => {
     const {insertedId} = await testModel.insertOne({name: 'insertOne'});
     const {result} = await testModel.updateOne({_id: insertedId}, {$set: {name: 'updateOne'}});
     expect(result).toMatchObject({n: 1, nModified: 1, ok: 1});
-    const foundDoc = await testModel.findOne({_id: insertedId});
+    const foundDoc = (await testModel.findOne({_id: insertedId})) as Test;
     expect(foundDoc.createdAt instanceof Date).toBeTruthy();
     expect(foundDoc.updatedAt instanceof Date).toBeTruthy();
-    expect(foundDoc.updatedAt > foundDoc.createdAt).toBeTruthy();
+    expect(foundDoc.updatedAt! > foundDoc.createdAt!).toBeTruthy();
   });
 });

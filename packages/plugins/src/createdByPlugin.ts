@@ -1,4 +1,4 @@
-import {BsonType, Model, UnknownSchema} from '@mongozest/core';
+import {BsonType, Model, DefaultSchema} from '@mongozest/core';
 import {ObjectId} from 'mongodb';
 
 export type CreatedByPluginSchema<TProp = ObjectId> = {
@@ -12,7 +12,7 @@ export type CreatedByPluginOptions = {
   ref?: string;
 };
 
-export const createdByPlugin = <TSchema extends UnknownSchema & CreatedByPluginSchema>(
+export const createdByPlugin = <TSchema extends DefaultSchema & CreatedByPluginSchema>(
   model: Model<TSchema>,
   {bsonType = 'objectId', ref = 'User'}: CreatedByPluginOptions = {}
 ): void => {

@@ -1,11 +1,12 @@
+import '@mongozest/core';
+import {DefaultSchema, inspect, log, Model} from '@mongozest/core';
 import {find, isString, isUndefined} from 'lodash';
-import {Model, log, inspect, UnknownSchema, ModelConstructor} from '@mongozest/core';
-import {IndexOptions, SchemaMember, OptionalId} from 'mongodb';
+import {IndexOptions, OptionalId, SchemaMember} from 'mongodb';
 
 export type SchemaIndexesConfig<TSchema> = [SchemaMember<TSchema, number | boolean>, IndexOptions][];
 
 declare module '@mongozest/core' {
-  export interface ModelConstructor<TSchema extends OptionalId<UnknownSchema> = UnknownSchema> {
+  export interface ModelConstructor<TSchema extends OptionalId<DefaultSchema> = DefaultSchema> {
     indexes?: SchemaIndexesConfig<TSchema>;
   }
   export interface JsonSchemaProperty<TProp = any> {
@@ -17,7 +18,7 @@ export type SchemaIndexesPluginOptions = {
   suffix?: string;
 };
 
-export const schemaIndexesPlugin = <TSchema extends UnknownSchema>(
+export const schemaIndexesPlugin = <TSchema extends DefaultSchema>(
   model: Model<TSchema>,
   {suffix = '_'}: SchemaIndexesPluginOptions = {}
 ): void => {

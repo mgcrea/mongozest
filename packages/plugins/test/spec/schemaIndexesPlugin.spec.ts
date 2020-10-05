@@ -1,6 +1,6 @@
 import createMongo, {Schema, jsonSchemaPlugin, Model} from '@mongozest/core';
 import {getDbName} from 'root/test/utils';
-import {schemaIndexesPlugin} from 'src/schemaIndexesPlugin';
+import {schemaIndexesPlugin} from '@mongozest/plugins';
 
 const DB_NAME = getDbName(__filename);
 
@@ -24,10 +24,8 @@ let testModel: TestModel;
 beforeAll(async () => {
   const db = await mongo.connect(DB_NAME);
   await db.dropDatabase();
-  it('should properly loadModel', async () => {
-    testModel = await mongo.loadModel(TestModel);
-    expect(TestModel instanceof Model).toBeTruthy();
-  });
+  testModel = await mongo.loadModel(TestModel);
+  expect(testModel instanceof Model).toBeTruthy();
 });
 
 afterAll(async () => {
@@ -35,7 +33,6 @@ afterAll(async () => {
 });
 
 describe('schemaIndexesPlugin', () => {
-  let testModel: Model;
   it('should properly loadModel and create indexes', async () => {
     const indexes = await testModel.collection.indexes();
     expect(indexes).toMatchSnapshot();

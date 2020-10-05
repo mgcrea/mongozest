@@ -1,7 +1,7 @@
 import createMongo, {Schema, jsonSchemaPlugin, Model} from '@mongozest/core';
 import {Decimal128 as Decimal} from 'mongodb';
 import {getDbName} from 'root/test/utils';
-import {schemaFakerPlugin} from 'src/schemaFakerPlugin';
+import {schemaFakerPlugin} from '@mongozest/plugins';
 
 const DB_NAME = getDbName(__filename);
 
@@ -38,17 +38,15 @@ let testModel: TestModel;
 beforeAll(async () => {
   const db = await mongo.connect(DB_NAME);
   await db.dropDatabase();
-  it('should properly loadModel', async () => {
-    testModel = await mongo.loadModel(TestModel);
-    expect(TestModel instanceof Model).toBeTruthy();
-  });
+  testModel = await mongo.loadModel(TestModel);
+  expect(testModel instanceof Model).toBeTruthy();
 });
 
 afterAll(async () => {
   await mongo.disconnect();
 });
 
-describe('schemaCastingPlugin', () => {
+describe('schemaFakerPlugin', () => {
   it('should properly generate a fake doc', () => {
     const fakeDoc = testModel.fakeOne({
       firstName: 'Olivier'
@@ -66,7 +64,7 @@ describe('schemaCastingPlugin', () => {
     expect(insertedDoc.firstName).toEqual('Olivier');
     // Check findOne result
     const foundDoc = await testModel.findOne({_id: insertedId});
-    expect(Object.keys(foundDoc)).toMatchSnapshot();
-    expect(foundDoc.firstName).toEqual('Olivier');
+    expect(Object.keys(foundDoc!)).toMatchSnapshot();
+    expect(foundDoc?.firstName).toEqual('Olivier');
   });
 });

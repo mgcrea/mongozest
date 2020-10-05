@@ -3,18 +3,18 @@ import {memoize} from 'lodash';
 import {FilterQuery, FindOneOptions, ReplaceOneOptions, UpdateQuery, UpdateWriteOpResult} from 'mongodb';
 import shortid from 'shortid';
 
-export type ShordIdPluginSchema = {
-  _sid?: string;
-};
-
 export type ShortId = string;
+
+export type ShortIdPluginSchema = {
+  _sid?: ShortId;
+};
 
 export type ShortIdPluginOptions = {
   sidKey?: ShortId;
   insertKeyOnTop?: boolean;
 };
 
-export const shortIdPlugin = <TSchema extends DefaultSchema & ShordIdPluginSchema>(
+export const shortIdPlugin = <TSchema extends DefaultSchema & ShortIdPluginSchema>(
   model: Model<TSchema>,
   {sidKey = '_sid', insertKeyOnTop = true}: ShortIdPluginOptions = {}
 ): void => {

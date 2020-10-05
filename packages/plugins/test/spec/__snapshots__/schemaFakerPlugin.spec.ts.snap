@@ -1,29 +1,32 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`schemaCastingPlugin should properly generate a fake doc 1`] = `
+exports[`schemaFakerPlugin should properly generate a fake doc 1`] = `
 Array [
   "firstName",
   "lastName",
+  "dateValue",
   "zipCode",
   "city",
 ]
 `;
 
-exports[`schemaCastingPlugin should properly insert a fake doc\` 1`] = `
+exports[`schemaFakerPlugin should properly insert a fake doc\` 1`] = `
 Array [
   "firstName",
   "lastName",
+  "dateValue",
   "zipCode",
   "city",
   "_id",
 ]
 `;
 
-exports[`schemaCastingPlugin should properly insert a fake doc\` 2`] = `
+exports[`schemaFakerPlugin should properly insert a fake doc\` 2`] = `
 Array [
   "_id",
   "firstName",
   "lastName",
+  "dateValue",
   "zipCode",
   "city",
 ]

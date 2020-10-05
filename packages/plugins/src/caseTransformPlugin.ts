@@ -1,7 +1,7 @@
 // @docs https://docs.mongodb.com/manual/reference/operator/query/type/#document-type-available-types
-
+import '@mongozest/core';
 import {isString, toString, lowerCase, upperFirst, startCase, isUndefined} from 'lodash';
-import {Model, mapPathValues, UnknownSchema} from '@mongozest/core';
+import {Model, mapPathValues, DefaultSchema} from '@mongozest/core';
 import {OptionalId} from 'mongodb';
 
 type CaseTransformOperation = 'toString' | 'lowerCase' | 'upperFirst' | 'startCase';
@@ -30,7 +30,7 @@ const transformCase = (value: unknown, caseTransformConfig: CaseTransformOperati
 };
 
 // Helper recursively parsing schema to find path where values should be casted
-export const caseTransformPlugin = <TSchema extends UnknownSchema>(model: Model<TSchema>): void => {
+export const caseTransformPlugin = <TSchema extends DefaultSchema>(model: Model<TSchema>): void => {
   const caseTransformProperties = new Map<string, CaseTransformOperation[]>();
   model.post('initialize:property', (property, path) => {
     if (isString(property) || isUndefined(property.caseTransform)) {

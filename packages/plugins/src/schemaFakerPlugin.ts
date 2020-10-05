@@ -1,21 +1,21 @@
-// @docs https://docs.mongodb.com/manual/reference/operator/query/type/#document-type-available-types
-
+import '@mongozest/core';
 import {isUndefined, get, set, isString, shuffle} from 'lodash';
 import faker from 'faker';
-import {DefaultSchema, Model, JsonSchemaProperty} from '@mongozest/core';
 import {CollectionInsertOneOptions, InsertOneWriteOpResult, OptionalId, WithId} from 'mongodb';
+import {DefaultSchema, Model} from '@mongozest/core';
+import {JsonSchemaProperty} from '@mongozest/core/lib/schema';
 
 faker.locale = 'fr';
 
 declare module '@mongozest/core' {
-  // export interface Model<TSchema extends OptionalId<DefaultSchema> = DefaultSchema> {
-  //   fakeOne: (document: OptionalId<TSchema>) => OptionalId<TSchema>;
-  //   insertFakeOne: (
-  //     document: OptionalId<TSchema>,
-  //     options?: CollectionInsertOneOptions
-  //   ) => Promise<InsertOneWriteOpResult<WithId<TSchema>>>;
-  // }
-  export interface JsonSchemaProperty<TProp = any> {
+  interface Model<TSchema extends OptionalId<DefaultSchema> = DefaultSchema> {
+    fakeOne: (document: OptionalId<TSchema>) => OptionalId<TSchema>;
+    insertFakeOne: (
+      document: OptionalId<TSchema>,
+      options?: CollectionInsertOneOptions
+    ) => Promise<InsertOneWriteOpResult<WithId<TSchema>>>;
+  }
+  interface JsonSchemaProperty<TProp = any> {
     faker?: string;
   }
 }

@@ -1,13 +1,17 @@
-import createMongo, {Model} from '@mongozest/core';
+import createMongo, {Model, Schema} from '@mongozest/core';
 import {getDbName} from 'root/test/utils';
-import {shortIdPlugin} from 'src/shortIdPlugin';
+import {shortIdPlugin, ShortIdPluginSchema} from '@mongozest/plugins';
 
 const DB_NAME = getDbName(__filename);
 
 const mongo = createMongo();
 
-class Test extends Model {
-  static schema = {
+type Test = ShortIdPluginSchema & {
+  name: string;
+};
+
+class TestModel extends Model<Test> {
+  static schema: Schema<Test> = {
     name: {bsonType: 'string', required: true}
   };
   static plugins = [shortIdPlugin];
@@ -23,21 +27,21 @@ afterAll(async () => {
 });
 
 describe('shortIdPlugin', () => {
-  let TestModel: Model;
+  let testModel: TestModel;
   it('should properly loadModel', async () => {
-    TestModel = await mongo.loadModel(Test);
-    expect(TestModel instanceof Model).toBeTruthy();
+    testModel = await mongo.loadModel(TestModel);
+    expect(testModel instanceof Model).toBeTruthy();
   });
   it('should properly add `_sid` on insertOne', async () => {
-    const {ops, insertedId} = await TestModel.insertOne({name: 'insertOne'});
+    const {ops, insertedId} = await testModel.insertOne({name: 'insertOne'});
     // Check op result
     const insertedDoc = ops[0];
     expect(Object.keys(insertedDoc)).toMatchObject(['_sid', 'name', '_id']);
-    expect(typeof insertedDoc._sid).toEqual('string');
-    expect(insertedDoc._sid.length > 0).toBeTruthy();
+    expect(typeof insertedDoc?._sid).toEqual('string');
+    expect(insertedDoc!._sid!.length > 0).toBeTruthy();
     // Check findOne result
-    const foundDoc = await TestModel.findOne({_id: insertedId});
-    expect(typeof foundDoc._sid).toEqual('string');
-    expect(foundDoc._sid.length > 0).toBeTruthy();
+    const foundDoc = await testModel.findOne({_id: insertedId});
+    expect(typeof foundDoc?._sid).toEqual('string');
+    expect(foundDoc!._sid!.length > 0).toBeTruthy();
   });
 });
