@@ -1,19 +1,16 @@
-// @docs https://docs.mongodb.com/manual/reference/operator/query/type/#document-type-available-types
-
-import JSON5 from 'json5';
-import createError from 'http-errors';
-import {get, pick, map, keyBy, mapValues, isString, isEmpty} from 'lodash';
-// import {uniqWithObjectIds} from './../utils/objectId';
-import {asyncHandler} from 'src/utils/request';
-// @types
-import {Resource, OperationMap, AggregationPipeline} from '..';
-import {CollectionAggregationOptions, FilterQuery} from 'mongodb';
+import {AggregationPipeline, DefaultSchema} from '@mongozest/core';
 import {Request, Response, Router} from 'express';
+import createError from 'http-errors';
+import JSON5 from 'json5';
+import {isEmpty, isString, mapValues, pick} from 'lodash';
+import {CollectionAggregationOptions, FilterQuery} from 'mongodb';
+import {asyncHandler} from 'src/utils/request';
+import {createOperationMap, Resource} from '..';
 
-export default function aggregationPlugin<TSchema>(
+export const aggregationPlugin = <TSchema extends DefaultSchema = DefaultSchema>(
   resource: Resource<TSchema>,
   {strictJSON = false, pipelineParamName = 'pipeline', pathName = 'aggregate'} = {}
-): void {
+): void => {
   const parseQueryParam = (value: any, key: string) => {
     if (!isString(value) || !/^[\[\{]/.test(value)) {
       return value;
@@ -34,8 +31,6 @@ export default function aggregationPlugin<TSchema>(
   };
 
   async function buildRequestPipeline(this: Resource<TSchema>, req: Request): Promise<AggregationPipeline> {
-    // const model = this.getModelFromRequest(req);
-    // const {ids, params} = this;
     const filter: FilterQuery<TSchema> = await this.buildRequestFilter(req);
     const whitelist = [pipelineParamName];
     const queryOptions = mapValues(mapValues(pick(req.query, whitelist), parseQueryParam), castQueryParam);
@@ -43,44 +38,28 @@ export default function aggregationPlugin<TSchema>(
     return !isEmpty(filter) ? [{$match: filter}].concat(queryPipeline) : queryPipeline;
   }
 
-  // resource.pre(
-  //   'aggregateCollection',
-  //   (pipeline: Array<Object>, options: CollectionAggregationOptions, operation: OperationMap) => {
-  //     const req: Request = operation.get('request');
-  //     const whitelist = ['pipeline'];
-  //     const queryOptions = mapValues(mapValues(pick(req.query, whitelist), parseQueryParam), castQueryParam);
-  //     // Apply pipeline
-  //     if (queryOptions.pipeline) {
-  //       operation.set('pipeline', queryOptions.pipeline);
-  //     }
-  //   }
-  // );
-
   async function aggregateCollection(this: Resource<TSchema>, req: Request, res: Response) {
     const model = this.getModelFromRequest(req);
     // Prepare operation params
     const pipeline: AggregationPipeline = await buildRequestPipeline.bind(this)(req);
     const options: CollectionAggregationOptions = {};
-    const operation: OperationMap = new Map([
-      ['method', 'aggregateCollection'],
-      ['scope', 'collection'],
-      ['request', req],
-      ['pipeline', pipeline]
-    ]);
+    const operation = createOperationMap<TSchema>({
+      method: 'aggregateCollection',
+      scope: 'collection',
+      request: req,
+      pipeline
+    });
     // Execute preHooks
-    await this.hooks.execManyPre(['pipeline', 'aggregateCollection'], [pipeline, options, operation]);
+    await this.hooks.execPre('aggregateCollection', [operation, pipeline, options]);
     // Actual mongo call
     const result = await model.aggregate(operation.get('pipeline'), options);
     operation.set('result', result);
     // Execute postHooks
-    await this.hooks.execPost('getCollection', [operation.get('filter'), options, operation]);
+    await this.hooks.execPost('aggregateCollection', [operation, operation.get('pipeline'), options]);
     res.json(operation.get('result'));
   }
 
   resource.pre('buildPath', (router: Router, path: string) => {
     router.get(`${path}/${pathName}`, asyncHandler(aggregateCollection.bind(resource)));
   });
-}
-
-// [{$group: {_id: {mission: "$mission"}, count: {$sum: 1}}}]
-// [{$group: {_id: {mission: "$mission"}, count: {$sum: 1}}}, {$project: {_id: 0, mission: "$_id.mission", count: 1}}]
+};

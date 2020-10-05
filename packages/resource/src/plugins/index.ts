@@ -1,7 +1,6 @@
-import debugPlugin from './debugPlugin';
-import createdByPlugin from './createdByPlugin';
-import queryPlugin from './queryPlugin';
-import populatePlugin from './populatePlugin';
-import shortIdPlugin from './shortIdPlugin';
-
-export {debugPlugin, createdByPlugin, queryPlugin, populatePlugin, shortIdPlugin};
+export * from './aggregationPlugin';
+export * from './createdByPlugin';
+export * from './debugPlugin';
+export * from './populationPlugin';
+export * from './queryPlugin';
+export * from './shortIdPlugin';

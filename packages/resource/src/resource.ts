@@ -1,25 +1,26 @@
-import assert from 'assert';
-import {snakeCase, uniq} from 'lodash';
-import pluralize from 'pluralize';
-import {Router as createRouter} from 'express';
+import {DefaultSchema, Model, OperationMap} from '@mongozest/core';
 import Hooks, {HookCallback} from '@mongozest/hooks';
-import {ObjectId} from 'mongodb';
-import {mongoErrorMiddleware} from './utils/errors';
-import {asyncHandler, parseBodyAsUpdate} from './utils/request';
-import queryPlugin from './plugins/queryPlugin';
-import populatePlugin from './plugins/populatePlugin';
+import assert from 'assert';
+import {Request, RequestHandler, Response, Router as createRouter, Router} from 'express';
 import createError from 'http-errors';
-import {BaseSchema, Model} from '@mongozest/core';
-import {Request, RequestHandler, Response, Router} from 'express';
+import {snakeCase, uniq} from 'lodash';
 import {
   CollectionInsertOneOptions,
   CommonOptions,
+  DeleteWriteOpResultObject,
   FilterQuery,
+  FindOneAndUpdateOption,
   FindOneOptions,
-  FindOneAndReplaceOption,
-  UpdateQuery
+  ObjectId,
+  OptionalId,
+  UpdateQuery,
+  WithId
 } from 'mongodb';
-import aggregationPlugin from './plugins/aggregationPlugin';
+import pluralize from 'pluralize';
+import {createOperationMap} from './operation';
+import {aggregationPlugin, populatePlugin, queryPlugin} from './plugins';
+import {mongoErrorMiddleware} from './utils/errors';
+import {asyncHandler, parseBodyAsUpdate} from './utils/request';
 
 interface ResourceOptions {
   router?: Router;
@@ -29,10 +30,12 @@ interface ResourceOptions {
   params?: {[s: string]: any};
 }
 
-export type OperationMap = Map<string, any>;
 export type AggregationPipeline = Array<Record<string, any>>;
 export type RequestParamChecker = (s: string) => boolean;
-export type RequestParamResolver<TSchema> = (s: string, m: Model<TSchema>) => FilterQuery<TSchema>;
+export type RequestParamResolver<TSchema extends DefaultSchema> = (
+  s: string,
+  m: Model<TSchema>
+) => FilterQuery<TSchema>;
 
 // const OBJECT_ID_PATTERN = '[a-f\\d]{24}';
 const OBJECT_ID_REGEX = /^[a-f\d]{24}$/i;
@@ -41,7 +44,7 @@ const assertScopedFilter = <TSchema>(filter: FilterQuery<TSchema>) => {
   assert(filter && Object.keys(filter).length, 'Invalid filter');
 };
 
-export default class Resource<TSchema extends BaseSchema> {
+class Resource<TSchema extends DefaultSchema> {
   static internalPrePlugins = [queryPlugin, populatePlugin, aggregationPlugin];
   static internalPostPlugins = [];
 
@@ -50,15 +53,18 @@ export default class Resource<TSchema extends BaseSchema> {
   // private statics: Map<string, () => void> = new Map();
   private params: Map<string, RequestParamResolver<TSchema>> = new Map();
   private ids: Map<RequestParamChecker, RequestParamResolver<TSchema>> = new Map([
-    [(s: string) => OBJECT_ID_REGEX.test(s), (s: string) => ({_id: ObjectId.createFromHexString(s)})]
+    [
+      (s: string) => OBJECT_ID_REGEX.test(s),
+      (s: string) => ({_id: ObjectId.createFromHexString(s)} as FilterQuery<TSchema>)
+    ]
   ]);
 
   private router: Router;
   private middleware: RequestHandler | null;
   private paths: Array<string>;
-  public hooks: Hooks = new Hooks();
+  public hooks = new Hooks<ResourceHookName>();
 
-  static create<USchema extends BaseSchema>(modelName: string, options?: ResourceOptions): Resource<USchema> {
+  static create<USchema extends DefaultSchema>(modelName: string, options?: ResourceOptions): Resource<USchema> {
     return new Resource(modelName, options);
   }
 
@@ -91,10 +97,10 @@ export default class Resource<TSchema extends BaseSchema> {
     });
   }
 
-  public pre(hookName: string, callback: HookCallback): void {
+  public pre(hookName: ResourceHookName, callback: HookCallback): void {
     this.hooks.pre(hookName, callback);
   }
-  public post(hookName: string, callback: HookCallback): void {
+  public post(hookName: ResourceHookName, callback: HookCallback): void {
     this.hooks.post(hookName, callback);
   }
 
@@ -190,102 +196,106 @@ export default class Resource<TSchema extends BaseSchema> {
   async getCollection(req: Request, res: Response): Promise<void> {
     const model = this.getModelFromRequest(req);
     // Prepare operation params
-    const filter: FilterQuery<TSchema> = await this.buildRequestFilter(req);
-    const options: FindOneOptions<TSchema> = {};
-    const operation: OperationMap = new Map<string, unknown>([
-      ['method', 'getCollection'],
-      ['scope', 'collection'],
-      ['request', req],
-      ['filter', filter]
-    ]);
+    const filter = await this.buildRequestFilter(req);
+    const options: FindOneOptions<TSchema extends TSchema ? TSchema : TSchema> = {};
+    const operation = createOperationMap<TSchema>({
+      method: 'getCollection',
+      scope: 'collection',
+      request: req,
+      filter
+    });
     // Execute preHooks
-    await this.hooks.execManyPre(['filter', 'getCollection'], [filter, options, operation]);
+    await this.hooks.execPre('filter', [operation, filter]);
+    await this.hooks.execPre('getCollection', [operation, filter, options]);
     // Actual mongo call
     const result = await model.find(operation.get('filter'), options);
     operation.set('result', result);
     // Execute postHooks
-    await this.hooks.execPost('getCollection', [operation.get('filter'), options, operation]);
+    await this.hooks.execPost('getCollection', [operation, operation.get('filter'), options]);
     res.json(operation.get('result'));
   }
 
   async postCollection(req: Request, res: Response): Promise<void> {
     const model = this.getModelFromRequest(req);
     // Prepare operation params
-    const document: TSchema = req.body;
+    const document: OptionalId<TSchema> = req.body;
     const options: CollectionInsertOneOptions = {};
-    const operation: OperationMap = new Map<string, unknown>([
-      ['method', 'postCollection'],
-      ['scope', 'collection'],
-      ['request', req]
-    ]);
+    const operation = createOperationMap<TSchema>({
+      method: 'postCollection',
+      scope: 'collection',
+      request: req
+    });
     // Execute preHooks
-    await this.hooks.execManyPre(['insert', 'postCollection'], [document, options, operation]);
+    await this.hooks.execManyPre(['insert', 'postCollection'], [operation, document, options]);
     // Actual mongo call
     const {ops} = await model.insertOne(document, options);
     operation.set('result', ops[0]);
     // Execute postHooks
-    await this.hooks.execPost('postCollection', [document, options, operation]);
+    await this.hooks.execPost('postCollection', [operation, document, options]);
     res.json(operation.get('result'));
   }
 
   async patchCollection(req: Request, res: Response): Promise<void> {
     const model = this.getModelFromRequest(req);
     // Prepare operation params
-    const filter: FilterQuery<TSchema> = await this.buildRequestFilter(req);
+    const filter = await this.buildRequestFilter(req);
     const update: UpdateQuery<TSchema> = parseBodyAsUpdate(req.body);
     const options: CommonOptions = {};
-    const operation: OperationMap = new Map<string, unknown>([
-      ['method', 'patchCollection'],
-      ['scope', 'collection'],
-      ['request', req],
-      ['filter', filter]
-    ]);
+    const operation = createOperationMap<TSchema>({
+      method: 'patchCollection',
+      scope: 'collection',
+      request: req,
+      filter
+    });
     // Execute preHooks
-    await this.hooks.execManyPre(['filter', 'patchCollection'], [filter, update, options, operation]);
+    await this.hooks.execPre('filter', [operation, filter]);
+    await this.hooks.execPre('patchCollection', [operation, filter, update, options]);
     // Actual mongo call
-    const {result: updateResult} = await model.updateMany(operation.get('filter'), update, options);
+    await model.updateMany(operation.get('filter'), update, options);
     const result = await model.find(operation.get('filter'), options);
     operation.set('result', result);
     // Execute postHooks
-    await this.hooks.execPost('patchCollection', [operation.get('filter'), update, options, operation]);
+    await this.hooks.execPost('patchCollection', [operation, operation.get('filter'), update, options]);
     res.json(operation.get('result'));
   }
 
   async deleteCollection(req: Request, res: Response): Promise<void> {
     const model = this.getModelFromRequest(req);
     // Prepare operation params
-    const filter: FilterQuery<TSchema> = await this.buildRequestFilter(req);
+    const filter = await this.buildRequestFilter(req);
     const options: CommonOptions = {};
-    const operation: OperationMap = new Map<string, unknown>([
-      ['method', 'deleteCollection'],
-      ['scope', 'collection'],
-      ['request', req],
-      ['filter', filter]
-    ]);
+    const operation = createOperationMap<TSchema>({
+      method: 'deleteCollection',
+      scope: 'collection',
+      request: req,
+      filter
+    });
     // Execute preHooks
-    await this.hooks.execManyPre(['filter', 'deleteCollection'], [filter, options, operation]);
+    await this.hooks.execPre('filter', [operation, filter]);
+    await this.hooks.execPre('deleteCollection', [operation, filter, options]);
     // Actual mongo call
     const result = await model.deleteMany(operation.get('filter'), options);
     operation.set('result', result);
     // Execute postHooks
-    await this.hooks.execPost('deleteCollection', [operation.get('filter'), options, operation]);
+    await this.hooks.execPost('deleteCollection', [operation, operation.get('filter'), options]);
     res.json(operation.get('result'));
   }
 
   async getDocument(req: Request, res: Response): Promise<void> {
     const model = this.getModelFromRequest(req);
     // Prepare operation params
-    const filter: FilterQuery<TSchema> = await this.buildRequestFilter(req);
+    const filter = await this.buildRequestFilter(req);
     assertScopedFilter(filter);
-    const options: FindOneOptions<TSchema> = {};
-    const operation: OperationMap = new Map<string, unknown>([
-      ['method', 'getDocument'],
-      ['scope', 'document'],
-      ['request', req],
-      ['filter', filter]
-    ]);
+    const options: FindOneOptions<TSchema extends TSchema ? TSchema : TSchema> = {};
+    const operation = createOperationMap<TSchema>({
+      method: 'getDocument',
+      scope: 'document',
+      request: req,
+      filter
+    });
     // Execute preHooks
-    await this.hooks.execManyPre(['filter', 'getDocument'], [filter, options, operation]);
+    await this.hooks.execPre('filter', [operation, filter]);
+    await this.hooks.execPre('getDocument', [operation, filter, options]);
     // Actual mongo call
     const result = await model.findOne(operation.get('filter'), options);
     if (!result) {
@@ -293,25 +303,26 @@ export default class Resource<TSchema extends BaseSchema> {
     }
     operation.set('result', result);
     // Execute postHooks
-    await this.hooks.execPost('getDocument', [operation.get('filter'), options, operation]);
+    await this.hooks.execPost('getDocument', [operation, operation.get('filter'), options]);
     res.json(operation.get('result'));
   }
 
   async patchDocument(req: Request, res: Response): Promise<void> {
     const model = this.getModelFromRequest(req);
     // Prepare operation params
-    const filter: FilterQuery<TSchema> = await this.buildRequestFilter(req);
+    const filter = await this.buildRequestFilter(req);
     assertScopedFilter(filter);
     const update: UpdateQuery<TSchema> = parseBodyAsUpdate(req.body);
-    const options: FindOneAndReplaceOption<TSchema> = {returnOriginal: false};
-    const operation: OperationMap = new Map<string, unknown>([
-      ['method', 'patchDocument'],
-      ['scope', 'document'],
-      ['request', req],
-      ['filter', filter]
-    ]);
+    const options: FindOneAndUpdateOption<TSchema> = {returnOriginal: false};
+    const operation = createOperationMap<TSchema>({
+      method: 'patchDocument',
+      scope: 'document',
+      request: req,
+      filter
+    });
     // Execute preHooks
-    await this.hooks.execManyPre(['filter', 'patchDocument'], [filter, update, options, operation]);
+    await this.hooks.execPre('filter', [operation, filter]);
+    await this.hooks.execPre('patchDocument', [operation, filter, update, options]);
     // Actual mongo call
     const {value: result} = await model.findOneAndUpdate(operation.get('filter'), update, options);
     if (!result) {
@@ -319,32 +330,165 @@ export default class Resource<TSchema extends BaseSchema> {
     }
     operation.set('result', result);
     // Execute postHooks
-    await this.hooks.execPost('patchDocument', [operation.get('filter'), update, options, operation]);
+    await this.hooks.execPost('patchDocument', [operation, operation.get('filter'), update, options]);
     res.json(operation.get('result'));
   }
 
   async deleteDocument(req: Request, res: Response): Promise<void> {
     const model = this.getModelFromRequest(req);
     // Prepare operation params
-    const filter: FilterQuery<TSchema> = await this.buildRequestFilter(req);
+    const filter = await this.buildRequestFilter(req);
     assertScopedFilter(filter);
     const options: CommonOptions & {bypassDocumentValidation?: boolean} = {};
-    const operation: OperationMap = new Map<string, unknown>([
-      ['method', 'deleteDocument'],
-      ['scope', 'document'],
-      ['request', req],
-      ['filter', filter]
-    ]);
+    const operation = createOperationMap<TSchema>({
+      method: 'deleteDocument',
+      scope: 'document',
+      request: req,
+      filter
+    });
     // Execute preHooks
-    await this.hooks.execManyPre(['filter', 'deleteDocument'], [filter, options, operation]);
+    await this.hooks.execManyPre(['filter', 'deleteDocument'], [operation, filter, options]);
     // Actual mongo call
     const {result} = await model.deleteOne(operation.get('filter'), options);
     if (result.n === 0) {
       throw createError(404);
     }
-    operation.set('result', {ok: result.ok, n: result.n});
+    operation.set('result', result);
     // Execute postHooks
-    await this.hooks.execPost('deleteDocument', [operation.get('filter'), options, operation]);
+    await this.hooks.execPost('deleteDocument', [operation, operation.get('filter'), options]);
     res.json(operation.get('result'));
   }
 }
+
+export type ResourceHookName =
+  | 'buildRouter'
+  | 'buildPath'
+  | 'filter'
+  | 'insert'
+  | 'getCollection'
+  | 'postCollection'
+  | 'patchCollection'
+  | 'deleteCollection'
+  | 'getDocument'
+  | 'patchDocument'
+  | 'deleteDocument'
+  | 'aggregateCollection';
+
+interface Resource<TSchema extends DefaultSchema> {
+  // pre
+  pre(hookName: 'filter', callback: (operation: OperationMap<TSchema>, filter: FilterQuery<TSchema>) => void): void;
+  pre(
+    hookName: 'getCollection' | 'getDocument',
+    callback: (
+      operation: OperationMap<TSchema>,
+      filter: FilterQuery<TSchema>,
+      options: FindOneOptions<TSchema extends TSchema ? TSchema : TSchema>
+    ) => void
+  ): void;
+  pre(
+    hookName: 'insert' | 'postCollection',
+    callback: (
+      operation: OperationMap<TSchema>,
+      document: OptionalId<TSchema>,
+      options: CollectionInsertOneOptions
+    ) => void
+  ): void;
+  pre(
+    hookName: 'patchCollection',
+    callback: (
+      operation: OperationMap<TSchema>,
+      filter: FilterQuery<TSchema>,
+      update: UpdateQuery<TSchema>,
+      options: CommonOptions
+    ) => void
+  ): void;
+  pre(
+    hookName: 'deleteCollection',
+    callback: (operation: OperationMap<TSchema>, filter: FilterQuery<TSchema>, options: CommonOptions) => void
+  ): void;
+  pre(
+    hookName: 'patchDocument',
+    callback: (
+      operation: OperationMap<TSchema>,
+      filter: FilterQuery<TSchema>,
+      update: UpdateQuery<TSchema>,
+      options: FindOneAndUpdateOption<TSchema>
+    ) => void
+  ): void;
+  pre(
+    hookName: 'deleteDocument',
+    callback: (
+      operation: OperationMap<TSchema>,
+      filter: FilterQuery<TSchema>,
+      options: CommonOptions & {bypassDocumentValidation?: boolean}
+    ) => void
+  ): void;
+  pre(
+    hookName: 'aggregateCollection',
+    callback: (
+      operation: OperationMap<TSchema>,
+      pipeline: AggregationPipeline,
+      options: CommonOptions & {bypassDocumentValidation?: boolean}
+    ) => void
+  ): void;
+  // post
+  post(
+    hookName: 'getCollection',
+    callback: (
+      operation: OperationMap<TSchema, TSchema[]>,
+      filter: FilterQuery<TSchema>,
+      options: FindOneOptions<TSchema extends TSchema ? TSchema : TSchema>
+    ) => void
+  ): void;
+  post(
+    hookName: 'postCollection',
+    callback: (
+      operation: OperationMap<TSchema, WithId<TSchema>>,
+      document: OptionalId<TSchema>,
+      options: CollectionInsertOneOptions
+    ) => void
+  ): void;
+  post(
+    hookName: 'patchCollection',
+    callback: (
+      operation: OperationMap<TSchema, TSchema[]>,
+      filter: FilterQuery<TSchema>,
+      update: UpdateQuery<TSchema>,
+      options: FindOneOptions<TSchema extends TSchema ? TSchema : TSchema>
+    ) => void
+  ): void;
+  post(
+    hookName: 'deleteCollection',
+    callback: (
+      operation: OperationMap<TSchema, DeleteWriteOpResultObject>,
+      filter: FilterQuery<TSchema>,
+      options: CommonOptions
+    ) => void
+  ): void;
+  post(
+    hookName: 'getDocument',
+    callback: (
+      operation: OperationMap<TSchema, TSchema | null>,
+      filter: FilterQuery<TSchema>,
+      options: FindOneOptions<TSchema extends TSchema ? TSchema : TSchema>
+    ) => void
+  ): void;
+  post(
+    hookName: 'deleteDocument',
+    callback: (
+      operation: OperationMap<TSchema, DeleteWriteOpResultObject['result']>,
+      filter: FilterQuery<TSchema>,
+      options: CommonOptions & {bypassDocumentValidation?: boolean}
+    ) => void
+  ): void;
+  post(
+    hookName: 'aggregateCollection',
+    callback: (
+      operation: OperationMap<TSchema, TSchema[]>,
+      pipeline: AggregationPipeline,
+      options: CommonOptions & {bypassDocumentValidation?: boolean}
+    ) => void
+  ): void;
+}
+
+export default Resource;

@@ -1,6 +1,6 @@
 import createError from 'http-errors';
 import {Request, Response, NextFunction} from 'express';
-import {MongoError} from '@mongozest/core';
+import {MongoError} from 'mongodb';
 
 export const mongoErrorMiddleware = (err: any, req: Request, res: Response, next: NextFunction) => {
   // Convert MongoError to HttpErrors

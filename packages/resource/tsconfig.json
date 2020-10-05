@@ -1,13 +1,21 @@
 {
-  "extends": "../../tsconfig",
+  "extends": "@tsconfig/node14/tsconfig.json",
   "compilerOptions": {
+    "declaration": true,
     "outDir": "./lib",
     "rootDir": "./src",
     "baseUrl": "./",
     "paths": {
-      "src/*": ["./src/*"],
-      "@mongozest/core": ["../core/src"]
+      "src/*": ["./src/*"]
     }
   },
-  "include": ["src/"]
+  "include": ["src/"],
+  "references": [
+    {
+      "path": "../core"
+    },
+    {
+      "path": "../hooks"
+    }
+  ]
 }

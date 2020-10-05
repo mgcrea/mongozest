@@ -1,23 +1,26 @@
+import {DefaultSchema} from '@mongozest/core';
 import {Resource} from '..';
+import {FilterQuery} from 'mongodb';
 
 const SID_REGEX = /^[a-z0-9\-\_]{7,14}$/i;
 
-export default function shortIdPlugin(resource: Resource, {sidKey = '_sid'} = {}) {
-  // const handle = (key: string, value: string) => {
+type ShortId = string;
+export type ShortIdPluginSchema = {
+  _sid: ShortId;
+};
 
-  // };
-
-  // resource.addUrl((key, value) => {
-
-  // })
-
+export const shortIdPlugin = <
+  TSchema extends DefaultSchema & ShortIdPluginSchema = DefaultSchema & ShortIdPluginSchema
+>(
+  resource: Resource<TSchema>,
+  {sidKey = '_sid'} = {}
+): void => {
   resource.addIdentifierHandler(
-    (_sid: string) => SID_REGEX.test(_sid),
-    (_sid: string) => ({_sid})
+    (_sid: ShortId) => SID_REGEX.test(_sid),
+    (_sid: ShortId) => ({[sidKey as '_sid']: _sid} as FilterQuery<TSchema>)
   );
-
   // resource.pre('id', (key: string, value: string, filter: {[s: string]: any}) => {
   //   const isMatch = key === '0' && SID_REGEX.test(value);
   //   return isMatch ? {[sidKey]: toString(value)} : null;
   // });
-}
+};
