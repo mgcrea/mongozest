@@ -1,16 +1,8 @@
 // @docs https://docs.mongodb.com/manual/reference/operator/query/jsonSchema/
 
-import {isString, pick, omit} from 'lodash';
-import {
-  BsonType,
-  CollectionCreateOptions,
-  JsonSchema,
-  JsonSchemaProperty,
-  MongoJsonSchemaProperties,
-  MongoJsonSchemaProperty,
-  UnknownSchema
-} from 'src/schema';
-import {BaseSchema, Model} from '..';
+import {isString, omit, pick} from 'lodash';
+import {BsonType, JsonSchema, JsonSchemaProperty, MongoJsonSchemaProperty, UnknownSchema} from 'src/schema';
+import {DefaultSchema, Model} from '..';
 
 const JSON_SCHEMA_VALID_KEYS = [
   'bsonType', // Accepts same string aliases used for the $type operator
@@ -44,7 +36,7 @@ const JSON_SCHEMA_VALID_KEYS = [
   'description' // A string that describes the schema and has no effect
 ];
 
-export const jsonSchemaPlugin = <USchema extends BaseSchema = BaseSchema>(model: Model<USchema>): void => {
+export const jsonSchemaPlugin = <USchema extends DefaultSchema = DefaultSchema>(model: Model<USchema>): void => {
   // @TODO refactor to decouple initialSchema override
   const buildJsonSchemaFromObject = <TSchema extends UnknownSchema = UnknownSchema>(
     schema: JsonSchema<TSchema>,
@@ -60,7 +52,7 @@ export const jsonSchemaPlugin = <USchema extends BaseSchema = BaseSchema>(model:
       // Add support for string shortcut
       const value = isString(schema[key]) ? {bsonType: (schema[key] as unknown) as BsonType} : schema[key];
       const properties = soFar.properties!;
-      const {bsonType, required, properties: childProperties, items: childItems, ...otherProps} = value;
+      const {bsonType, required, properties: childProperties, items: _childItems, ...otherProps} = value;
       // Add support for required
       if (required === true) {
         // Initialize array on the fly due to `$jsonSchema keyword 'required' cannot be an empty array`
@@ -78,8 +70,10 @@ export const jsonSchemaPlugin = <USchema extends BaseSchema = BaseSchema>(model:
         return soFar;
       }
       // Nested arrayItems case
-      const isNestedArrayItems = bsonType === 'array' && childItems;
-      if (isNestedArrayItems && childItems) {
+      const isNestedArrayItems = bsonType === 'array' && _childItems;
+      // @TODO no check for plain objects, etc?
+      if (isNestedArrayItems) {
+        const childItems = _childItems as JsonSchemaProperty;
         const isNestedObjectInArray = childItems.bsonType === 'object' && childItems.properties;
         const validItemsJsonKeys = pick(omit(childItems, 'properties'), JSON_SCHEMA_VALID_KEYS) as JsonSchemaProperty;
         if (isNestedObjectInArray) {

@@ -1,4 +1,6 @@
 import {get, has, set} from 'lodash';
+import {OptionalId} from 'mongodb';
+import {DefaultSchema} from 'src/schema';
 
 // Check a leaf path (eg. `{foo.bar: {baz: 1}}`)
 export const hasLeafPath = (object: Record<string, unknown>, path: string): boolean => {
@@ -33,7 +35,11 @@ export const getPath = (object: Record<string, unknown>, path: string): string |
 };
 
 // @NOTE wtf about $ positional operator? and items.1 operator?
-export const mapPathValues = (object: Record<string, unknown>, path: string, callback: any): void => {
+export const mapPathValues = <TSchema extends DefaultSchema>(
+  object: TSchema,
+  path: string,
+  callback: <K extends keyof TSchema = keyof TSchema>(value: TSchema[K]) => TSchema[K]
+): void => {
   const arrayParts = path.split('[]');
   const isArrayPath = arrayParts.length === 1;
   // Get path before array as lodash won't handle it
@@ -77,14 +83,18 @@ export const mapPathValues = (object: Record<string, unknown>, path: string, cal
     }
     const valueAtPath = object[key];
     if (!remainingArrayPath) {
-      object[key] = callback(valueAtPath);
+      object[key as keyof TSchema] = callback(valueAtPath as TSchema[keyof TSchema]);
     } else {
-      mapPathValues(valueAtPath as Record<string, unknown>, remainingArrayPath, callback);
+      mapPathValues(valueAtPath as TSchema, remainingArrayPath, callback);
     }
   });
 };
 
-export const defaultPathValues = (object: any, path: string, callback: any) => {
+export const defaultPathValues = <TSchema extends DefaultSchema>(
+  object: OptionalId<TSchema> | TSchema,
+  path: string,
+  callback: <K extends keyof TSchema = keyof TSchema>() => TSchema[K]
+): void => {
   const parts = path.split('[]');
   const currentPath = parts[0];
   if (!has(object, currentPath)) {

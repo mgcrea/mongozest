@@ -1,13 +1,6 @@
-// @docs https://www.mongodb.com/blog/post/handling-files-using-mongodb-stitch-and-aws-s3
-// @docs https://github.com/hapijs/joi/blob/v13.7.0/API.md
-// @docs https://github.com/dylang/shortid
-// @docs http://mongodb.github.io/node-mongodb-native/3.1/reference/ecmascriptnext/crud/
-// @docs https://github.com/aljazerzen/mongodb-typescript
-
 import Hooks, {HookCallback} from '@mongozest/hooks';
 import {cloneDeep, isPlainObject, snakeCase, uniq} from 'lodash';
 import {
-  ClientSession,
   Collection,
   CollectionAggregationOptions,
   CollectionCreateOptions,
@@ -23,24 +16,32 @@ import {
   InsertOneWriteOpResult,
   InsertWriteOpResult,
   MongoCountPreferences,
+  MongoDistinctPreferences,
   ObjectId,
-  ReadPreferenceOrMode,
+  OptionalId,
   ReplaceOneOptions,
   ReplaceWriteOpResult,
   UpdateManyOptions,
   UpdateQuery,
-  UpdateWriteOpResult
+  UpdateWriteOpResult,
+  WithId
 } from 'mongodb';
 import pluralize from 'pluralize';
 import {byIdPlugin, debugPlugin, jsonSchemaPlugin} from 'src/plugins';
-import {BaseSchema, JsonSchema, JsonSchemaProperties} from 'src/schema';
-import type {Plugin, OperationMap} from 'src/typings';
+import {JsonSchema, JsonSchemaProperties, JsonSchemaProperty, DefaultSchema} from 'src/schema';
+import type {Plugin, UnwrapPromise} from 'src/typings';
+import {cloneOperationMap, createOperationMap, OperationMap} from './operation';
 
-export default class Model<TSchema extends BaseSchema = BaseSchema> {
+export interface ModelConstructor<TSchema extends OptionalId<DefaultSchema> = DefaultSchema> {
+  new (db: MongoDb): Model<TSchema>;
+  modelName: string;
+}
+
+class Model<TSchema extends OptionalId<DefaultSchema> = DefaultSchema> {
   static internalPrePlugins: Plugin[] = [byIdPlugin];
   static internalPostPlugins: Plugin[] = [jsonSchemaPlugin, debugPlugin];
 
-  static readonly schema: Record<string, unknown>;
+  static readonly schema: JsonSchema;
   static readonly modelName: string;
   static readonly collectionName: string | null = null;
   static readonly collectionOptions: CollectionCreateOptions = {};
@@ -53,13 +54,14 @@ export default class Model<TSchema extends BaseSchema = BaseSchema> {
   public statics: Map<string | number | symbol, Function> = new Map();
 
   public collection!: Collection<TSchema>;
-  private hooks: Hooks = new Hooks();
+  private hooks = new Hooks<ModelHookName>();
 
   constructor(public db: MongoDb) {
-    const {name: className, modelName, collectionName, collectionOptions, schema, plugins} = this.constructor as any;
+    const {name: className, modelName, collectionName, collectionOptions, schema, plugins} = this
+      .constructor as typeof Model;
     this.collectionName = collectionName ? collectionName : snakeCase(pluralize(modelName || className));
     this.collectionOptions = cloneDeep(collectionOptions);
-    this.schema = cloneDeep(schema);
+    this.schema = cloneDeep(schema) as JsonSchema<TSchema>;
     this.plugins = plugins;
   }
 
@@ -103,12 +105,11 @@ export default class Model<TSchema extends BaseSchema = BaseSchema> {
           });
           // isNestedObjectInArray
         } else if (
-          childItems &&
           isPlainObject(childItems) &&
-          childItems.bsonType === 'object' &&
-          childItems.properties
+          (childItems as JsonSchemaProperty).bsonType === 'object' &&
+          (childItems as JsonSchemaProperty).properties
         ) {
-          await this.execPostPropertyHooks<unknown>(childItems.properties, `${currentPath}[]`);
+          await this.execPostPropertyHooks((childItems as JsonSchemaProperty).properties!, `${currentPath}[]`);
         } else {
           // Special array leaf case
           await this.hooks.execPost('initialize:property', [childItems, `${currentPath}[]`, {isLeaf: true}]);
@@ -124,10 +125,6 @@ export default class Model<TSchema extends BaseSchema = BaseSchema> {
 
   // Collection management
 
-  // @TODO fixme!
-  public loadModel<OSchema extends BaseSchema = BaseSchema>(): undefined | Model<OSchema> {
-    return;
-  }
   public async hasCollection(): Promise<boolean> {
     const {collectionName, db} = this;
     const collections = await db.listCollections({name: collectionName}, {nameOnly: true}).toArray();
@@ -197,10 +194,10 @@ export default class Model<TSchema extends BaseSchema = BaseSchema> {
     const {schema} = this;
     Object.assign(schema, additionalProperties);
   }
-  pre(hookName: string, callback: HookCallback): void {
+  pre(hookName: ModelHookName, callback: HookCallback): void {
     this.hooks.pre(hookName, callback);
   }
-  post(hookName: string, callback: HookCallback): void {
+  post(hookName: ModelHookName, callback: HookCallback): void {
     this.hooks.post(hookName, callback);
   }
 
@@ -210,31 +207,31 @@ export default class Model<TSchema extends BaseSchema = BaseSchema> {
     options: CollectionAggregationOptions = {}
   ): Promise<T[]> {
     // Prepare operation params
-    const operation: OperationMap = new Map([['method', 'aggregate']]);
+    const operation = createOperationMap<TSchema>('aggregate');
     // Execute preHooks
-    await this.hooks.execPre('aggregate', [pipeline, options, operation]);
+    await this.hooks.execPre('aggregate', [operation, pipeline, options]);
     // Actual mongodb operation
     const result = await this.collection.aggregate<T>(pipeline, options).toArray();
     /* ['result', 'connection', 'message', 'ops', 'insertedCount', 'insertedId'] */
     /* {result: ['n', 'opTime', 'electionId', 'ok', 'operationTime', '$clusterTime']} */
     operation.set('result', result);
     // Execute postHooks
-    await this.hooks.execPost('aggregate', [pipeline, options, operation]);
+    await this.hooks.execPost('aggregate', [operation, pipeline, options]);
     return operation.get('result');
   }
 
   // @docs http://mongodb.github.io/node-mongodb-native/3.1/api/Collection.html#countDocuments
   async countDocuments(query: FilterQuery<TSchema>, options: MongoCountPreferences = {}): Promise<number> {
     // Prepare operation params
-    const operation: OperationMap = new Map([['method', 'countDocuments']]);
+    const operation = createOperationMap<TSchema>('countDocuments');
     // Execute preHooks
-    await this.hooks.execPre('find', [query, options, operation]);
-    await this.hooks.execPre('countDocuments', [query, options, operation]);
+    await this.hooks.execPre('find', [operation, query, options]);
+    await this.hooks.execPre('countDocuments', [operation, query, options]);
     // Actual mongodb operation
     const result: number = await this.collection.countDocuments(query, options);
     operation.set('result', result);
     // Execute postHooks
-    await this.hooks.execPost('countDocuments', [query, options, operation]);
+    await this.hooks.execPost('countDocuments', [operation, query, options]);
     return operation.get('result') as number;
   }
 
@@ -242,49 +239,48 @@ export default class Model<TSchema extends BaseSchema = BaseSchema> {
   async distinct(
     key: string,
     query: FilterQuery<TSchema>,
-    options: {readPreference?: ReadPreferenceOrMode; maxTimeMS?: number; session?: ClientSession} = {}
+    options: MongoDistinctPreferences = {}
   ): Promise<Array<ObjectId>> {
     // Prepare operation params
-    const operation: OperationMap = new Map([['method', 'distinct']]);
+    const operation = createOperationMap<TSchema>('distinct');
     // Execute preHooks
-    await this.hooks.execPre('find', [query, options, operation]);
-    await this.hooks.execPre('distinct', [key, query, options, operation]);
+    await this.hooks.execPre('find', [operation, query, options]);
+    await this.hooks.execPre('distinct', [operation, key, query, options]);
     // Actual mongodb operation
     const result: Array<ObjectId> = await this.collection.distinct(key, query, options);
     operation.set('result', result);
     // Execute postHooks
-    await this.hooks.execPost('distinct', [key, query, options, operation]);
+    await this.hooks.execPost('distinct', [operation, key, query, options]);
     return operation.get('result');
   }
 
   // @docs http://mongodb.github.io/node-mongodb-native/3.1/api/Collection.html#insertOne
   async insertOne(
-    document: TSchema,
+    document: OptionalId<TSchema>,
     options: CollectionInsertOneOptions = {}
-  ): Promise<InsertOneWriteOpResult<TSchema>> {
+  ): Promise<InsertOneWriteOpResult<WithId<TSchema>>> {
     // Prepare operation params
-    const operation: OperationMap = new Map([['method', 'insertOne']]);
+    const operation = createOperationMap<TSchema>('insertOne');
     // Execute preHooks
-    await this.hooks.execManyPre(['insert', 'insertOne', 'validate'], [document, options, operation]);
+    await this.hooks.execManyPre(['insert', 'insertOne', 'validate'], [operation, document, options]);
     // Actual mongodb operation
-    let result;
     try {
-      result = await this.collection.insertOne(
+      const result = await this.collection.insertOne(
         operation.has('document') ? operation.get('document') : document,
         options
       );
       /* ['result', 'connection', 'message', 'ops', 'insertedCount', 'insertedId'] */
       /* {result: ['n', 'opTime', 'electionId', 'ok', 'operationTime', '$clusterTime']} */
+      operation.set('result', result);
     } catch (error) {
       operation.set('error', error);
-      await this.hooks.execManyPost(['error', 'insertError', 'insertOneError'], [document, options, operation]);
+      await this.hooks.execManyPost(['error', 'insertError', 'insertOneError'], [operation, document, options]);
       if (operation.has('error')) {
         throw operation.get('error');
       }
     }
-    operation.set('result', result);
     // Execute postHooks
-    await this.hooks.execManyPost(['insert', 'insertOne'], [document, options, operation]);
+    await this.hooks.execManyPost(['insert', 'insertOne'], [operation, document, options]);
     return operation.get('result');
   }
 
@@ -296,39 +292,39 @@ export default class Model<TSchema extends BaseSchema = BaseSchema> {
     options: ReplaceOneOptions = {}
   ): Promise<ReplaceWriteOpResult> {
     // Prepare operation params
-    const operation: OperationMap = new Map([['method', 'replaceOne']]);
+    const operation = createOperationMap<TSchema>('replaceOne');
     // Execute preHooks
-    await this.hooks.execPre('insert', [document, options, operation]);
-    await this.hooks.execPre('replaceOne', [filter, document, options, operation]);
-    await this.hooks.execPre('validate', [document, options, operation]);
+    await this.hooks.execPre('insert', [operation, document, options]);
+    await this.hooks.execPre('replaceOne', [operation, filter, document, options]);
+    await this.hooks.execPre('validate', [operation, document, options]);
     // Actual mongodb operation
     const result = await this.collection.replaceOne(
       filter,
-      operation.has('document') ? operation.get('document') : document,
+      operation.has('document') ? (operation.get('document') as TSchema) : document,
       options
     );
     /* ['result', 'connection', 'message', 'modifiedCount', 'upsertedId', 'upsertedCount', 'matchedCount', 'ops'] */
     operation.set('result', result);
     // Execute postHooks
-    await this.hooks.execPost('insert', [document, options, operation]);
-    await this.hooks.execPost('replaceOne', [filter, document, options, operation]);
+    await this.hooks.execPost('insert', [operation, document, options]);
+    await this.hooks.execPost('replaceOne', [operation, filter, document, options]);
     return operation.get('result');
   }
 
   // @docs http://mongodb.github.io/node-mongodb-native/3.1/api/Collection.html#insertMany
   async insertMany(
-    documents: TSchema[],
+    documents: Array<OptionalId<TSchema>>,
     options: CollectionInsertManyOptions = {}
-  ): Promise<InsertWriteOpResult<TSchema>> {
+  ): Promise<InsertWriteOpResult<WithId<TSchema>>> {
     // Prepare operation params
-    const operation: OperationMap = new Map([['method', 'insertMany']]);
+    const operation = createOperationMap<TSchema>('insertMany');
     // Execute preHooks
     const eachPreArgs = documents.reduce(
-      (soFar: Array<any>, document: TSchema) => soFar.concat([[document, options, operation]]),
+      (soFar: Array<any>, document: OptionalId<TSchema>) => soFar.concat([[operation, document, options]]),
       []
     );
     await this.hooks.execEachPre('insert', eachPreArgs);
-    await this.hooks.execPre('insertMany', [documents, options, operation]);
+    await this.hooks.execPre('insertMany', [operation, documents, options]);
     await this.hooks.execEachPre('validate', eachPreArgs);
     // Actual mongodb operation
     const result = await this.collection.insertMany(
@@ -338,12 +334,12 @@ export default class Model<TSchema extends BaseSchema = BaseSchema> {
     operation.set('result', result);
     // Execute postHooks
     const {ops, insertedIds} = result;
-    const eachPostArgs = documents.reduce((soFar: Array<any>, document: TSchema, index) => {
+    const eachPostArgs = documents.reduce((soFar: Array<any>, document: OptionalId<TSchema>, index) => {
       const documentResult = {...result, ops: [ops[index]], insertedCount: 1, insertedId: insertedIds[index]};
-      return soFar.concat([[document, options, new Map([...operation, ['result', documentResult]])]]);
+      return soFar.concat([[document, options, cloneOperationMap(operation, ['result', documentResult])]]);
     }, []);
     await this.hooks.execEachPost('insert', eachPostArgs);
-    await this.hooks.execPost('insertMany', [documents, options, operation]);
+    await this.hooks.execPost('insertMany', [operation, documents, options]);
     return operation.get('result');
   }
 
@@ -354,26 +350,25 @@ export default class Model<TSchema extends BaseSchema = BaseSchema> {
     options: ReplaceOneOptions = {}
   ): Promise<UpdateWriteOpResult> {
     // Prepare operation params
-    const operation: OperationMap = new Map([['method', 'updateOne']]);
+    const operation = createOperationMap<TSchema>('updateOne');
     // Execute preHooks
-    await this.hooks.execManyPre(['update', 'updateOne'], [filter, update, options, operation]);
+    await this.hooks.execManyPre(['update', 'updateOne'], [operation, filter, update, options]);
     if ((update as UpdateQuery<TSchema>).$set) {
-      await this.hooks.execPre('validate', [(update as UpdateQuery<TSchema>).$set, options, operation]);
+      await this.hooks.execPre('validate', [operation, (update as UpdateQuery<TSchema>).$set, options]);
     }
     // Actual mongodb operation
-    let result;
     try {
-      result = await this.collection.updateOne(filter, update, options);
+      const result = await this.collection.updateOne(filter, update, options);
+      operation.set('result', result);
     } catch (error) {
       operation.set('error', error);
-      await this.hooks.execManyPost(['error', 'updateError', 'updateOneError'], [filter, update, options, operation]);
+      await this.hooks.execManyPost(['error', 'updateError', 'updateOneError'], [operation, filter, update, options]);
       if (operation.has('error')) {
         throw operation.get('error');
       }
     }
-    operation.set('result', result);
     // Execute postHooks
-    await this.hooks.execManyPost(['update', 'updateOne'], [filter, update, options, operation]);
+    await this.hooks.execManyPost(['update', 'updateOne'], [operation, filter, update, options]);
     return operation.get('result');
   }
 
@@ -384,17 +379,17 @@ export default class Model<TSchema extends BaseSchema = BaseSchema> {
     options: UpdateManyOptions = {}
   ): Promise<UpdateWriteOpResult> {
     // Prepare operation params
-    const operation: OperationMap = new Map([['method', 'updateMany']]);
+    const operation = createOperationMap<TSchema>('updateMany');
     // Execute preHooks
-    await this.hooks.execManyPre(['update', 'updateMany'], [filter, update, options, operation]);
+    await this.hooks.execManyPre(['update', 'updateMany'], [operation, filter, update, options]);
     if (update.$set) {
-      await this.hooks.execPre('validate', [update.$set, options, operation]);
+      await this.hooks.execPre('validate', [operation, update.$set, options]);
     }
     // Actual mongodb operation
     const result = await this.collection.updateMany(filter, update, options);
     operation.set('result', result);
     // Execute postHooks
-    await this.hooks.execManyPost(['update', 'updateMany'], [filter, update, options, operation]);
+    await this.hooks.execManyPost(['update', 'updateMany'], [operation, filter, update, options]);
     return operation.get('result');
   }
 
@@ -406,31 +401,32 @@ export default class Model<TSchema extends BaseSchema = BaseSchema> {
     options: FindOneAndReplaceOption<TSchema> = {}
   ): Promise<FindAndModifyWriteOpResultObject<TSchema>> {
     // Prepare operation params
-    const operation: OperationMap = new Map([['method', 'findOneAndUpdate']]);
+    const operation = createOperationMap<TSchema>('findOneAndUpdate');
+    const findOperation = createOperationMap<TSchema>('findOneAndUpdate');
     // Execute preHooks
-    await this.hooks.execManyPre(['find', 'findOne'], [filter, options, operation]);
-    await this.hooks.execManyPre(['update', 'updateOne', 'findOneAndUpdate'], [filter, update, options, operation]);
+    await this.hooks.execManyPre(['find', 'findOne'], [operation, filter, options]);
+    await this.hooks.execManyPre(['update', 'updateOne', 'findOneAndUpdate'], [operation, filter, update, options]);
     if (update.$set) {
       await this.hooks.execPre('validate', [update.$set, options, operation]);
     }
     // Actual mongodb operation
-    let result;
     try {
-      result = await this.collection.findOneAndUpdate(filter, update, options);
+      const result = await this.collection.findOneAndUpdate(filter, update, options);
+      operation.set('result', result);
+      findOperation.set('result', result.value);
     } catch (error) {
       operation.set('error', error);
       await this.hooks.execManyPost(
         ['error', 'updateError', 'updateOneError', 'findOneAndUpdateError'],
-        [filter, update, options, operation]
+        [operation, filter, update, options]
       );
       if (operation.has('error')) {
         throw operation.get('error');
       }
     }
-    operation.set('result', result);
     // Execute postHooks
-    await this.hooks.execManyPost(['find', 'findOne'], [filter, options, operation]);
-    await this.hooks.execManyPost(['update', 'updateOne', 'findOneAndUpdate'], [filter, update, options, operation]);
+    await this.hooks.execManyPost(['find', 'findOne'], [findOperation, filter, options]);
+    await this.hooks.execManyPost(['update', 'updateOne', 'findOneAndUpdate'], [operation, filter, update, options]);
     return operation.get('result');
   }
 
@@ -441,14 +437,14 @@ export default class Model<TSchema extends BaseSchema = BaseSchema> {
     options: FindOneOptions<T extends TSchema ? TSchema : T> = {}
   ): Promise<T | null> {
     // Prepare operation params
-    const operation: OperationMap = new Map([['method', 'findOne']]);
+    const operation = createOperationMap<TSchema>('findOne');
     // Execute preHooks
-    await this.hooks.execManyPre(['find', 'findOne'], [query, options, operation]);
+    await this.hooks.execManyPre(['find', 'findOne'], [operation, query, options]);
     // Actual mongodb operation
     const result = await this.collection.findOne<T>(query, options);
     operation.set('result', result);
     // Execute postHooks
-    await this.hooks.execManyPost(['find', 'findOne'], [query, options, operation]);
+    await this.hooks.execManyPost(['find', 'findOne'], [operation, query, options]);
     return operation.get('result');
   }
 
@@ -458,20 +454,23 @@ export default class Model<TSchema extends BaseSchema = BaseSchema> {
     options: FindOneOptions<T extends TSchema ? TSchema : T> = {}
   ): Promise<Array<T>> {
     // PreHooks handling
-    const operation: OperationMap = new Map([['method', 'find']]);
-    await this.hooks.execManyPre(['find', 'findMany'], [query, options, operation]);
+    const operation = createOperationMap<TSchema>('find');
+    await this.hooks.execManyPre(['find', 'findMany'], [operation, query, options]);
     // Actual mongodb operation
     const result = await this.collection.find<T>(query, options).toArray();
     operation.set('result', result);
     // Execute postHooks
     // const pre = process.hrtime();
-    const eachPostArgs = result.reduce<Array<[typeof query, typeof options, OperationMap]>>((soFar, document) => {
-      return soFar.concat([[query, options, new Map([...operation, ['result', document]])]]);
-    }, []);
+    const eachPostArgs = result.reduce<Array<[typeof query, typeof options, OperationMap<TSchema>]>>(
+      (soFar, document) => {
+        return soFar.concat([[query, options, cloneOperationMap(operation, ['result', document])]]);
+      },
+      []
+    );
     // const diff = process.hrtime(pre);
     // const elapsed = (diff[0] * NS_PER_SEC + diff[1]) / 1e6;
     await this.hooks.execEachPost('find', eachPostArgs);
-    await this.hooks.execPost('findMany', [query, options, operation]);
+    await this.hooks.execPost('findMany', [operation, query, options]);
     return operation.get('result');
   }
 
@@ -481,26 +480,160 @@ export default class Model<TSchema extends BaseSchema = BaseSchema> {
     options: CommonOptions & {bypassDocumentValidation?: boolean} = {}
   ): Promise<DeleteWriteOpResultObject> {
     // PreHooks handling
-    const operation: OperationMap = new Map([['method', 'deleteOne']]);
-    await this.hooks.execManyPre(['delete', 'deleteOne'], [filter, options, operation]);
+    const operation = createOperationMap<TSchema>('deleteOne');
+    await this.hooks.execManyPre(['delete', 'deleteOne'], [operation, filter, options]);
     // Actual mongodb operation
     const result = await this.collection.deleteOne(filter, options);
     operation.set('result', result);
     // Execute postHooks
-    await this.hooks.execManyPost(['delete', 'deleteOne'], [result, filter, options, operation]);
+    await this.hooks.execManyPost(['delete', 'deleteOne'], [operation, result, filter, options]);
     return operation.get('result');
   }
 
   // @docs http://mongodb.github.io/node-mongodb-native/3.1/api/Collection.html#deleteMany
   async deleteMany(filter: FilterQuery<TSchema>, options: CommonOptions = {}): Promise<DeleteWriteOpResultObject> {
     // PreHooks handling
-    const operation: OperationMap = new Map([['method', 'deleteMany']]);
-    await this.hooks.execManyPre(['delete', 'deleteMany'], [filter, options, operation]);
+    const operation = createOperationMap<TSchema>('deleteMany');
+    await this.hooks.execManyPre(['delete', 'deleteMany'], [operation, filter, options]);
     // Actual mongodb operation
     const result = await this.collection.deleteMany(filter, options);
     operation.set('result', result);
     // Execute postHooks
-    await this.hooks.execManyPost(['delete', 'deleteMany'], [result, filter, options, operation]);
+    await this.hooks.execManyPost(['delete', 'deleteMany'], [operation, result, filter, options]);
     return operation.get('result');
   }
 }
+
+export type ModelHookName =
+  | 'aggregate'
+  | 'countDocuments'
+  | 'delete'
+  | 'deleteMany'
+  | 'deleteOne'
+  | 'distinct'
+  | 'error'
+  | 'find'
+  | 'findMany'
+  | 'findOne'
+  | 'findOneAndUpdate'
+  | 'findOneAndUpdateError'
+  | 'initialize:property'
+  | 'initialize'
+  | 'insert'
+  | 'insertError'
+  | 'insertMany'
+  | 'insertOne'
+  | 'insertOneError'
+  | 'replaceOne'
+  | 'setup'
+  | 'update'
+  | 'updateError'
+  | 'updateMany'
+  | 'updateOne'
+  | 'updateOneError'
+  | 'validate';
+
+interface Model<TSchema extends OptionalId<DefaultSchema> = DefaultSchema> {
+  otherModel: <OSchema extends DefaultSchema = DefaultSchema>(modelName: string) => Model<OSchema>;
+  allModels: () => Map<string, Model>;
+}
+interface Model<TSchema extends OptionalId<DefaultSchema> = DefaultSchema> {
+  fakeOne: (document: OptionalId<TSchema>) => OptionalId<TSchema>;
+}
+
+interface Model<TSchema extends OptionalId<DefaultSchema> = DefaultSchema> {
+  // pre
+  pre(
+    hookName: 'aggregate',
+    callback: (operation: OperationMap<TSchema>, ...args: Parameters<Model<TSchema>['aggregate']>) => void
+  ): void;
+  pre(
+    hookName: 'find' | 'findOne',
+    callback: (operation: OperationMap<TSchema>, ...args: Parameters<Model<TSchema>['findOne']>) => void
+  ): void;
+  pre(
+    hookName: 'findMany',
+    callback: (operation: OperationMap<TSchema>, ...args: Parameters<Model<TSchema>['findOne']>) => void
+  ): void;
+  pre(
+    hookName: 'findOneAndUpdate',
+    callback: (operation: OperationMap<TSchema>, ...args: Parameters<Model<TSchema>['findOneAndUpdate']>) => void
+  ): void;
+  pre(
+    hookName: 'update' | 'updateOne',
+    callback: (operation: OperationMap<TSchema>, ...args: Parameters<Model<TSchema>['updateOne']>) => void
+  ): void;
+  pre(
+    hookName: 'updateMany',
+    callback: (operation: OperationMap<TSchema>, ...args: Parameters<Model<TSchema>['updateMany']>) => void
+  ): void;
+  pre(
+    hookName: 'insert' | 'insertOne',
+    callback: (operation: OperationMap<TSchema>, ...args: Parameters<Model<TSchema>['insertOne']>) => void
+  ): void;
+  pre(
+    hookName: 'replaceOne',
+    callback: (operation: OperationMap<TSchema>, ...args: Parameters<Model<TSchema>['replaceOne']>) => void
+  ): void;
+  pre(
+    hookName: 'insertMany',
+    callback: (operation: OperationMap<TSchema>, ...args: Parameters<Model<TSchema>['insertMany']>) => void
+  ): void;
+  pre(
+    hookName: 'delete' | 'deleteOne',
+    callback: (operation: OperationMap<TSchema>, ...args: Parameters<Model<TSchema>['deleteOne']>) => void
+  ): void;
+  pre(
+    hookName: 'deleteMany',
+    callback: (operation: OperationMap<TSchema>, ...args: Parameters<Model<TSchema>['deleteMany']>) => void
+  ): void;
+  pre(
+    hookName: 'validate',
+    callback: (operation: OperationMap<TSchema>, ...args: Parameters<Model<TSchema>['insertOne']>) => void
+  ): void;
+  // post
+  post(
+    hookName: 'aggregate',
+    callback: (operation: OperationMap<TSchema, TSchema[]>, ...args: Parameters<Model<TSchema>['aggregate']>) => void
+  ): void;
+  post(
+    hookName: 'find' | 'findOne',
+    callback: (operation: OperationMap<TSchema, TSchema | null>, ...args: Parameters<Model<TSchema>['findOne']>) => void
+  ): void;
+  post(
+    hookName: 'findMany',
+    callback: (operation: OperationMap<TSchema, TSchema[]>, ...args: Parameters<Model<TSchema>['findOne']>) => void
+  ): void;
+  post(
+    hookName: 'update' | 'updateOne',
+    callback: (
+      operation: OperationMap<TSchema, UnwrapPromise<ReturnType<Model<TSchema>['updateOne']>>>,
+      ...args: Parameters<Model<TSchema>['updateOne']>
+    ) => void
+  ): void;
+  post(
+    hookName: 'delete' | 'deleteOne',
+    callback: (
+      operation: OperationMap<TSchema, UnwrapPromise<ReturnType<Model<TSchema>['deleteOne']>>>,
+      ...args: Parameters<Model<TSchema>['deleteOne']>
+    ) => void
+  ): void;
+  post(
+    hookName: 'deleteMany',
+    callback: (
+      operation: OperationMap<TSchema, UnwrapPromise<ReturnType<Model<TSchema>['deleteMany']>>>,
+      ...args: Parameters<Model<TSchema>['deleteMany']>
+    ) => void
+  ): void;
+  post(
+    hookName: 'findOneAndUpdate',
+    callback: (
+      operation: OperationMap<TSchema, FindAndModifyWriteOpResultObject<TSchema>>,
+      ...args: Parameters<Model<TSchema>['findOneAndUpdate']>
+    ) => void
+  ): void;
+  post(hookName: 'initialize', callback: () => void): void;
+  post(hookName: 'initialize:property', callback: (property: JsonSchemaProperty, path: string) => void): void;
+}
+
+export default Model;

@@ -9,11 +9,11 @@ import {
   UpdateWriteOpResult
 } from 'mongodb';
 import Model from 'src/model';
-import {BaseSchema} from 'src/schema';
+import {DefaultSchema} from 'src/schema';
 
 type StringOrObjectId = string | ObjectId;
 
-export const byIdPlugin = <TSchema extends BaseSchema = BaseSchema>(model: Model<TSchema>): void => {
+export const byIdPlugin = <TSchema extends DefaultSchema = DefaultSchema>(model: Model<TSchema>): void => {
   model.addStatics({
     findById: async <T = TSchema>(
       id: StringOrObjectId,

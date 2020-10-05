@@ -1,6 +1,8 @@
 {
-  "extends": "../../tsconfig",
+  "extends": "@tsconfig/node14/tsconfig.json",
   "compilerOptions": {
+    "composite": true,
+    "declaration": true,
     "outDir": "./lib",
     "rootDir": "./src",
     "baseUrl": "./",

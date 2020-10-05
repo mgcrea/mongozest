@@ -4,17 +4,14 @@
 import assert from 'assert';
 import {Db as MongoDb, MongoClient, MongoClientOptions, ObjectId} from 'mongodb';
 import {parse} from 'url';
-import Model from './model';
-import {BaseSchema} from './schema';
-
-type ModelProxy<TSchema extends BaseSchema = BaseSchema> = Model<TSchema> & {
-  otherModel: <OSchema extends BaseSchema = BaseSchema>(modelName: string) => Model<OSchema>;
-  allModels: () => Map<string, Model>;
-};
+import Model, {ModelConstructor} from './model';
+import {UnknownSchema} from './schema';
 
 const DEFAULT_MONGODB_URI = 'mongodb://mongo:27017';
 
 const interfaces: Map<string, MongoInterface> = new Map();
+
+// @TODO type global model store
 
 export default class MongoInterface {
   static defaultClientUri = DEFAULT_MONGODB_URI;
@@ -35,7 +32,7 @@ export default class MongoInterface {
   }
   client: MongoClient;
   private dbName: string;
-  private models: Map<string, ModelProxy> = new Map();
+  private models: Map<string, Model<UnknownSchema>> = new Map();
   db: MongoDb | null = null;
   id: ObjectId;
 
@@ -56,24 +53,26 @@ export default class MongoInterface {
   public async disconnect(): Promise<void> {
     await this.client.close();
   }
-  public async loadModels(modelClasses: Record<string, typeof Model>): Promise<Record<string, Model>> {
+  public async loadModels(modelClasses: Record<string, ModelConstructor>): Promise<Record<string, Model>> {
     return await Object.keys(modelClasses).reduce<Promise<Record<string, Model>>>(async (promiseSoFar, key) => {
       const soFar = await promiseSoFar;
       soFar[key] = await this.loadModel(modelClasses[key]);
       return soFar;
     }, Promise.resolve({}));
   }
-  public async loadModel(modelClass: typeof Model): Promise<ModelProxy> {
+  public async loadModel<TSchema extends UnknownSchema>(
+    ModelClass: ModelConstructor<TSchema>
+  ): Promise<Model<TSchema>> {
     const {client} = this;
-    const {name: className, modelName: classModelName} = modelClass;
+    const {name: className, modelName: classModelName} = ModelClass;
     const modelName = classModelName || className;
     if (this.models.has(modelName)) {
-      return Promise.resolve(this.models.get(modelName)!);
+      return Promise.resolve((this.models.get(modelName)! as unknown) as Model<TSchema>);
     }
     const startSession = client.startSession.bind(client);
     // const model = Model.create();
     assert(this.db, 'Missing db instance, please connect first');
-    const model = new modelClass(this.db as MongoDb);
+    const model = new ModelClass(this.db as MongoDb);
     const modelProxy = new Proxy(model, {
       get: function (target, name, _receiver) {
         // Skip proxy's constructor
@@ -91,19 +90,19 @@ export default class MongoInterface {
         // Original call
         return name in target ? target[name as keyof typeof target] : undefined;
       }
-    }) as ModelProxy;
+    });
     // Publish model getter for easier traversing
     modelProxy.otherModel = this.model.bind(this);
     modelProxy.allModels = () => this.models;
-    this.models.set(modelName, modelProxy);
+    this.models.set(modelName, modelProxy as Model<UnknownSchema>);
     // @TODO add timeout for database stalling
     await modelProxy.initialize();
     return modelProxy;
   }
-  public model<OSchema extends BaseSchema = BaseSchema>(modelName: string): ModelProxy<OSchema> {
+  public model<OSchema extends UnknownSchema = UnknownSchema>(modelName: string): Model<OSchema> {
     if (!this.models.has(modelName)) {
       throw new Error(`model ${modelName} not loaded`);
     }
-    return (this.models.get(modelName) as unknown) as ModelProxy<OSchema>;
+    return (this.models.get(modelName) as unknown) as Model<OSchema>;
   }
 }

@@ -26,8 +26,8 @@ export type BsonType =
   | 'maxKey';
 
 export type UnknownSchema = Record<string, unknown>;
-export interface BaseSchema extends Record<string, unknown> {
-  _id: ObjectId;
+export interface DefaultSchema extends UnknownSchema {
+  _id?: ObjectId;
 }
 
 export interface MongoJsonSchemaProperty<TProp = any> {
@@ -41,7 +41,7 @@ export interface MongoJsonSchemaProperty<TProp = any> {
   maxProperties?: number;
   minimum?: number;
   maximum?: number;
-  items?: TProp extends Array<infer UProp> ? MongoJsonSchemaProperty<UProp> : never;
+  items?: TProp extends Array<infer UProp> ? MongoJsonSchemaProperty<UProp> | MongoJsonSchemaProperty<UProp>[] : never;
   // items?: MongoJsonSchemaProperty<any>;
   additionalProperties?: boolean;
   // properties?: TProp extends Record<infer KProp, infer UProp> ? {[s in KProp]: MongoJsonSchemaProperty<UProp>} : never;
@@ -54,14 +54,14 @@ export interface CollectionCreateOptions {
 
 export interface JsonSchemaProperty<TProp = any>
   extends Omit<MongoJsonSchemaProperty<TProp>, 'items' | 'properties' | 'required'> {
-  items?: TProp extends Array<infer UProp> ? JsonSchemaProperty<UProp> : never;
+  items?: TProp extends Array<infer UProp> ? JsonSchemaProperty<UProp> | JsonSchemaProperty<UProp>[] : never;
   // items?: JsonSchemaProperty<any>;
   // properties?: TProp extends Record<string, infer UProp> ? JsonSchemaProperties<UProp> : never;
   properties?: JsonSchemaProperties<any>;
   required?: boolean;
 }
 export type JsonSchemaProperties<TSchema> = {[s in keyof TSchema]: JsonSchemaProperty<TSchema[s]>};
-export type JsonSchema<TSchema> = JsonSchemaProperties<TSchema>;
+export type JsonSchema<TSchema extends UnknownSchema = UnknownSchema> = JsonSchemaProperties<TSchema>;
 
 // test plugin extension
 export interface JsonSchemaProperty<TProp> {
