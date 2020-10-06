@@ -30,7 +30,20 @@ export type UnknownSchema = Record<string, unknown>;
 export interface DefaultSchema extends UnknownSchema {
   _id?: ObjectId;
 }
-export type ForeignRef<T extends DefaultSchema> = ObjectId | T;
+export type ForeignRef<T extends DefaultSchema = DefaultSchema> = ObjectId | T;
+
+export type Lean<T extends DefaultSchema> = {
+  [K in keyof T]: T[K] extends ForeignRef ? ObjectId : T[K];
+};
+export type Input<T extends DefaultSchema> = Lean<T>;
+export type Populated<T extends DefaultSchema> = Omit<T, '_id'> &
+  {
+    [K in keyof T]: T[K] extends ForeignRef<infer U> | undefined ? U : T[K];
+  };
+export type PopulatedKeys<T extends DefaultSchema, K extends keyof T> = Omit<T, K> &
+  {
+    [k in K]-?: T[K] extends ForeignRef<infer U> ? U : T[K];
+  };
 
 export interface MongoJsonSchemaProperty<UProp = any, TProp = NonNullable<UProp>> {
   bsonType: BsonType;
@@ -97,4 +110,7 @@ export interface JsonSchemaProperty<TProp = any> {
 }
 export interface JsonSchemaProperty<TProp = any> {
   validate?: [(...anyArgs: any[]) => boolean, string];
+}
+export interface JsonSchemaProperty<TProp = any> {
+  file?: boolean;
 }

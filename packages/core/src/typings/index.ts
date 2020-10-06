@@ -1,5 +1,5 @@
 export {ObjectId, OptionalId, WithId, FilterQuery, MongoError} from 'mongodb';
-import {UpdateQuery, MatchKeysAndValues, OnlyFieldsOfType, SchemaMember} from 'mongodb';
+import {UpdateQuery, MatchKeysAndValues, OnlyFieldsOfType, SchemaMember, PushOperator} from 'mongodb';
 import type {Model} from '../model';
 import type {DefaultSchema} from '../schema';
 
@@ -17,9 +17,11 @@ export type Constructor<T> = new (...args: any[]) => T;
 
 export type SetUpdate<TSchema> = Writeable<MatchKeysAndValues<TSchema>>;
 // export type WriteableNonNullable<T> = {-readonly [P in keyof T]-?: T[P]};
-export type WriteableUpdateQuery<TSchema> = Omit<UpdateQuery<TSchema>, '$set' | '$inc'> & {
+export type WriteableUpdateQuery<TSchema> = Omit<UpdateQuery<TSchema>, '$set' | '$inc' | '$push' | '$pull'> & {
   $set?: SetUpdate<TSchema>;
   $inc?: SchemaMember<TSchema, number>;
+  $push?: Writeable<PushOperator<TSchema>>;
+  $pull?: Writeable<PushOperator<TSchema>>;
 };
 
 // $inc issue#1

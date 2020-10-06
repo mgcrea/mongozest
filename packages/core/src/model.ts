@@ -24,6 +24,7 @@ import {
   ReplaceWriteOpResult,
   SessionOptions,
   UpdateManyOptions,
+  UpdateOneOptions,
   UpdateQuery,
   UpdateWriteOpResult,
   WithId
@@ -336,10 +337,13 @@ export class Model<TSchema extends OptionalId<DefaultSchema> = DefaultSchema> {
     operation.set('result', result);
     // Execute postHooks
     const {ops, insertedIds} = result;
-    const eachPostArgs = documents.reduce((soFar: Array<any>, document: OptionalId<TSchema>, index) => {
-      const documentResult = {...result, ops: [ops[index]], insertedCount: 1, insertedId: insertedIds[index]};
-      return soFar.concat([[document, options, cloneOperationMap(operation, ['result', documentResult])]]);
-    }, []);
+    const eachPostArgs = documents.reduce<Array<[OperationMap<TSchema>, OptionalId<TSchema>, typeof options]>>(
+      (soFar, document, index) => {
+        const documentResult = {...result, ops: [ops[index]], insertedCount: 1, insertedId: insertedIds[index]};
+        return soFar.concat([[cloneOperationMap(operation, ['result', documentResult]), document, options]]);
+      },
+      []
+    );
     await this.hooks.execEachPost('insert', eachPostArgs);
     await this.hooks.execPost('insertMany', [operation, documents, options]);
     return operation.get('result');
@@ -350,7 +354,7 @@ export class Model<TSchema extends OptionalId<DefaultSchema> = DefaultSchema> {
   async updateOne(
     filter: FilterQuery<TSchema>,
     update: WriteableUpdateQuery<TSchema>,
-    options: ReplaceOneOptions = {}
+    options: UpdateOneOptions = {}
   ): Promise<UpdateWriteOpResult> {
     // Prepare operation params
     const operation = createOperationMap<TSchema>('updateOne');
@@ -464,9 +468,9 @@ export class Model<TSchema extends OptionalId<DefaultSchema> = DefaultSchema> {
     operation.set('result', result);
     // Execute postHooks
     // const pre = process.hrtime();
-    const eachPostArgs = result.reduce<Array<[typeof query, typeof options, OperationMap<TSchema>]>>(
+    const eachPostArgs = result.reduce<Array<[OperationMap<TSchema>, typeof query, typeof options]>>(
       (soFar, document) => {
-        return soFar.concat([[query, options, cloneOperationMap(operation, ['result', document])]]);
+        return soFar.concat([[cloneOperationMap(operation, ['result', document]), query, options]]);
       },
       []
     );
@@ -545,6 +549,7 @@ export interface Model<TSchema extends OptionalId<DefaultSchema> = DefaultSchema
   allModels: () => Map<string, Model>;
 }
 
+// findByIdPlugin
 export interface Model<TSchema extends OptionalId<DefaultSchema> = DefaultSchema> {
   findById: <T = TSchema>(
     id: ObjectId | string,
@@ -553,12 +558,23 @@ export interface Model<TSchema extends OptionalId<DefaultSchema> = DefaultSchema
   updateById: (
     id: ObjectId | string,
     update: WriteableUpdateQuery<TSchema>,
-    options: ReplaceOneOptions
+    options?: ReplaceOneOptions
   ) => Promise<UpdateWriteOpResult>;
   deleteById: (
     id: ObjectId | string,
-    options: CommonOptions & {bypassDocumentValidation?: boolean}
+    options?: CommonOptions & {bypassDocumentValidation?: boolean}
   ) => Promise<DeleteWriteOpResultObject>;
+}
+
+// shortIdPlugin
+export interface Model<TSchema extends OptionalId<DefaultSchema> = DefaultSchema> {
+  findBySid: <T = TSchema>(sid: string, options?: FindOneOptions<T extends TSchema ? TSchema : T>) => Promise<T | null>;
+  updateBySid: (
+    sid: string,
+    update: WriteableUpdateQuery<TSchema>,
+    options?: ReplaceOneOptions
+  ) => Promise<UpdateWriteOpResult>;
+  lazyIdFromSid: (sid: string) => Promise<ObjectId | null>;
 }
 
 // @NOTE fixme
@@ -628,6 +644,13 @@ export interface Model<TSchema extends OptionalId<DefaultSchema> = DefaultSchema
   post(
     hookName: 'findMany',
     callback: (operation: OperationMap<TSchema, TSchema[]>, ...args: Parameters<Model<TSchema>['findOne']>) => void
+  ): void;
+  post(
+    hookName: 'insert' | 'insertOne',
+    callback: (
+      operation: OperationMap<TSchema, UnwrapPromise<ReturnType<Model<TSchema>['insertOne']>>>,
+      ...args: Parameters<Model<TSchema>['insertOne']>
+    ) => void
   ): void;
   post(
     hookName: 'update' | 'updateOne',

@@ -239,7 +239,7 @@ export class Resource<TSchema extends DefaultSchema> {
     const model = this.getModelFromRequest(req);
     // Prepare operation params
     const filter = await this.buildRequestFilter(req);
-    const update: UpdateQuery<TSchema> = parseBodyAsUpdate(req.body);
+    const update: WriteableUpdateQuery<TSchema> = parseBodyAsUpdate(req.body);
     const options: CommonOptions = {};
     const operation = createOperationMap<TSchema>({
       method: 'patchCollection',
