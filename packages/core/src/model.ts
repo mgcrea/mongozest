@@ -344,9 +344,10 @@ export class Model<TSchema extends OptionalId<DefaultSchema> = DefaultSchema> {
   }
 
   // @docs http://mongodb.github.io/node-mongodb-native/3.1/api/Collection.html#updateOne
+  // @NOTE removed support for TSchema update
   async updateOne(
     filter: FilterQuery<TSchema>,
-    update: UpdateQuery<TSchema> | TSchema,
+    update: UpdateQuery<TSchema>,
     options: ReplaceOneOptions = {}
   ): Promise<UpdateWriteOpResult> {
     // Prepare operation params
@@ -354,7 +355,7 @@ export class Model<TSchema extends OptionalId<DefaultSchema> = DefaultSchema> {
     // Execute preHooks
     await this.hooks.execManyPre(['update', 'updateOne'], [operation, filter, update, options]);
     if ((update as UpdateQuery<TSchema>).$set) {
-      await this.hooks.execPre('validate', [operation, (update as UpdateQuery<TSchema>).$set, options]);
+      await this.hooks.execPre('validate', [operation, update.$set, options]);
     }
     // Actual mongodb operation
     try {

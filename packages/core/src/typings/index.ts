@@ -10,9 +10,6 @@ export type Plugin<TSchema extends DefaultSchema = DefaultSchema> = (
 
 // export type RequiredKeys<T, K extends keyof T = keyof T> = Pick<T, Exclude<keyof T, K>> & {[P in K]: NonNullable<T[P]>};
 
-export type Writeable<T extends Record<string, any>, K extends keyof T = keyof T> = {
-  [P in K]: T[P];
-};
-
+export type Writeable<T> = {-readonly [P in keyof T]: T[P]};
 export type UnwrapPromise<T> = T extends Promise<infer U> ? U : never;
 export type Constructor<T> = new (...args: any[]) => T;

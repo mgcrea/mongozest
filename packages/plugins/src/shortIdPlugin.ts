@@ -30,7 +30,7 @@ export const shortIdPlugin = <TSchema extends DefaultSchema & ShortIdPluginSchem
     },
     updateBySid: async (
       sid: ShortId,
-      update: UpdateQuery<TSchema> | TSchema,
+      update: UpdateQuery<TSchema>,
       options: ReplaceOneOptions = {}
     ): Promise<UpdateWriteOpResult> => {
       return model.updateOne({[sidKey as '_sid']: sid} as FilterQuery<TSchema>, update, options);

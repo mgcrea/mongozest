@@ -23,7 +23,7 @@ export const byIdPlugin = <TSchema extends DefaultSchema = DefaultSchema>(model:
     },
     updateById: async (
       id: StringOrObjectId,
-      update: UpdateQuery<TSchema> | TSchema,
+      update: UpdateQuery<TSchema>,
       options: ReplaceOneOptions
     ): Promise<UpdateWriteOpResult> => {
       return model.updateOne({_id: new ObjectId(id)} as FilterQuery<TSchema>, update, options);
