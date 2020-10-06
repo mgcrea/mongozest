@@ -4,6 +4,7 @@ import {IndexOptions, ObjectId, OptionalId} from 'mongodb';
 // @docs https://docs.mongodb.com/manual/reference/operator/query/jsonSchema/
 // @docs https://www.typescriptlang.org/docs/handbook/advanced-types.html
 // @docs https://github.com/DefinitelyTyped/DefinitelyTyped/blob/master/types/json-schema/index.d.ts
+// export {DefaultSchema} from 'mongodb';
 
 export type BsonType =
   | 'double'
@@ -90,4 +91,10 @@ export interface JsonSchemaProperty<TProp = any> {
 }
 export interface JsonSchemaProperty<TProp = any> {
   faker?: string;
+}
+export interface JsonSchemaProperty<TProp = any> {
+  trim?: boolean;
+}
+export interface JsonSchemaProperty<TProp = any> {
+  validate?: [(...anyArgs: any[]) => boolean, string];
 }

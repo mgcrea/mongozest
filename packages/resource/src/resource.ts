@@ -1,4 +1,4 @@
-import {DefaultSchema, Model, OperationMap} from '@mongozest/core';
+import {DefaultSchema, Model, OperationMap, WriteableUpdateQuery} from '@mongozest/core';
 import Hooks, {HookCallback} from '@mongozest/hooks';
 import assert from 'assert';
 import {Request, RequestHandler, Response, Router as createRouter, Router} from 'express';
@@ -312,7 +312,7 @@ export class Resource<TSchema extends DefaultSchema> {
     // Prepare operation params
     const filter = await this.buildRequestFilter(req);
     assertScopedFilter(filter);
-    const update: UpdateQuery<TSchema> = parseBodyAsUpdate(req.body);
+    const update: WriteableUpdateQuery<TSchema> = parseBodyAsUpdate(req.body);
     const options: FindOneAndUpdateOption<TSchema> = {returnOriginal: false};
     const operation = createOperationMap<TSchema>({
       method: 'patchDocument',

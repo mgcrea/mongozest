@@ -2,9 +2,9 @@ import {BsonType, Model, DefaultSchema} from '@mongozest/core';
 import {ObjectId} from 'mongodb';
 
 export type CreatedByPluginSchema<TProp = ObjectId> = {
-  ownedBy: TProp;
-  createdBy: TProp;
-  updatedBy: TProp;
+  ownedBy?: TProp;
+  createdBy?: TProp;
+  updatedBy?: TProp;
 };
 
 export type CreatedByPluginOptions = {

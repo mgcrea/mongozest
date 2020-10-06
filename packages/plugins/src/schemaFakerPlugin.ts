@@ -2,8 +2,7 @@ import '@mongozest/core';
 import {isUndefined, get, set, isString, shuffle} from 'lodash';
 import faker from 'faker';
 import {CollectionInsertOneOptions, InsertOneWriteOpResult, OptionalId, WithId} from 'mongodb';
-import {DefaultSchema, Model} from '@mongozest/core';
-import {JsonSchemaProperty} from '@mongozest/core/lib/schema';
+import {DefaultSchema, JsonSchemaProperty, Model} from '@mongozest/core';
 
 faker.locale = 'fr';
 

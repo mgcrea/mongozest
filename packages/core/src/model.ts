@@ -1,6 +1,7 @@
 import Hooks, {HookCallback} from '@mongozest/hooks';
 import {cloneDeep, isPlainObject, snakeCase, uniq} from 'lodash';
 import {
+  ClientSession,
   Collection,
   CollectionAggregationOptions,
   CollectionCreateOptions,
@@ -21,6 +22,7 @@ import {
   OptionalId,
   ReplaceOneOptions,
   ReplaceWriteOpResult,
+  SessionOptions,
   UpdateManyOptions,
   UpdateQuery,
   UpdateWriteOpResult,
@@ -376,7 +378,7 @@ export class Model<TSchema extends OptionalId<DefaultSchema> = DefaultSchema> {
   // @docs http://mongodb.github.io/node-mongodb-native/3.1/api/Collection.html#updateMany
   async updateMany(
     filter: FilterQuery<TSchema>,
-    update: UpdateQuery<TSchema>,
+    update: WriteableUpdateQuery<TSchema>,
     options: UpdateManyOptions = {}
   ): Promise<UpdateWriteOpResult> {
     // Prepare operation params
@@ -387,7 +389,7 @@ export class Model<TSchema extends OptionalId<DefaultSchema> = DefaultSchema> {
       await this.hooks.execPre('validate', [operation, update.$set, options]);
     }
     // Actual mongodb operation
-    const result = await this.collection.updateMany(filter, update, options);
+    const result = await this.collection.updateMany(filter, update as UpdateQuery<TSchema>, options);
     operation.set('result', result);
     // Execute postHooks
     await this.hooks.execManyPost(['update', 'updateMany'], [operation, filter, update, options]);
@@ -398,7 +400,7 @@ export class Model<TSchema extends OptionalId<DefaultSchema> = DefaultSchema> {
   // @note use {returnOriginal: false} to get updated object
   async findOneAndUpdate(
     filter: FilterQuery<TSchema>,
-    update: UpdateQuery<TSchema>, // | TSchema
+    update: WriteableUpdateQuery<TSchema>,
     options: FindOneAndUpdateOption<TSchema> = {}
   ): Promise<FindAndModifyWriteOpResultObject<TSchema>> {
     // Prepare operation params
@@ -412,7 +414,7 @@ export class Model<TSchema extends OptionalId<DefaultSchema> = DefaultSchema> {
     }
     // Actual mongodb operation
     try {
-      const result = await this.collection.findOneAndUpdate(filter, update, options);
+      const result = await this.collection.findOneAndUpdate(filter, update as UpdateQuery<TSchema>, options);
       operation.set('result', result);
       findOperation.set('result', result.value);
     } catch (error) {
@@ -534,10 +536,31 @@ export type ModelHookName =
   | 'updateOneError'
   | 'validate';
 
+// @TODO investigate namespacing to properly perform cross-file declaration merging
+
+// Proxy
 export interface Model<TSchema extends OptionalId<DefaultSchema> = DefaultSchema> {
+  startSession: (options?: SessionOptions) => ClientSession;
   otherModel: <OSchema extends DefaultSchema = DefaultSchema>(modelName: string) => Model<OSchema>;
   allModels: () => Map<string, Model>;
 }
+
+export interface Model<TSchema extends OptionalId<DefaultSchema> = DefaultSchema> {
+  findById: <T = TSchema>(
+    id: ObjectId | string,
+    options?: FindOneOptions<T extends TSchema ? TSchema : T>
+  ) => Promise<T | null>;
+  updateById: (
+    id: ObjectId | string,
+    update: WriteableUpdateQuery<TSchema>,
+    options: ReplaceOneOptions
+  ) => Promise<UpdateWriteOpResult>;
+  deleteById: (
+    id: ObjectId | string,
+    options: CommonOptions & {bypassDocumentValidation?: boolean}
+  ) => Promise<DeleteWriteOpResultObject>;
+}
+
 // @NOTE fixme
 // interface Model<TSchema extends OptionalId<DefaultSchema> = DefaultSchema> {
 //   fakeOne: (document: OptionalId<TSchema>) => OptionalId<TSchema>;
