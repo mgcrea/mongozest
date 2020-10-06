@@ -36,7 +36,7 @@ export const trimPlugin = <TSchema extends DefaultSchema>(
   model.pre('update', (_operation, _filter, update) => {
     trimmableProperties.forEach((bsonType, path) => {
       if (update.$set) {
-        mapPathValues(update.$set as OptionalId<TSchema>, path, (value) => trimValueForType(value, bsonType));
+        mapPathValues(update.$set, path, (value) => trimValueForType(value, bsonType));
       }
       if (update.$push) {
         mapPathValues(update.$push as OptionalId<TSchema>, path, (value) => trimValueForType(value, bsonType));

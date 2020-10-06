@@ -119,10 +119,10 @@ export const schemaCastingPlugin = <TSchema extends DefaultSchema>(
       // d(`update ${path}: ${bsonType}`);
       mapPathValues(filter as OptionalId<TSchema>, path, (value: any) => castFilterValueForType(value, bsonType));
       if (update.$set) {
-        mapPathValues(update.$set as OptionalId<TSchema>, path, (value: any) => castValueForType(value, bsonType));
+        mapPathValues(update.$set, path, (value: any) => castValueForType(value, bsonType));
       }
       if (update.$push) {
-        mapPathValues(update.$push as OptionalId<TSchema>, path, (value: any) => castValueForType(value, bsonType));
+        mapPathValues(update.$push, path, (value: any) => castValueForType(value, bsonType));
       }
     });
   });

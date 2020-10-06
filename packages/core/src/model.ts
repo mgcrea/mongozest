@@ -29,7 +29,7 @@ import {
 import pluralize from 'pluralize';
 import {byIdPlugin, debugPlugin, jsonSchemaPlugin} from './plugins';
 import {DefaultSchema, JsonSchemaProperties, JsonSchemaProperty, Schema} from './schema';
-import type {AggregationPipeline, Plugin, UnwrapPromise} from './typings';
+import type {AggregationPipeline, Plugin, UnwrapPromise, WriteableUpdateQuery} from './typings';
 import {cloneOperationMap, createOperationMap, OperationMap} from './operation';
 
 export interface ModelConstructor<TSchema extends OptionalId<DefaultSchema> = DefaultSchema> {
@@ -347,19 +347,19 @@ export class Model<TSchema extends OptionalId<DefaultSchema> = DefaultSchema> {
   // @NOTE removed support for TSchema update
   async updateOne(
     filter: FilterQuery<TSchema>,
-    update: UpdateQuery<TSchema>,
+    update: WriteableUpdateQuery<TSchema>,
     options: ReplaceOneOptions = {}
   ): Promise<UpdateWriteOpResult> {
     // Prepare operation params
     const operation = createOperationMap<TSchema>('updateOne');
     // Execute preHooks
     await this.hooks.execManyPre(['update', 'updateOne'], [operation, filter, update, options]);
-    if ((update as UpdateQuery<TSchema>).$set) {
+    if (update.$set) {
       await this.hooks.execPre('validate', [operation, update.$set, options]);
     }
     // Actual mongodb operation
     try {
-      const result = await this.collection.updateOne(filter, update, options);
+      const result = await this.collection.updateOne(filter, update as UpdateQuery<TSchema>, options);
       operation.set('result', result);
     } catch (error) {
       operation.set('error', error);
@@ -376,7 +376,7 @@ export class Model<TSchema extends OptionalId<DefaultSchema> = DefaultSchema> {
   // @docs http://mongodb.github.io/node-mongodb-native/3.1/api/Collection.html#updateMany
   async updateMany(
     filter: FilterQuery<TSchema>,
-    update: UpdateQuery<TSchema>, // | TSchema
+    update: UpdateQuery<TSchema>,
     options: UpdateManyOptions = {}
   ): Promise<UpdateWriteOpResult> {
     // Prepare operation params

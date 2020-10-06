@@ -6,4 +6,6 @@ declare module 'mongodb' {
       $jsonSchema?: MongoJsonSchemaProperty;
     };
   }
+  // export type MatchKeysAndValues<TSchema> = ReadonlyPartial<TSchema> & DotAndArrayNotation<any>;
+  // export type MatchKeysAndValues<TSchema> = string;
 }

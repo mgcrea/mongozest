@@ -1,6 +1,6 @@
-import {DefaultSchema, Model} from '@mongozest/core';
+import {DefaultSchema, Model, WriteableUpdateQuery} from '@mongozest/core';
 import {memoize} from 'lodash';
-import {FilterQuery, FindOneOptions, ReplaceOneOptions, UpdateQuery, UpdateWriteOpResult} from 'mongodb';
+import {FilterQuery, FindOneOptions, ReplaceOneOptions, UpdateWriteOpResult} from 'mongodb';
 import shortid from 'shortid';
 
 export type ShortId = string;
@@ -30,7 +30,7 @@ export const shortIdPlugin = <TSchema extends DefaultSchema & ShortIdPluginSchem
     },
     updateBySid: async (
       sid: ShortId,
-      update: UpdateQuery<TSchema>,
+      update: WriteableUpdateQuery<TSchema>,
       options: ReplaceOneOptions = {}
     ): Promise<UpdateWriteOpResult> => {
       return model.updateOne({[sidKey as '_sid']: sid} as FilterQuery<TSchema>, update, options);

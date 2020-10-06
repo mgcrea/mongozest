@@ -1,8 +1,7 @@
 // @docs https://docs.mongodb.com/manual/reference/operator/query/type/#document-type-available-types
 import '@mongozest/core';
-import {isString, toString, lowerCase, upperFirst, startCase, isUndefined} from 'lodash';
-import {Model, mapPathValues, DefaultSchema} from '@mongozest/core';
-import {OptionalId} from 'mongodb';
+import {DefaultSchema, mapPathValues, Model} from '@mongozest/core';
+import {isString, isUndefined, lowerCase, startCase, toString, upperFirst} from 'lodash';
 
 type CaseTransformOperation = 'toString' | 'lowerCase' | 'upperFirst' | 'startCase';
 
@@ -41,10 +40,10 @@ export const caseTransformPlugin = <TSchema extends DefaultSchema>(model: Model<
   model.pre('update', (_operation, _filter, update) => {
     caseTransformProperties.forEach((caseTransformConfig, path) => {
       if (update.$set) {
-        mapPathValues(update.$set as OptionalId<TSchema>, path, (value) => transformCase(value, caseTransformConfig));
+        mapPathValues(update.$set, path, (value) => transformCase(value, caseTransformConfig));
       }
       if (update.$push) {
-        mapPathValues(update.$push as OptionalId<TSchema>, path, (value) => transformCase(value, caseTransformConfig));
+        mapPathValues(update.$push, path, (value) => transformCase(value, caseTransformConfig));
       }
     });
   });

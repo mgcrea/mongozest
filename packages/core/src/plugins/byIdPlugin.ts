@@ -5,9 +5,9 @@ import {
   FindOneOptions,
   ObjectId,
   ReplaceOneOptions,
-  UpdateQuery,
   UpdateWriteOpResult
 } from 'mongodb';
+import {WriteableUpdateQuery} from '../typings';
 import {Model} from '../model';
 import {DefaultSchema} from '../schema';
 
@@ -23,7 +23,7 @@ export const byIdPlugin = <TSchema extends DefaultSchema = DefaultSchema>(model:
     },
     updateById: async (
       id: StringOrObjectId,
-      update: UpdateQuery<TSchema>,
+      update: WriteableUpdateQuery<TSchema>,
       options: ReplaceOneOptions
     ): Promise<UpdateWriteOpResult> => {
       return model.updateOne({_id: new ObjectId(id)} as FilterQuery<TSchema>, update, options);
