@@ -1,6 +1,6 @@
 {
   "name": "@mongozest/core",
-  "version": "0.3.0",
+  "version": "e",
   "description": "",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
@@ -13,7 +13,7 @@
   "author": "Olivier Louvignes <olivier@mgcrea.io>",
   "license": "MIT",
   "dependencies": {
-    "@mongozest/hooks": "0.3.0",
+    "@mongozest/hooks": "e",
     "chalk": "^4.1.0",
     "lodash": "^4.17.20",
     "mongodb": "^3.6.2",
