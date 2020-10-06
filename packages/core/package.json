@@ -1,6 +1,6 @@
 {
   "name": "@mongozest/core",
-  "version": "0.3.2",
+  "version": "0.4.0",
   "description": "",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
@@ -13,17 +13,18 @@
   "author": "Olivier Louvignes <olivier@mgcrea.io>",
   "license": "MIT",
   "dependencies": {
-    "@mongozest/hooks": "0.3.2",
+    "@mongozest/hooks": "0.4.0",
     "chalk": "^4.1.0",
     "lodash": "^4.17.20",
     "mongodb": "^3.6.2",
     "pluralize": "^8.0.0"
   },
   "devDependencies": {
+    "@tsconfig/node12": "^1.0.7",
     "@types/jest": "^26.0.14",
     "@types/mongodb": "^3.5.27",
     "@types/pluralize": "^0.0.29",
-    "jest": "^26.4.2",
+    "jest": "^26.5.2",
     "ts-jest": "^26.4.1",
     "typescript": "^4.0.3"
   }
