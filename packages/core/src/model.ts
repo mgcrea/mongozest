@@ -422,7 +422,7 @@ export class Model<TSchema extends AnySchema = DefaultSchema> {
     await this.hooks.execManyPre(['find', 'findOne'], [operation, filter, options]);
     await this.hooks.execManyPre(['update', 'updateOne', 'findOneAndUpdate'], [operation, filter, update, options]);
     if (update.$set) {
-      await this.hooks.execPre('validate', [update.$set, options, operation]);
+      await this.hooks.execPre('validate', [operation, update.$set, options]);
     }
     // Actual mongodb operation
     try {
