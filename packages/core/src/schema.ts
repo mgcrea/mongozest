@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-empty-interface */
-import {IndexOptions, ObjectId, OptionalId} from 'mongodb';
+import {IndexOptions, ObjectId, OptionalId, WithId} from 'mongodb';
 
 // @docs https://docs.mongodb.com/manual/reference/operator/query/jsonSchema/
 // @docs https://www.typescriptlang.org/docs/handbook/advanced-types.html
@@ -27,19 +27,22 @@ export type BsonType =
   | 'maxKey';
 
 export type UnknownSchema = Record<string, unknown>;
-export interface DefaultSchema extends UnknownSchema {
+export type AnySchema = {[key: string]: any};
+export interface DefaultSchema extends AnySchema {
   _id?: ObjectId;
 }
-export type ForeignRef<T extends DefaultSchema = DefaultSchema> = ObjectId | T;
+export type ForeignRef<T extends DefaultSchema> = ObjectId | T;
 
-export type Lean<T extends DefaultSchema> = {
-  [K in keyof T]: T[K] extends ForeignRef ? ObjectId : T[K];
+export type Vacated<T extends DefaultSchema> = {
+  [K in keyof T]: T[K] extends ForeignRef<infer U> ? ObjectId : T[K];
 };
-export type Input<T extends DefaultSchema> = Lean<T>;
-export type Populated<T extends DefaultSchema> = Omit<T, '_id'> &
-  {
-    [K in keyof T]: T[K] extends ForeignRef<infer U> | undefined ? U : T[K];
-  };
+export type Populated<T extends DefaultSchema> = {
+  [K in Exclude<keyof T, '_id'>]: T[K] extends ForeignRef<infer U> | undefined ? U : T[K];
+} & {_id: ObjectId};
+// export type WithId<TSchema> = EnhancedOmit<TSchema, '_id'> & { _id: ExtractIdType<TSchema> };
+
+export type Input<T extends DefaultSchema> = Vacated<T>;
+
 export type PopulatedKeys<T extends DefaultSchema, K extends keyof T> = Omit<T, K> &
   {
     [k in K]-?: T[K] extends ForeignRef<infer U> ? U : T[K];

@@ -8,7 +8,7 @@ export type CreatedByPluginSchema = {
   updatedBy: ObjectId;
 };
 
-export const schemaProjectionPlugin = <
+export const createdByPlugin = <
   TSchema extends DefaultSchema & CreatedByPluginSchema = DefaultSchema & CreatedByPluginSchema
 >(
   resource: Resource<TSchema>,

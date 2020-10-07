@@ -2,12 +2,12 @@ import '@mongozest/core';
 import {isUndefined, get, set, isString, shuffle} from 'lodash';
 import faker from 'faker';
 import {CollectionInsertOneOptions, InsertOneWriteOpResult, OptionalId, WithId} from 'mongodb';
-import {DefaultSchema, JsonSchemaProperty, Model} from '@mongozest/core';
+import {AnySchema, DefaultSchema, JsonSchemaProperty, Model} from '@mongozest/core';
 
 faker.locale = 'fr';
 
 declare module '@mongozest/core' {
-  interface Model<TSchema extends OptionalId<DefaultSchema> = DefaultSchema> {
+  interface Model<TSchema extends AnySchema = DefaultSchema> {
     fakeOne: (document: OptionalId<TSchema>) => OptionalId<TSchema>;
     insertFakeOne: (
       document: OptionalId<TSchema>,

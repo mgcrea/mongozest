@@ -3,7 +3,7 @@ import Hooks, {HookCallback} from '@mongozest/hooks';
 import assert from 'assert';
 import {Request, RequestHandler, Response, Router as createRouter, Router} from 'express';
 import createError from 'http-errors';
-import {pick, snakeCase, uniq} from 'lodash';
+import {isFunction, pick, snakeCase, uniq} from 'lodash';
 import {
   CollectionInsertOneOptions,
   CommonOptions,
@@ -86,13 +86,24 @@ export class Resource<TSchema extends DefaultSchema> {
   // Plugins management
 
   private loadPlugins() {
-    const {plugins} = this;
+    const {plugins, modelName} = this;
     const allPlugins = uniq([...Resource.internalPrePlugins, ...plugins, ...Resource.internalPostPlugins]);
-    allPlugins.forEach((pluginConfig) => {
-      if (Array.isArray(pluginConfig)) {
-        pluginConfig[0](this, pluginConfig[1]);
-      } else {
-        pluginConfig(this);
+    allPlugins.forEach((pluginConfig, index) => {
+      const pluginFn = Array.isArray(pluginConfig) ? pluginConfig[0] : pluginConfig;
+      if (!pluginFn || !isFunction(pluginFn)) {
+        throw new Error(`Found unexpected non-function resource plugin at index=${index} for model="${modelName}"`);
+      }
+      try {
+        if (Array.isArray(pluginConfig)) {
+          pluginFn(this, pluginConfig[1]);
+        } else {
+          pluginFn(this);
+        }
+      } catch (err) {
+        console.error(
+          `Failed to load resource plugin named="${pluginFn.name}" at index=${index} for model="${modelName}"`
+        );
+        throw err;
       }
     });
   }

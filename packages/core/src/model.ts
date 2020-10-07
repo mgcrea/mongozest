@@ -1,5 +1,5 @@
 import Hooks, {HookCallback} from '@mongozest/hooks';
-import {cloneDeep, isPlainObject, snakeCase, uniq} from 'lodash';
+import {cloneDeep, isFunction, isPlainObject, snakeCase, uniq} from 'lodash';
 import {
   ClientSession,
   Collection,
@@ -31,16 +31,16 @@ import {
 } from 'mongodb';
 import pluralize from 'pluralize';
 import {byIdPlugin, debugPlugin, jsonSchemaPlugin} from './plugins';
-import {DefaultSchema, JsonSchemaProperties, JsonSchemaProperty, Schema} from './schema';
+import {AnySchema, DefaultSchema, JsonSchemaProperties, JsonSchemaProperty, Schema} from './schema';
 import type {AggregationPipeline, Plugin, UnwrapPromise, WriteableUpdateQuery} from './typings';
 import {cloneOperationMap, createOperationMap, OperationMap} from './operation';
 
-export interface ModelConstructor<TSchema extends OptionalId<DefaultSchema> = DefaultSchema> {
+export interface ModelConstructor<TSchema extends AnySchema = DefaultSchema> {
   new (db: MongoDb): Model<TSchema>;
   modelName: string;
 }
 
-export class Model<TSchema extends OptionalId<DefaultSchema> = DefaultSchema> {
+export class Model<TSchema extends AnySchema = DefaultSchema> {
   static internalPrePlugins: Plugin[] = [byIdPlugin];
   static internalPostPlugins: Plugin[] = [jsonSchemaPlugin, debugPlugin];
 
@@ -174,18 +174,26 @@ export class Model<TSchema extends OptionalId<DefaultSchema> = DefaultSchema> {
   // Plugins management
 
   private async loadPlugins(this: Model<TSchema>) {
+    const {modelName} = this.constructor as typeof Model;
     const {plugins} = this;
-    const allPlugins: Plugin<TSchema>[] = uniq([
-      ...((Model.internalPrePlugins as unknown) as Plugin<TSchema>[]),
-      ...plugins,
-      ...((Model.internalPostPlugins as unknown) as Plugin<TSchema>[])
-    ]);
-    // d({name: this.collectionName, allPlugins});
-    allPlugins.forEach((pluginConfig, _index) => {
-      if (Array.isArray(pluginConfig)) {
-        pluginConfig[0](this, pluginConfig[1]);
-      } else {
-        pluginConfig(this, undefined);
+    // @ts-expect-error fixme
+    const allPlugins: Plugin<TSchema>[] = uniq([...Model.internalPrePlugins, ...plugins, ...Model.internalPostPlugins]);
+    allPlugins.forEach((pluginConfig, index) => {
+      const pluginFn = Array.isArray(pluginConfig) ? pluginConfig[0] : pluginConfig;
+      if (!pluginFn || !isFunction(pluginFn)) {
+        throw new Error(`Found unexpected non-function model plugin at index=${index} for model="${modelName}"`);
+      }
+      try {
+        if (Array.isArray(pluginConfig)) {
+          pluginFn(this, pluginConfig[1]);
+        } else if (pluginConfig) {
+          pluginConfig(this, undefined);
+        }
+      } catch (err) {
+        console.error(
+          `Failed to load model plugin named="${pluginFn.name}" at index=${index} for model="${modelName}"`
+        );
+        throw err;
       }
     });
   }
@@ -543,14 +551,14 @@ export type ModelHookName =
 // @TODO investigate namespacing to properly perform cross-file declaration merging
 
 // Proxy
-export interface Model<TSchema extends OptionalId<DefaultSchema> = DefaultSchema> {
+export interface Model<TSchema extends AnySchema = DefaultSchema> {
   startSession: (options?: SessionOptions) => ClientSession;
   otherModel: <OSchema extends DefaultSchema = DefaultSchema>(modelName: string) => Model<OSchema>;
   allModels: () => Map<string, Model>;
 }
 
 // findByIdPlugin
-export interface Model<TSchema extends OptionalId<DefaultSchema> = DefaultSchema> {
+export interface Model<TSchema extends AnySchema = DefaultSchema> {
   findById: <T = TSchema>(
     id: ObjectId | string,
     options?: FindOneOptions<T extends TSchema ? TSchema : T>
@@ -567,7 +575,7 @@ export interface Model<TSchema extends OptionalId<DefaultSchema> = DefaultSchema
 }
 
 // shortIdPlugin
-export interface Model<TSchema extends OptionalId<DefaultSchema> = DefaultSchema> {
+export interface Model<TSchema extends AnySchema = DefaultSchema> {
   findBySid: <T = TSchema>(sid: string, options?: FindOneOptions<T extends TSchema ? TSchema : T>) => Promise<T | null>;
   updateBySid: (
     sid: string,
@@ -582,7 +590,7 @@ export interface Model<TSchema extends OptionalId<DefaultSchema> = DefaultSchema
 //   fakeOne: (document: OptionalId<TSchema>) => OptionalId<TSchema>;
 // }
 
-export interface Model<TSchema extends OptionalId<DefaultSchema> = DefaultSchema> {
+export interface Model<TSchema extends AnySchema = DefaultSchema> {
   // pre
   pre(
     hookName: 'aggregate',

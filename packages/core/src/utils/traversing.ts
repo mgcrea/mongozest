@@ -1,9 +1,9 @@
 import {get, has, set} from 'lodash';
 import {OptionalId} from 'mongodb';
-import {DefaultSchema} from '../schema';
+import {AnySchema, DefaultSchema} from '../schema';
 
 // Check a leaf path (eg. `{foo.bar: {baz: 1}}`)
-export const hasLeafPath = (object: Record<string, unknown>, path: string): boolean => {
+export const hasLeafPath = (object: AnySchema, path: string): boolean => {
   const dottedParts = path.split('.');
   // Only relevent for deep paths (n > 2)
   if (dottedParts.length <= 2) {
@@ -13,7 +13,7 @@ export const hasLeafPath = (object: Record<string, unknown>, path: string): bool
   return has(object, leafPath);
 };
 // Check a leaf path (eg. `{foo.bar: {baz: 1}}`)
-export const resolveLeafPath = (object: Record<string, unknown>, path: string): Array<string> | false => {
+export const resolveLeafPath = (object: AnySchema, path: string): Array<string> | false => {
   const dottedParts = path.split('.');
   // Only relevent for deep paths (n > 2)
   if (dottedParts.length <= 2) {
@@ -22,7 +22,7 @@ export const resolveLeafPath = (object: Record<string, unknown>, path: string): 
   const leafPath = [dottedParts.slice(0, -1).join('.'), dottedParts.slice(-1)[0]];
   return has(object, leafPath) ? leafPath : false;
 };
-export const getPath = (object: Record<string, unknown>, path: string): string | Array<string> | false => {
+export const getPath = (object: AnySchema, path: string): string | Array<string> | false => {
   const hasDirectPath = has(object, path);
   if (hasDirectPath) {
     return path;
@@ -35,7 +35,7 @@ export const getPath = (object: Record<string, unknown>, path: string): string |
 };
 
 // @NOTE wtf about $ positional operator? and items.1 operator?
-export const mapPathValues = <TSchema extends DefaultSchema>(
+export const mapPathValues = <TSchema extends AnySchema>(
   object: TSchema,
   path: string,
   callback: <K extends keyof TSchema = keyof TSchema>(value: TSchema[K]) => TSchema[K]

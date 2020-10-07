@@ -46,15 +46,16 @@ export const populationPlugin = <TSchema extends DefaultSchema>(model: Model<TSc
       return;
     }
     const result: TSchema[] = operation.get('result');
-    await Object.keys(population).reduce(async (soFar, _key) => {
+    await Object.keys(population).reduce(async (soFar, key) => {
       await soFar;
-      const key = _key as keyof typeof population; // @NOTE typescript needs a hand for now (@4.0.3)
       if (!propsWithRefs.has(key)) {
         return;
       }
       const ref = propsWithRefs.get(key);
       const uniqueIds = uniqWithObjectIds(map(result, key).filter(Boolean) as ObjectId[]);
+      // @ts-expect-error wtf?
       const childProjectionExcludesIds = isPlainObject(population[key]) && population[key]._id === 0;
+      // @ts-expect-error wtf?
       const childProjection = isPlainObject(population[key]) ? {...population[key], _id: 1} : {};
       const resolvedChildren = await model
         .otherModel(ref)!
@@ -83,16 +84,17 @@ export const populationPlugin = <TSchema extends DefaultSchema>(model: Model<TSc
     if (!result) {
       return;
     }
-    await Object.keys(population).reduce(async (soFar, _key) => {
+    await Object.keys(population).reduce(async (soFar, key) => {
       await soFar;
-      const key = _key as keyof typeof population; // @NOTE typescript needs a hand for now (@4.0.3)
       if (!propsWithRefs.has(key)) {
         return;
       }
       const ref = propsWithRefs.get(key);
       const refValue = get(result, key) as ObjectId | ObjectId[];
       const isArrayValue = Array.isArray(refValue);
+      // @ts-expect-error wtf?
       const childProjectionExcludesIds = isPlainObject(population[key]) && population[key]._id === 0;
+      // @ts-expect-error wtf?
       const childProjection = isPlainObject(population[key]) ? {...population[key], _id: 1} : {};
 
       if (isArrayValue) {
