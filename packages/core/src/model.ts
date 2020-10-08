@@ -54,6 +54,7 @@ export class Model<TSchema extends AnySchema = DefaultSchema> {
   public collectionOptions: CollectionCreateOptions = {};
   public schema: Schema<TSchema>;
   private plugins: Plugin<TSchema>[];
+  private initPromise: Promise<void> | null = null;
   public statics: Map<string | number | symbol, Function> = new Map();
 
   public collection!: Collection<TSchema>;
@@ -71,17 +72,22 @@ export class Model<TSchema extends AnySchema = DefaultSchema> {
   // Initialization
 
   async initialize(): Promise<void> {
-    // Load plugins
-    await this.loadPlugins();
-    // PreHooks handling
-    await this.hooks.execPre('initialize', []);
-    // Setup collection
-    this.collection = await this.setupCollection();
-    // PostHooks handling
-    if (this.hooks.hasPost('initialize:property')) {
-      await this.execPostPropertyHooks(this.schema);
+    if (this.initPromise) {
+      return this.initPromise;
     }
-    await this.hooks.execPost('initialize', []);
+    this.initPromise = (async () => {
+      // Load plugins
+      await this.loadPlugins();
+      // PreHooks handling
+      await this.hooks.execPre('initialize', []);
+      // Setup collection
+      this.collection = await this.setupCollection();
+      // PostHooks handling
+      if (this.hooks.hasPost('initialize:property')) {
+        await this.execPostPropertyHooks(this.schema);
+      }
+      await this.hooks.execPost('initialize', []);
+    })();
   }
 
   // Helper recursively parsing schema
@@ -191,7 +197,7 @@ export class Model<TSchema extends AnySchema = DefaultSchema> {
         }
       } catch (err) {
         console.error(
-          `Failed to load model plugin named="${pluginFn.name}" at index=${index} for model="${modelName}"`
+          `Failed to load model plugin named="${pluginFn.name}" at index=${index} for model="${modelName}":\n${err.message}`
         );
         throw err;
       }
