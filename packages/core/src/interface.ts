@@ -59,7 +59,7 @@ export class MongoInterface {
     const loadedModels = await Object.keys(modelClasses).reduce<Promise<Record<string, Model>>>(
       async (promiseSoFar, modelName) => {
         const soFar = await promiseSoFar;
-        soFar[modelName] = await this.loadModel(modelClasses[modelName]);
+        soFar[modelName] = await this.loadModel(modelClasses[modelName], true);
         return soFar;
       },
       Promise.resolve({})
@@ -77,7 +77,11 @@ export class MongoInterface {
 
     return initializedModels;
   }
-  public async loadModel<TSchema extends AnySchema>(ModelClass: ModelConstructor<TSchema>): Promise<Model<TSchema>> {
+
+  public async loadModel<TSchema extends AnySchema>(
+    ModelClass: ModelConstructor<TSchema>,
+    skipInitialization?: boolean
+  ): Promise<Model<TSchema>> {
     const {client} = this;
     const {name: className, modelName: classModelName} = ModelClass;
     const modelName = classModelName || className;
@@ -112,7 +116,9 @@ export class MongoInterface {
     // @ts-expect-error as Model<AnySchema>
     this.models.set(modelName, modelProxy);
     // @TODO add timeout for database stalling
-    // await modelProxy.initialize();
+    if (!skipInitialization) {
+      await modelProxy.initialize();
+    }
     return modelProxy;
   }
   public model<OSchema extends AnySchema = DefaultSchema>(modelName: string): Model<OSchema> {

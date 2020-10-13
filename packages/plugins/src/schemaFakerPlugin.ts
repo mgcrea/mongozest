@@ -47,7 +47,7 @@ export const schemaFakerPlugin = <TSchema extends DefaultSchema>(model: Model<TS
       options?: CollectionInsertOneOptions
     ): Promise<InsertOneWriteOpResult<WithId<TSchema>>> => {
       const fake = model.fakeOne(document);
-      return await model.insertOne(fake, options);
+      return await model.insertOne(fake as OptionalId<TSchema>, options);
     }
   });
 };

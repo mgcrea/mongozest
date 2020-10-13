@@ -88,6 +88,7 @@ export class Model<TSchema extends AnySchema = DefaultSchema> {
       }
       await this.hooks.execPost('initialize', []);
     })();
+    return this.initPromise;
   }
 
   // Helper recursively parsing schema

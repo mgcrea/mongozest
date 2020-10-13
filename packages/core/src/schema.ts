@@ -31,10 +31,12 @@ export type AnySchema = {[key: string]: any};
 export interface DefaultSchema extends AnySchema {
   _id?: ObjectId;
 }
-export type ForeignRef<T extends DefaultSchema> = ObjectId | T;
+
+const __isForeignRef = Symbol('__isForeignRef');
+export type ForeignRef<T extends DefaultSchema> = (ObjectId | T) & {[__isForeignRef]: never};
 
 export type Vacated<T extends DefaultSchema> = {
-  [K in keyof T]: T[K] extends ForeignRef<infer U> ? ObjectId : T[K];
+  [k in keyof T]: T[k] extends ForeignRef<infer U> ? ObjectId : T[k];
 };
 export type Populated<T extends DefaultSchema> = {
   [K in Exclude<keyof T, '_id'>]: T[K] extends ForeignRef<infer U> | undefined ? U : T[K];
@@ -47,6 +49,12 @@ export type PopulatedKeys<T extends DefaultSchema, K extends keyof T> = Omit<T, 
   {
     [k in K]-?: T[K] extends ForeignRef<infer U> ? U : T[K];
   };
+
+const __hasDefault = Symbol('__hasDefault');
+export type WithDefault<T> = T & {[__hasDefault]: never};
+type ConvertSchema<S extends DefaultSchema> = {
+  [k in keyof S]: S[k] extends WithDefault<infer T> ? T | undefined : S[k];
+};
 
 export interface MongoJsonSchemaProperty<UProp = any, TProp = NonNullable<UProp>> {
   bsonType: BsonType;
