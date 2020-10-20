@@ -169,11 +169,10 @@ export class Resource<TSchema extends DefaultSchema> {
   async buildRequestFilter(req: Request): Promise<FilterQuery<TSchema>> {
     const model = this.getModelFromRequest(req);
     const {ids, params: configParams} = this;
-    const {params: reqParams, extraParams: reqExtraParams = {}} = req;
-    const allParams = Object.assign(reqParams, reqExtraParams);
-    return await Object.keys(allParams).reduce(async (promiseSoFar, key) => {
+    const {params: reqParams} = req;
+    return await Object.keys(reqParams).reduce(async (promiseSoFar, key) => {
       const soFar = await promiseSoFar;
-      const value = allParams[key];
+      const value = reqParams[key];
       const isIdentifier = key === '_id';
       if (isIdentifier) {
         // Special case to handle several ids
@@ -196,9 +195,6 @@ export class Resource<TSchema extends DefaultSchema> {
             throw createError(400, 'Invalid url parameter');
           }
         }
-      } else if (reqExtraParams[key]) {
-        // Raw extra params
-        Object.assign(soFar, {[key]: value});
       }
       return soFar;
     }, Promise.resolve({}));
