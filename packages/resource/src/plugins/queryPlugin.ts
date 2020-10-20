@@ -1,4 +1,4 @@
-import {DefaultSchema} from '@mongozest/core';
+import {DefaultSchema, ObjectId} from '@mongozest/core';
 import createError from 'http-errors';
 import JSON5 from 'json5';
 import {isEmpty, isString, mapValues, pick} from 'lodash';
@@ -35,6 +35,10 @@ export const queryPlugin = <TSchema extends DefaultSchema = DefaultSchema>(
     const filter = operation.get('filter');
     const queryFilter = parseQueryParam(req.query.filter, 'filter');
     if (queryFilter) {
+      // Properly cast _id parameter
+      if (queryFilter._id && ObjectId.isValid(queryFilter._id)) {
+        queryFilter._id = new ObjectId(queryFilter._id);
+      }
       const nextFilter = !isEmpty(filter) ? {$and: [filter, queryFilter]} : queryFilter;
       operation.set('filter', nextFilter);
     }
