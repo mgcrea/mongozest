@@ -479,12 +479,13 @@ export class Model<TSchema extends AnySchema = DefaultSchema> {
   }
 
   // @docs http://mongodb.github.io/node-mongodb-native/3.1/api/Collection.html#find
-  async find<T = WithId<TSchema>>(
+  find = this.findMany;
+  async findMany<T = WithId<TSchema>>(
     query: FilterQuery<TSchema>,
     options: FindOneOptions<T extends TSchema ? TSchema : T> = {}
   ): Promise<Array<T>> {
     // PreHooks handling
-    const operation = createOperationMap<TSchema>('find');
+    const operation = createOperationMap<TSchema>('findMany');
     await this.hooks.execManyPre(['find', 'findMany'], [operation, query, options]);
     // Actual mongodb operation
     const result = await this.collection.find<T>(query, options).toArray();
