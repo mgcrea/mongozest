@@ -380,7 +380,11 @@ export class Model<TSchema extends AnySchema = DefaultSchema> {
     }
     // Actual mongodb operation
     try {
-      const result = await this.collection.updateOne(filter, update as UpdateQuery<TSchema>, options);
+      const result = await this.collection.updateOne(
+        filter,
+        (operation.has('update') ? operation.get('update') : update) as UpdateQuery<TSchema>,
+        options
+      );
       operation.set('result', result);
     } catch (error) {
       operation.set('error', error);
@@ -408,7 +412,11 @@ export class Model<TSchema extends AnySchema = DefaultSchema> {
       await this.hooks.execPre('validate', [operation, update.$set, options]);
     }
     // Actual mongodb operation
-    const result = await this.collection.updateMany(filter, update as UpdateQuery<TSchema>, options);
+    const result = await this.collection.updateMany(
+      filter,
+      (operation.has('update') ? operation.get('update') : update) as UpdateQuery<TSchema>,
+      options
+    );
     operation.set('result', result);
     // Execute postHooks
     await this.hooks.execManyPost(['update', 'updateMany'], [operation, filter, update, options]);
@@ -454,7 +462,7 @@ export class Model<TSchema extends AnySchema = DefaultSchema> {
 
   // @docs http://mongodb.github.io/node-mongodb-native/3.1/api/Collection.html#findOne
   // findOne<T = TSchema>(filter: FilterQuery<TSchema>, options?: FindOneOptions<T extends TSchema ? TSchema : T>): Promise<T | null>;
-  async findOne<T = TSchema>(
+  async findOne<T = WithId<TSchema>>(
     query: FilterQuery<TSchema>,
     options: FindOneOptions<T extends TSchema ? TSchema : T> = {}
   ): Promise<T | null> {
@@ -471,7 +479,7 @@ export class Model<TSchema extends AnySchema = DefaultSchema> {
   }
 
   // @docs http://mongodb.github.io/node-mongodb-native/3.1/api/Collection.html#find
-  async find<T = TSchema>(
+  async find<T = WithId<TSchema>>(
     query: FilterQuery<TSchema>,
     options: FindOneOptions<T extends TSchema ? TSchema : T> = {}
   ): Promise<Array<T>> {

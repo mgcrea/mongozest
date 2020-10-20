@@ -32,8 +32,9 @@ export interface DefaultSchema extends AnySchema {
   _id?: ObjectId;
 }
 
-const __isForeignRef = Symbol('__isForeignRef');
-export type ForeignRef<T extends DefaultSchema> = (ObjectId | T) & {[__isForeignRef]: never};
+// const __isForeignRef = Symbol('__isForeignRef');
+// export type ForeignRef<T extends DefaultSchema> = (ObjectId | T) & {[__isForeignRef]: never};
+export type ForeignRef<T extends DefaultSchema> = ObjectId | T;
 
 export type Vacated<T extends DefaultSchema> = {
   [k in keyof T]: T[k] extends ForeignRef<infer U> ? ObjectId : T[k];

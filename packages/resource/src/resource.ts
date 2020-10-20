@@ -1,4 +1,4 @@
-import {DefaultSchema, Model, OperationMap, WriteableUpdateQuery} from '@mongozest/core';
+import {DefaultSchema, Model, WriteableUpdateQuery} from '@mongozest/core';
 import Hooks, {HookCallback} from '@mongozest/hooks';
 import assert from 'assert';
 import {Request, RequestHandler, Response, Router as createRouter, Router} from 'express';
@@ -17,7 +17,7 @@ import {
   WithId
 } from 'mongodb';
 import pluralize from 'pluralize';
-import {createOperationMap} from './operation';
+import {createOperationMap, OperationMap} from './operation';
 import {aggregationPlugin, populatePlugin, queryPlugin} from './plugins';
 import {mongoErrorMiddleware} from './utils/errors';
 import {asyncHandler, parseBodyAsUpdate} from './utils/request';
@@ -239,7 +239,7 @@ export class Resource<TSchema extends DefaultSchema> {
     // Execute preHooks
     await this.hooks.execManyPre(['insert', 'postCollection'], [operation, document, options]);
     // Actual mongo call
-    const {ops} = await model.insertOne(document, options);
+    const {ops} = await model.insertOne(operation.has('document') ? operation.get('document') : document, options);
     operation.set('result', ops[0]);
     // Execute postHooks
     await this.hooks.execPost('postCollection', [operation, document, options]);
@@ -262,7 +262,11 @@ export class Resource<TSchema extends DefaultSchema> {
     await this.hooks.execPre('filter', [operation, filter]);
     await this.hooks.execPre('patchCollection', [operation, filter, update, options]);
     // Actual mongo call
-    await model.updateMany(operation.get('filter'), update, options);
+    await model.updateMany(
+      operation.get('filter'),
+      operation.has('update') ? operation.get('update') : update,
+      options
+    );
     const result = await model.find(operation.get('filter'), options);
     operation.set('result', result);
     // Execute postHooks
