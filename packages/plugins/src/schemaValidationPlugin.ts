@@ -25,15 +25,8 @@ const formatValidationErrors = (errors: ValidationErrors) => {
     .join('\n');
 };
 
-export type SchemaValidationPluginOptions = {
-  validateJsonSchema?: boolean;
-};
-
 // Handle schema defaults
-export const schemaValidationPlugin = <TSchema extends DefaultSchema>(
-  model: Model<TSchema>,
-  {validateJsonSchema = true}: SchemaValidationPluginOptions = {}
-): void => {
+export const schemaValidationPlugin = <TSchema extends DefaultSchema>(model: Model<TSchema>): void => {
   const propsWithValidation: Map<string, any> = new Map();
   const propsWithPattern: Map<string, any> = new Map();
   model.post('initialize:property', (prop: {[s: string]: any} | string, path: string) => {
@@ -47,55 +40,10 @@ export const schemaValidationPlugin = <TSchema extends DefaultSchema>(
       }
       propsWithValidation.set(path, [validator, message]);
     }
-    if (validateJsonSchema && !isUndefined(prop.pattern)) {
-      propsWithPattern.set(path, new RegExp(prop.pattern));
-    }
   });
   // Handle document insertion
   model.pre('validate', (operation, doc) => {
     const validationErrors: ValidationErrors = [];
-
-    const isUpdate = ['updateOne', 'updateMany', 'findOneAndUpdate'].includes(operation.get('method'));
-
-    // update or not? // @TODO
-    if (validateJsonSchema) {
-      // Check required props
-      const {validator} = model.collectionOptions;
-      // @ts-expect-error $jsonSchema missing in CollectionCreateOptions
-      if (validator && validator.$jsonSchema) {
-        const {
-          required: requiredProps,
-          additionalProperties: allowsAdditionalProps,
-          properties: props
-          // @ts-expect-error $jsonSchema missing in CollectionCreateOptions
-        } = validator.$jsonSchema;
-        if (!isUpdate) {
-          requiredProps.forEach((path: string) => {
-            if (!has(doc, path)) {
-              validationErrors.push({error: 'required', path});
-            }
-          });
-        }
-        if (!allowsAdditionalProps && !isUpdate) {
-          // @TODO support isUpdate with $set positional in arrays
-          const additionalProps = difference(Object.keys(doc), Object.keys(props));
-          if (additionalProps.length) {
-            additionalProps.forEach((path) => {
-              validationErrors.push({error: 'extraneous', path});
-            });
-          }
-        }
-        // @TODO handle nested schemas
-      }
-
-      // Check props with pattern
-      propsWithPattern.forEach((patternOption, path) => {
-        const value = get(doc, path);
-        if (value && !patternOption.test(value)) {
-          validationErrors.push({error: 'pattern', path});
-        }
-      });
-    }
 
     // Check props with custom validation
     propsWithValidation.forEach((validateOption, path) => {

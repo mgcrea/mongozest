@@ -1,4 +1,4 @@
-import {AggregationPipeline} from '@mongozest/core';
+import {AggregationPipeline, OptionalId} from '@mongozest/core';
 import {Request} from 'express';
 import {FilterQuery} from 'mongodb';
 
@@ -29,6 +29,7 @@ export type OperationOptions<TSchema> = {
   request: Request;
   filter?: FilterQuery<TSchema>;
   pipeline?: AggregationPipeline;
+  document?: OptionalId<TSchema>;
 };
 export const createOperationMap = <TSchema>(options: OperationOptions<TSchema>): OperationMap<TSchema> => {
   const map = new Map(Object.entries(options));

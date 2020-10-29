@@ -3,7 +3,7 @@ import Hooks, {HookCallback} from '@mongozest/hooks';
 import assert from 'assert';
 import {Request, RequestHandler, Response, Router as createRouter, Router} from 'express';
 import createError from 'http-errors';
-import {isFunction, pick, snakeCase, uniq} from 'lodash';
+import {clone, isFunction, pick, snakeCase, uniq} from 'lodash';
 import {
   CollectionInsertOneOptions,
   CommonOptions,
@@ -225,12 +225,13 @@ export class Resource<TSchema extends DefaultSchema> {
   async postCollection(req: Request, res: Response): Promise<void> {
     const model = this.getModelFromRequest(req);
     // Prepare operation params
-    const document: OptionalId<TSchema> = req.body;
+    const document: OptionalId<TSchema> = clone(req.body);
     const options: CollectionInsertOneOptions = {};
     const operation = createOperationMap<TSchema>({
       method: 'postCollection',
       scope: 'collection',
-      request: req
+      request: req,
+      document
     });
     // Execute preHooks
     await this.hooks.execManyPre(['insert', 'postCollection'], [operation, document, options]);
