@@ -143,6 +143,7 @@ export const jsonSchemaPlugin = <USchema extends DefaultSchema = DefaultSchema>(
     }
     const {validator} = model.collectionOptions as CollectionCreateOptions;
     const document = operation.get('document') || originalDocument;
+    // @ts-expect-error mongodb typing
     const errors = validateSchema(document, validator!.$jsonSchema as JsonSchema);
     if (errors.length > 1) {
       throw createValidationError(`JsonSchema validation failed with ${errors.length} errors`);
@@ -163,6 +164,7 @@ export const jsonSchemaPlugin = <USchema extends DefaultSchema = DefaultSchema>(
       return;
     }
     const nextDoc = applyUpdate(prevDoc, update);
+    // @ts-expect-error mongodb typing
     const errors = validateSchema(nextDoc, validator!.$jsonSchema as JsonSchema);
     if (errors.length > 1) {
       throw createValidationError(`JsonSchema validation failed with ${errors.length} errors`);
@@ -320,15 +322,20 @@ const validateSchema = (value: any, schema: JsonSchema, path: string = '', error
   if (items && isPlainObject(items)) {
     if (Array.isArray(value)) {
       value.forEach((itemValue, index) => {
-        validateSchema(itemValue, items, path ? `${path}[${index}]` : `[${index}]`, errors);
+        validateSchema(
+          itemValue,
+          items as JsonSchemaProperty<unknown>,
+          path ? `${path}[${index}]` : `[${index}]`,
+          errors
+        );
       });
     }
   }
   if (items && Array.isArray(items)) {
     throw new Error(`@TODO Unsupported array items rule`);
   }
-  if (Object.keys(otherProps).length > 0) {
-    d('out', {otherProps, path});
-  }
+  // if (Object.keys(otherProps).length > 0) {
+  //   d('out', {otherProps, path});
+  // }
   return errors;
 };

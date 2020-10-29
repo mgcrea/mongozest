@@ -43,7 +43,7 @@ Object {
 
 exports[`Resource collection POST /users should return 400 when payload is invalid 1`] = `
 Object {
-  "error": "Document failed validation (db.users.insertOne)",
+  "error": "Failed validation of jsonSchema rule=\\"[32m'required'[39m\\" at path=\\"[32m'email'[39m\\" with stringified value=[90m{\\"firstName\\":\\"John\\",\\"lastName\\":\\"Doe\\",\\"_id\\":\\"5f9ad6642bc8156f2eb42928\\"}[39m, expected rule=\\"[90mtrue[39m\\"",
 }
 `;
 
