@@ -204,13 +204,13 @@ const isValidBsonType = (type: BsonType, value: any): boolean => {
     case 'date':
       return value instanceof Date;
     case 'int':
-      return value instanceof Int32;
+      return value instanceof Int32 || Number.isFinite(value);
     case 'decimal':
       return value instanceof Decimal128;
     case 'objectId':
       return value instanceof ObjectId;
     case 'double':
-      return value instanceof Double;
+      return value instanceof Double || Number.isFinite(value);
     case 'object':
       return isPlainObject(value);
     case 'array':
