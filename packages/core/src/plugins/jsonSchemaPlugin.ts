@@ -206,7 +206,7 @@ const isValidBsonType = (type: BsonType, value: any): boolean => {
     case 'int':
       return value instanceof Int32 || Number.isFinite(value);
     case 'decimal':
-      return value instanceof Decimal128;
+      return value instanceof Decimal128 || Number.isFinite(value);
     case 'objectId':
       return value instanceof ObjectId;
     case 'double':
@@ -236,9 +236,9 @@ const createValidationError = (message: string) => {
 const createRuleValidationError = (rule: {[s: string]: any}, value: any, path: string) => {
   const ruleName = Object.keys(rule)[0];
   return createValidationError(
-    `Failed validation of jsonSchema rule="${chalkString(ruleName)}" at path="${chalkString(
+    `Failed validation of jsonSchema rule=${chalkString(ruleName)} at path=${chalkString(
       path
-    )}" with stringified value=${chalkJson(value)}, expected rule="${chalkJson(rule[ruleName])}"`
+    )} with stringified value=${chalkJson(value)}, expected rule=${chalkJson(rule[ruleName])}`
   );
 };
 
@@ -297,7 +297,7 @@ const validateSchema = (value: any, schema: JsonSchema, path: string = '', error
   if (Array.isArray(required)) {
     required.forEach((propName) => {
       if (isUndefined(value[propName])) {
-        errors.push(createRuleValidationError({required: true}, value, path ? `${path}.${propName}` : propName));
+        errors.push(createRuleValidationError({required: true}, undefined, path ? `${path}.${propName}` : propName));
       }
     });
   }
