@@ -1,5 +1,5 @@
 import Hooks, {HookCallback} from '@mongozest/hooks';
-import {cloneDeep, isFunction, isPlainObject, snakeCase, uniq} from 'lodash';
+import {add, cloneDeep, intersection, isFunction, isPlainObject, snakeCase, uniq} from 'lodash';
 import {
   ClientSession,
   Collection,
@@ -209,7 +209,12 @@ export class Model<TSchema extends AnySchema = DefaultSchema> {
     Object.keys(staticsMap).forEach((key) => this.statics.set(key, staticsMap[key]));
   }
   addSchemaProperties(additionalProperties: Record<string, unknown>): void {
+    const {modelName} = this.constructor as typeof Model;
     const {schema} = this;
+    const conflictingKeys = intersection(Object.keys(schema), Object.keys(additionalProperties));
+    if (conflictingKeys.length) {
+      throw new Error(`Conflicting keys=[${conflictingKeys.join(', ')}] on ${modelName} schema`);
+    }
     Object.assign(schema, additionalProperties);
   }
   pre(hookName: ModelHookName, callback: HookCallback): void {

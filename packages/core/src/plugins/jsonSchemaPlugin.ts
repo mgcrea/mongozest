@@ -313,7 +313,11 @@ const validateSchema = (value: any, schema: JsonSchema, path: string = '', error
       Object.keys(value).forEach((propName) => {
         if (!schemaPropNames.includes(propName)) {
           errors.push(
-            createRuleValidationError({additionalProperties: false}, value, path ? `${path}.${propName}` : propName)
+            createRuleValidationError(
+              {additionalProperties: false},
+              {[propName]: value[propName]},
+              path ? `${path}.${propName}` : propName
+            )
           );
         }
       });
