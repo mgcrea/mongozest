@@ -192,6 +192,11 @@ const applyUpdate = (object: AnySchema, update: FilterQuery<AnySchema>) => {
       unset(res, field);
     });
   }
+  if (update.$push) {
+    Object.keys(update.$push).forEach((field) => {
+      set(res, field, get(object, field, []).concat(update.$push[field]));
+    });
+  }
   return res;
 };
 
