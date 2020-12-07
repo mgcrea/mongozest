@@ -146,7 +146,7 @@ export const jsonSchemaPlugin = <USchema extends DefaultSchema = DefaultSchema>(
     // @ts-expect-error mongodb typing
     const errors = validateSchema(document, validator!.$jsonSchema as JsonSchema);
     if (errors.length > 1) {
-      throw createValidationError(`JsonSchema validation failed with ${errors.length} errors`);
+      throw createValidationMultipleError(errors);
     } else if (errors.length === 1) {
       throw errors[0];
     }
@@ -167,7 +167,7 @@ export const jsonSchemaPlugin = <USchema extends DefaultSchema = DefaultSchema>(
     // @ts-expect-error mongodb typing
     const errors = validateSchema(nextDoc, validator!.$jsonSchema as JsonSchema);
     if (errors.length > 1) {
-      throw createValidationError(`JsonSchema validation failed with ${errors.length} errors`);
+      throw createValidationMultipleError(errors);
     } else if (errors.length === 1) {
       throw errors[0];
     }
@@ -238,6 +238,14 @@ const createValidationError = (message: string) => {
   error.code = 121;
   return error;
 };
+
+const createValidationMultipleError = (errors: Error[]) => {
+  const messages = errors.reduce((soFar, error) => {
+    return soFar ? `${soFar}\n- ${error.message}` : `- ${error.message}`;
+  }, '');
+  return createValidationError(`JsonSchema validation failed with ${errors.length} errors:\n${messages}`);
+};
+
 const createRuleValidationError = (rule: {[s: string]: any}, value: any, path: string) => {
   const ruleName = Object.keys(rule)[0];
   return createValidationError(
