@@ -25,6 +25,6 @@
 }
 
 .hero--primary {
-  background: url(/img/triangular@2x.png) var(--ifm-color-primary);
+  background: url(/mongozest/img/triangular@2x.png) var(--ifm-color-primary);
   background-size: 62px;
 }
