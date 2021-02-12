@@ -1,6 +1,6 @@
 module.exports = {
-  title: 'My Site',
-  tagline: 'The tagline of my site',
+  title: 'MongoZest',
+  tagline: 'Lightweight MongoDB object modeling',
   url: 'https://your-mongozest-test-site.com',
   baseUrl: '/',
   onBrokenLinks: 'throw',
@@ -10,9 +10,9 @@ module.exports = {
   projectName: 'mongozest', // Usually your repo name.
   themeConfig: {
     navbar: {
-      title: 'My Site',
+      title: 'Mongozest',
       logo: {
-        alt: 'My Site Logo',
+        alt: 'Mongozest Logo',
         src: 'img/logo.svg',
       },
       items: [
