@@ -5,10 +5,10 @@ import {
   FindOneOptions,
   ObjectId,
   ReplaceOneOptions,
-  UpdateWriteOpResult
+  UpdateWriteOpResult,
 } from 'mongodb';
-import type {Model} from '../model';
-import type {AnySchema, DefaultSchema, WriteableUpdateQuery} from '../typings';
+import type { Model } from '../model';
+import type { AnySchema, DefaultSchema, WriteableUpdateQuery } from '../typings';
 
 export const byIdPlugin = <TSchema extends DefaultSchema = DefaultSchema>(model: Model<TSchema>): void => {
   model.addStatics({
@@ -16,21 +16,21 @@ export const byIdPlugin = <TSchema extends DefaultSchema = DefaultSchema>(model:
       id: ObjectId | string,
       options?: FindOneOptions<T extends TSchema ? TSchema : T>
     ): Promise<T | null> => {
-      return model.findOne<T>({_id: new ObjectId(id)} as FilterQuery<TSchema>, options);
+      return model.findOne<T>({ _id: new ObjectId(id) } as FilterQuery<TSchema>, options);
     },
     updateById: async (
       id: ObjectId | string,
       update: WriteableUpdateQuery<TSchema>,
       options: ReplaceOneOptions
     ): Promise<UpdateWriteOpResult> => {
-      return model.updateOne({_id: new ObjectId(id)} as FilterQuery<TSchema>, update, options);
+      return model.updateOne({ _id: new ObjectId(id) } as FilterQuery<TSchema>, update, options);
     },
     deleteById: async (
       id: ObjectId | string,
-      options: CommonOptions & {bypassDocumentValidation?: boolean} = {}
+      options: CommonOptions & { bypassDocumentValidation?: boolean } = {}
     ): Promise<DeleteWriteOpResultObject> => {
-      return model.deleteOne({_id: new ObjectId(id)} as FilterQuery<TSchema>, options);
-    }
+      return model.deleteOne({ _id: new ObjectId(id) } as FilterQuery<TSchema>, options);
+    },
   });
 };
 
@@ -47,7 +47,7 @@ declare module '../model' {
     ) => Promise<UpdateWriteOpResult>;
     deleteById: (
       id: ObjectId | string,
-      options?: CommonOptions & {bypassDocumentValidation?: boolean}
+      options?: CommonOptions & { bypassDocumentValidation?: boolean }
     ) => Promise<DeleteWriteOpResultObject>;
   }
 }

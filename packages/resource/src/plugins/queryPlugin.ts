@@ -1,12 +1,12 @@
-import {DefaultSchema, ObjectId} from '@mongozest/core';
+import { DefaultSchema, ObjectId } from '@mongozest/core';
 import createError from 'http-errors';
 import JSON5 from 'json5';
-import {isEmpty, isString, mapValues, pick} from 'lodash';
-import {Resource} from '../resource';
+import { isEmpty, isString, mapValues, pick } from 'lodash';
+import { Resource } from '../resource';
 
 export const queryPlugin = <TSchema extends DefaultSchema = DefaultSchema>(
   resource: Resource<TSchema>,
-  {strictJSON = false} = {}
+  { strictJSON = false } = {}
 ): void => {
   const parseQueryParam = (value: any, key: string) => {
     if (!isString(value) || !/^[\[\{]/.test(value)) {
@@ -39,7 +39,7 @@ export const queryPlugin = <TSchema extends DefaultSchema = DefaultSchema>(
       if (queryFilter._id && ObjectId.isValid(queryFilter._id)) {
         queryFilter._id = new ObjectId(queryFilter._id);
       }
-      const nextFilter = !isEmpty(filter) ? {$and: [filter, queryFilter]} : queryFilter;
+      const nextFilter = !isEmpty(filter) ? { $and: [filter, queryFilter] } : queryFilter;
       operation.set('filter', nextFilter);
     }
   });

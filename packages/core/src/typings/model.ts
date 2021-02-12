@@ -1,7 +1,7 @@
-import {FindAndModifyWriteOpResultObject} from 'mongodb';
-import {OperationMap} from '../operation';
-import {UnwrapPromise} from './base';
-import {AnySchema, DefaultSchema, JsonSchemaProperty} from './schema';
+import { FindAndModifyWriteOpResultObject } from 'mongodb';
+import { OperationMap } from '../operation';
+import { UnwrapPromise } from './base';
+import { AnySchema, DefaultSchema, JsonSchemaProperty } from './schema';
 
 export type ModelHookName =
   | 'aggregate'

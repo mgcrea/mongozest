@@ -1,16 +1,16 @@
-import {AggregationPipeline, DefaultSchema} from '@mongozest/core';
-import {Request, Response, Router} from 'express';
+import { AggregationPipeline, DefaultSchema } from '@mongozest/core';
+import { Request, Response, Router } from 'express';
 import createError from 'http-errors';
 import JSON5 from 'json5';
-import {isEmpty, isString} from 'lodash';
-import {CollectionAggregationOptions, FilterQuery} from 'mongodb';
-import {createOperationMap} from '../operation';
-import {Resource} from '../resource';
-import {asyncHandler} from '../utils/request';
+import { isEmpty, isString } from 'lodash';
+import { CollectionAggregationOptions, FilterQuery } from 'mongodb';
+import { createOperationMap } from '../operation';
+import { Resource } from '../resource';
+import { asyncHandler } from '../utils/request';
 
 export const aggregationPlugin = <TSchema extends DefaultSchema = DefaultSchema>(
   resource: Resource<TSchema>,
-  {strictJSON = false, pipelineParamName = 'pipeline', pathName = 'aggregate'} = {}
+  { strictJSON = false, pipelineParamName = 'pipeline', pathName = 'aggregate' } = {}
 ): void => {
   const parseQueryParam = (value: any, key: string) => {
     if (!isString(value) || !/^[\[\{]/.test(value)) {
@@ -45,14 +45,14 @@ export const aggregationPlugin = <TSchema extends DefaultSchema = DefaultSchema>
       scope: 'collection',
       request: req,
       pipeline,
-      filter
+      filter,
     });
     // Execute preHooks
     await this.hooks.execPre('filter', [operation, filter]);
     if (!isEmpty(operation.get('filter'))) {
       operation.set(
         'pipeline',
-        ([{$match: operation.get('filter')}] as AggregationPipeline).concat(operation.get('pipeline'))
+        ([{ $match: operation.get('filter') }] as AggregationPipeline).concat(operation.get('pipeline'))
       );
     }
     await this.hooks.execPre('aggregateCollection', [operation, pipeline, options]);

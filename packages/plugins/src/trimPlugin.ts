@@ -1,8 +1,8 @@
 // @docs https://docs.mongodb.com/manual/reference/operator/query/type/#document-type-available-types
 
-import {AnySchema, BsonType, mapPathValues, Model} from '@mongozest/core';
-import {isString, toString} from 'lodash';
-import {OptionalId} from 'mongodb';
+import { AnySchema, BsonType, mapPathValues, Model } from '@mongozest/core';
+import { isString, toString } from 'lodash';
+import { OptionalId } from 'mongodb';
 
 const TRIMMABLE_TYPES: BsonType[] = ['string'];
 
@@ -25,7 +25,7 @@ export type TrimPluginOptions = {
 // Helper recursively parsing schema to find path where values should be casted
 export const trimPlugin = <TSchema extends AnySchema>(
   model: Model<TSchema>,
-  {trimmableTypes = TRIMMABLE_TYPES}: TrimPluginOptions = {}
+  { trimmableTypes = TRIMMABLE_TYPES }: TrimPluginOptions = {}
 ): void => {
   const trimmableProperties = new Map();
   model.post('initialize:property', (property, path) => {

@@ -1,7 +1,7 @@
-import {AnySchema, JsonSchemaProperty, Model} from '@mongozest/core';
+import { AnySchema, JsonSchemaProperty, Model } from '@mongozest/core';
 import faker from 'faker';
-import {get, isString, isUndefined, set, shuffle} from 'lodash';
-import {CollectionInsertOneOptions, InsertOneWriteOpResult, OptionalId, WithId} from 'mongodb';
+import { get, isString, isUndefined, set, shuffle } from 'lodash';
+import { CollectionInsertOneOptions, InsertOneWriteOpResult, OptionalId, WithId } from 'mongodb';
 
 faker.locale = 'fr';
 
@@ -26,7 +26,7 @@ export const schemaFakerPlugin = <TSchema extends AnySchema>(model: Model<TSchem
           set(fake, path, fakeFunction());
         }
       });
-      return {...fake, ...document} as OptionalId<TSchema>;
+      return { ...fake, ...document } as OptionalId<TSchema>;
     },
     insertFakeOne: async (
       document: OptionalId<TSchema>,
@@ -34,7 +34,7 @@ export const schemaFakerPlugin = <TSchema extends AnySchema>(model: Model<TSchem
     ): Promise<InsertOneWriteOpResult<WithId<TSchema>>> => {
       const fake = model.fakeOne(document) as OptionalId<TSchema>;
       return await model.insertOne(fake, options);
-    }
+    },
   });
 };
 

@@ -1,6 +1,6 @@
-import {BsonType, DefaultSchema, mapPathValues, Model} from '@mongozest/core';
-import {isPlainObject, isString, toNumber, toSafeInteger, toString} from 'lodash';
-import {Decimal128 as Decimal, Double, Int32 as Int, Long, ObjectId, OptionalId} from 'mongodb';
+import { BsonType, DefaultSchema, mapPathValues, Model } from '@mongozest/core';
+import { isPlainObject, isString, toNumber, toSafeInteger, toString } from 'lodash';
+import { Decimal128 as Decimal, Double, Int32 as Int, Long, ObjectId, OptionalId } from 'mongodb';
 
 const CASTABLE_TYPES: BsonType[] = ['bool', 'date', 'decimal', 'double', 'int', 'long', 'objectId', 'string'];
 
@@ -73,7 +73,7 @@ export type SchemaCastingPluginOptions = {
 
 export const schemaCastingPlugin = <TSchema extends DefaultSchema>(
   model: Model<TSchema>,
-  {castableTypes = CASTABLE_TYPES, castDecimalsAsFloats = false}: SchemaCastingPluginOptions = {}
+  { castableTypes = CASTABLE_TYPES, castDecimalsAsFloats = false }: SchemaCastingPluginOptions = {}
 ): void => {
   const castableProperties = new Map();
   model.post('initialize:property', (property, path: string) => {

@@ -1,6 +1,6 @@
-import {DefaultSchema} from '@mongozest/core';
-import {ObjectId} from 'mongodb';
-import {Resource} from '../resource';
+import { DefaultSchema } from '@mongozest/core';
+import { ObjectId } from 'mongodb';
+import { Resource } from '../resource';
 
 export type CreatedByPluginSchema = {
   createdBy: ObjectId;
@@ -11,7 +11,7 @@ export const createdByPlugin = <
   TSchema extends DefaultSchema & CreatedByPluginSchema = DefaultSchema & CreatedByPluginSchema
 >(
   resource: Resource<TSchema>,
-  {idKey = '_id', createdByKey = 'createdBy', updatedByKey = 'updatedBy'} = {}
+  { idKey = '_id', createdByKey = 'createdBy', updatedByKey = 'updatedBy' } = {}
 ): void => {
   resource.pre('postCollection', (operation) => {
     const document = operation.get('document');
@@ -27,7 +27,7 @@ export const createdByPlugin = <
       if (!update.$set) {
         update.$set = {};
       }
-      Object.assign(update.$set, {[updatedByKey as 'updatedBy']: req.user[idKey as '_id']});
+      Object.assign(update.$set, { [updatedByKey as 'updatedBy']: req.user[idKey as '_id'] });
     }
   });
   resource.pre('patchDocument', (operation, _filter, update) => {
@@ -36,7 +36,7 @@ export const createdByPlugin = <
       if (!update.$set) {
         update.$set = {};
       }
-      Object.assign(update.$set, {[updatedByKey as 'updatedBy']: req.user[idKey as '_id']});
+      Object.assign(update.$set, { [updatedByKey as 'updatedBy']: req.user[idKey as '_id'] });
     }
   });
 };

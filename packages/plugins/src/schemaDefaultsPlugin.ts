@@ -1,7 +1,7 @@
 import '@mongozest/core';
-import {isUndefined, get, isString, isFunction} from 'lodash';
-import {Model, defaultPathValues, DefaultSchema} from '@mongozest/core';
-import {OptionalId} from 'mongodb';
+import { isUndefined, get, isString, isFunction } from 'lodash';
+import { Model, defaultPathValues, DefaultSchema } from '@mongozest/core';
+import { OptionalId } from 'mongodb';
 
 declare module '@mongozest/core' {
   export interface JsonSchemaProperty<TProp = any> {

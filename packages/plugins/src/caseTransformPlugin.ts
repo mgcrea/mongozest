@@ -1,6 +1,6 @@
 // @docs https://docs.mongodb.com/manual/reference/operator/query/type/#document-type-available-types
-import {DefaultSchema, mapPathValues, Model} from '@mongozest/core';
-import {isString, isUndefined, lowerCase, startCase, toString, upperFirst} from 'lodash';
+import { DefaultSchema, mapPathValues, Model } from '@mongozest/core';
+import { isString, isUndefined, lowerCase, startCase, toString, upperFirst } from 'lodash';
 
 type CaseTransformOperation = 'toString' | 'lowerCase' | 'upperFirst' | 'startCase';
 

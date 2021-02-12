@@ -1,14 +1,14 @@
 // @docs https://docs.mongodb.com/manual/reference/operator/query/type/#document-type-available-types
 
-import {DefaultSchema, Model} from '@mongozest/core';
-import {get, isFunction, isString, isUndefined} from 'lodash';
-import {MongoError} from 'mongodb';
+import { DefaultSchema, Model } from '@mongozest/core';
+import { get, isFunction, isString, isUndefined } from 'lodash';
+import { MongoError } from 'mongodb';
 
-type ValidationErrors = Array<{error: string; path: string; message?: string}>;
+type ValidationErrors = Array<{ error: string; path: string; message?: string }>;
 
 const formatValidationErrors = (errors: ValidationErrors) => {
   return errors
-    .map(({error, path, message}) => {
+    .map(({ error, path, message }) => {
       switch (error) {
         case 'required':
           return `  - "${path}" is required`;
@@ -50,7 +50,7 @@ export const schemaValidationPlugin = <TSchema extends DefaultSchema>(model: Mod
       const value = get(doc, path);
       const [validator, message] = validateOption;
       if (value && !validator(value)) {
-        validationErrors.push({error: 'validate', path, message});
+        validationErrors.push({ error: 'validate', path, message });
       }
     });
 

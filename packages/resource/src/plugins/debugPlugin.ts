@@ -1,8 +1,8 @@
-import {DefaultSchema} from '@mongozest/core';
-import {ResourceHookName} from '../typings';
-import {OperationMap} from '../operation';
-import {Resource} from '../resource';
-import {inspect, log} from '../utils/logger';
+import { DefaultSchema } from '@mongozest/core';
+import { ResourceHookName } from '../typings';
+import { OperationMap } from '../operation';
+import { Resource } from '../resource';
+import { inspect, log } from '../utils/logger';
 
 export const debugPlugin = <TSchema extends DefaultSchema = DefaultSchema>(resource: Resource<TSchema>): void => {
   const logMethodOperation = (method: string, operation: OperationMap<TSchema>, ...args: any[]) => {
@@ -20,7 +20,7 @@ export const debugPlugin = <TSchema extends DefaultSchema = DefaultSchema>(resou
     'getDocument',
     'patchDocument',
     'deleteDocument',
-    'aggregateCollection'
+    'aggregateCollection',
   ];
   loggedPreHooks.forEach((name) => {
     resource.pre(name, (operation: OperationMap<TSchema>, ...args: unknown[]) => {

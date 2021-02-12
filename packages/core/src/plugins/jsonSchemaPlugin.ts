@@ -2,9 +2,9 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 // @docs https://docs.mongodb.com/manual/reference/operator/query/jsonSchema/
 
-import {cloneDeep, get, isPlainObject, isString, isUndefined, omit, pick, set, unset} from 'lodash';
-import {CollectionCreateOptions, Decimal128, Double, FilterQuery, Int32, MongoError, ObjectId} from 'mongodb';
-import type {Model} from '../model';
+import { cloneDeep, get, isPlainObject, isString, isUndefined, omit, pick, set, unset } from 'lodash';
+import { CollectionCreateOptions, Decimal128, Double, FilterQuery, Int32, MongoError, ObjectId } from 'mongodb';
+import type { Model } from '../model';
 import type {
   AnySchema,
   BsonType,
@@ -13,9 +13,9 @@ import type {
   JsonSchemaProperties,
   JsonSchemaProperty,
   MongoJsonSchemaProperty,
-  UnknownSchema
+  UnknownSchema,
 } from '../typings';
-import {chalkJson, chalkString} from './../utils';
+import { chalkJson, chalkString } from './../utils';
 
 const JSON_SCHEMA_VALID_KEYS = [
   'bsonType', // Accepts same string aliases used for the $type operator
@@ -46,7 +46,7 @@ const JSON_SCHEMA_VALID_KEYS = [
   'minItems', // Indicates the minimum length of array
   'uniqueItems', // If true, each item in the array must be unique. Otherwise, no uniqueness constraint is enforced
   'title', // A descriptive title string with no effect
-  'description' // A string that describes the schema and has no effect
+  'description', // A string that describes the schema and has no effect
 ];
 
 export const jsonSchemaPlugin = <USchema extends DefaultSchema = DefaultSchema>(model: Model<USchema>): void => {
@@ -59,13 +59,13 @@ export const jsonSchemaPlugin = <USchema extends DefaultSchema = DefaultSchema>(
       bsonType: 'object',
       additionalProperties: false,
       properties: {},
-      ...options
+      ...options,
     } as MongoJsonSchemaProperty<TSchema>;
     return Object.keys(schema).reduce<MongoJsonSchemaProperty<TSchema>>((soFar, key) => {
       // Add support for string shortcut
-      const value = isString(schema[key]) ? {bsonType: (schema[key] as unknown) as BsonType} : schema[key];
+      const value = isString(schema[key]) ? { bsonType: (schema[key] as unknown) as BsonType } : schema[key];
       const properties = soFar.properties!;
-      const {bsonType, required, properties: childProperties, items: _childItems, ...otherProps} = value;
+      const { bsonType, required, properties: childProperties, items: _childItems, ...otherProps } = value;
       // Add support for required
       if (required === true) {
         // Initialize array on the fly due to `$jsonSchema keyword 'required' cannot be an empty array`
@@ -93,7 +93,7 @@ export const jsonSchemaPlugin = <USchema extends DefaultSchema = DefaultSchema>(
           properties[key] = {
             bsonType,
             items: buildJsonSchema(childItems.properties!, validItemsJsonKeys),
-            ...validJsonKeys
+            ...validJsonKeys,
           };
           return soFar;
         } else {
@@ -101,13 +101,13 @@ export const jsonSchemaPlugin = <USchema extends DefaultSchema = DefaultSchema>(
           properties[key] = {
             bsonType,
             items: validItemsJsonKeys as MongoJsonSchemaProperty,
-            ...validJsonKeys
+            ...validJsonKeys,
           };
           return soFar;
         }
       }
       // Generic leaf case
-      properties[key as keyof TSchema] = {bsonType, ...validJsonKeys};
+      properties[key as keyof TSchema] = { bsonType, ...validJsonKeys };
       return soFar;
     }, initialObjectSchema);
   };
@@ -117,10 +117,10 @@ export const jsonSchemaPlugin = <USchema extends DefaultSchema = DefaultSchema>(
     if (!model.collectionOptions.validator) {
       model.collectionOptions.validator = {};
     }
-    const {validator} = model.collectionOptions as CollectionCreateOptions;
+    const { validator } = model.collectionOptions as CollectionCreateOptions;
     // Add _id unique key if missing
     if (!model.schema._id) {
-      model.schema._id = {bsonType: 'objectId'};
+      model.schema._id = { bsonType: 'objectId' };
     }
     // Set model validator schema
     try {
@@ -142,7 +142,7 @@ export const jsonSchemaPlugin = <USchema extends DefaultSchema = DefaultSchema>(
     if (!error || error.code !== 121) {
       return;
     }
-    const {validator} = model.collectionOptions as CollectionCreateOptions;
+    const { validator } = model.collectionOptions as CollectionCreateOptions;
     const document = operation.get('document') || originalDocument;
     // @ts-expect-error mongodb typing
     const errors = validateSchema(document, validator!.$jsonSchema as JsonSchema);
@@ -158,7 +158,7 @@ export const jsonSchemaPlugin = <USchema extends DefaultSchema = DefaultSchema>(
     if (!error || error.code !== 121) {
       return;
     }
-    const {validator} = model.collectionOptions as CollectionCreateOptions;
+    const { validator } = model.collectionOptions as CollectionCreateOptions;
     const update = operation.get('update') || originalUpdate;
     const prevDoc = await model.findOne(filter);
     if (!prevDoc) {
@@ -247,7 +247,7 @@ const createValidationMultipleError = (errors: Error[]) => {
   return createValidationError(`JsonSchema validation failed with ${errors.length} errors:\n${messages}`);
 };
 
-const createRuleValidationError = (rule: {[s: string]: any}, value: unknown, path: string) => {
+const createRuleValidationError = (rule: { [s: string]: any }, value: unknown, path: string) => {
   const ruleName = Object.keys(rule)[0];
   return createValidationError(
     `Failed validation of jsonSchema rule=${chalkString(ruleName)} at path=${chalkString(
@@ -269,49 +269,49 @@ const validateSchema = (value: any, schema: JsonSchema, path: string = '', error
     minLength,
     maxLength,
     items,
-    additionalProperties
+    additionalProperties,
     // ...otherProps
   } = schema;
 
   if (isDefined(bsonType)) {
     if (!isValidBsonType(bsonType, value)) {
-      throw createRuleValidationError({bsonType}, value, path);
+      throw createRuleValidationError({ bsonType }, value, path);
     }
   }
   if (Array.isArray(_enum)) {
     if (!_enum.includes(value)) {
-      errors.push(createRuleValidationError({enum: _enum}, value, path));
+      errors.push(createRuleValidationError({ enum: _enum }, value, path));
     }
   }
   if (isDefined(minItems)) {
     if (!Array.isArray(value) || value.length < minItems!) {
-      errors.push(createRuleValidationError({minItems}, value, path));
+      errors.push(createRuleValidationError({ minItems }, value, path));
     }
   }
   if (isDefined(maxItems)) {
     if (!Array.isArray(value) || value.length > maxItems!) {
-      errors.push(createRuleValidationError({maxItems}, value, path));
+      errors.push(createRuleValidationError({ maxItems }, value, path));
     }
   }
   if (isDefined(minLength)) {
     if (!isString(value) || value.length < minLength!) {
-      errors.push(createRuleValidationError({minLength}, value, path));
+      errors.push(createRuleValidationError({ minLength }, value, path));
     }
   }
   if (isDefined(maxLength)) {
     if (!isString(value) || value.length > maxLength!) {
-      errors.push(createRuleValidationError({maxLength}, value, path));
+      errors.push(createRuleValidationError({ maxLength }, value, path));
     }
   }
   if (isDefined(pattern)) {
     if (isDefined(value) && (!isString(value) || !value.match(pattern!))) {
-      errors.push(createRuleValidationError({pattern}, value, path));
+      errors.push(createRuleValidationError({ pattern }, value, path));
     }
   }
   if (Array.isArray(required)) {
     required.forEach((propName) => {
       if (isUndefined(value[propName])) {
-        errors.push(createRuleValidationError({required: true}, undefined, path ? `${path}.${propName}` : propName));
+        errors.push(createRuleValidationError({ required: true }, undefined, path ? `${path}.${propName}` : propName));
       }
     });
   }
@@ -328,8 +328,8 @@ const validateSchema = (value: any, schema: JsonSchema, path: string = '', error
         if (!schemaPropNames.includes(propName)) {
           errors.push(
             createRuleValidationError(
-              {additionalProperties: false},
-              {[propName]: value[propName]},
+              { additionalProperties: false },
+              { [propName]: value[propName] },
               path ? `${path}.${propName}` : propName
             )
           );

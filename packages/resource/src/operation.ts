@@ -1,6 +1,6 @@
-import {AggregationPipeline, OptionalId} from '@mongozest/core';
-import {Request} from 'express';
-import {FilterQuery} from 'mongodb';
+import { AggregationPipeline, OptionalId } from '@mongozest/core';
+import { Request } from 'express';
+import { FilterQuery } from 'mongodb';
 
 export type OperationMethod =
   | 'getCollection'

@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import {OptionalId} from 'mongodb';
+import { OptionalId } from 'mongodb';
 
-type ErrorWithCode = Error & {code?: string | number};
+type ErrorWithCode = Error & { code?: string | number };
 
 export interface OperationMap<TSchema, TResult = any> extends Map<string | symbol, any> {
   get(key: 'method'): string; // @NOTE valid methods?

@@ -1,11 +1,11 @@
-import {DefaultSchema, FilterQuery, OperationMap, OptionalId, WithId} from '@mongozest/core';
+import { DefaultSchema, FilterQuery, OperationMap, OptionalId, WithId } from '@mongozest/core';
 import {
   CollectionInsertOneOptions,
   CommonOptions,
   DeleteWriteOpResultObject,
   FindOneAndUpdateOption,
   FindOneOptions,
-  UpdateQuery
+  UpdateQuery,
 } from 'mongodb';
 
 export type ResourceHookName =
@@ -69,7 +69,7 @@ declare module '../resource' {
       callback: (
         operation: OperationMap<TSchema>,
         filter: FilterQuery<TSchema>,
-        options: CommonOptions & {bypassDocumentValidation?: boolean}
+        options: CommonOptions & { bypassDocumentValidation?: boolean }
       ) => void
     ): void;
     pre(
@@ -77,7 +77,7 @@ declare module '../resource' {
       callback: (
         operation: OperationMap<TSchema>,
         pipeline: AggregationPipeline,
-        options: CommonOptions & {bypassDocumentValidation?: boolean}
+        options: CommonOptions & { bypassDocumentValidation?: boolean }
       ) => void
     ): void;
     // post
@@ -127,7 +127,7 @@ declare module '../resource' {
       callback: (
         operation: OperationMap<TSchema, DeleteWriteOpResultObject['result']>,
         filter: FilterQuery<TSchema>,
-        options: CommonOptions & {bypassDocumentValidation?: boolean}
+        options: CommonOptions & { bypassDocumentValidation?: boolean }
       ) => void
     ): void;
     post(
@@ -135,7 +135,7 @@ declare module '../resource' {
       callback: (
         operation: OperationMap<TSchema, TSchema[]>,
         pipeline: AggregationPipeline,
-        options: CommonOptions & {bypassDocumentValidation?: boolean}
+        options: CommonOptions & { bypassDocumentValidation?: boolean }
       ) => void
     ): void;
   }

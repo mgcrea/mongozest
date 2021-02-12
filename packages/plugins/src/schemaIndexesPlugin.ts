@@ -1,6 +1,6 @@
-import {AnySchema, DefaultSchema, inspect, log, Model} from '@mongozest/core';
-import {find, isString, isUndefined} from 'lodash';
-import {IndexOptions, SchemaMember} from 'mongodb';
+import { AnySchema, DefaultSchema, inspect, log, Model } from '@mongozest/core';
+import { find, isString, isUndefined } from 'lodash';
+import { IndexOptions, SchemaMember } from 'mongodb';
 
 export type SchemaIndexesConfig<TSchema> = [SchemaMember<TSchema, number | boolean>, IndexOptions][];
 
@@ -19,9 +19,9 @@ export type SchemaIndexesPluginOptions = {
 
 export const schemaIndexesPlugin = <TSchema extends DefaultSchema>(
   model: Model<TSchema>,
-  {suffix = '_'}: SchemaIndexesPluginOptions = {}
+  { suffix = '_' }: SchemaIndexesPluginOptions = {}
 ): void => {
-  const {collectionName} = model;
+  const { collectionName } = model;
   const propsWithIndexes: Map<string, IndexOptions> = new Map();
   model.post('initialize:property', (prop, path) => {
     if (isString(prop) || isUndefined(prop.index)) {
@@ -32,19 +32,19 @@ export const schemaIndexesPlugin = <TSchema extends DefaultSchema>(
   // Handle document insertion
   model.post('initialize', async () => {
     // Create indexes from static model config
-    const {indexes: indexesFromConfig} = model.constructor as {indexes?: SchemaIndexesConfig<TSchema>};
+    const { indexes: indexesFromConfig } = model.constructor as { indexes?: SchemaIndexesConfig<TSchema> };
     if (indexesFromConfig) {
       const createdIndexesFromConfig = await indexesFromConfig.reduce(async (promiseSoFar, entry, index) => {
         const soFar = await promiseSoFar;
         const [key, options] = entry;
-        const indexOptions: IndexOptions = {name: Object.keys(key).join('_'), ...options};
-        const {name} = indexOptions;
+        const indexOptions: IndexOptions = { name: Object.keys(key).join('_'), ...options };
+        const { name } = indexOptions;
         // Do we have a named index?
         if (name) {
           const indexExists = await model.collection.indexExists(name);
           if (indexExists) {
             // Do we have an exact match?
-            const matchingIndex = find(await model.collection.indexes(), {key, ...indexOptions});
+            const matchingIndex = find(await model.collection.indexes(), { key, ...indexOptions });
             if (matchingIndex) {
               // Nothing more to do!
               return soFar;
@@ -70,14 +70,14 @@ export const schemaIndexesPlugin = <TSchema extends DefaultSchema>(
       const soFar = await promiseSoFar;
       const [path, options] = entry;
       const name = `${path}${suffix}`;
-      const indexOptions: IndexOptions = {name, ...options};
-      const key = {[path]: 1};
+      const indexOptions: IndexOptions = { name, ...options };
+      const key = { [path]: 1 };
       // Do we have a named index?
       if (indexOptions.name) {
         const indexExists = await model.collection.indexExists(name);
         if (indexExists) {
           // Do we have an exact match?
-          const matchingIndex = find(await model.collection.indexes(), {key, name, ...indexOptions});
+          const matchingIndex = find(await model.collection.indexes(), { key, name, ...indexOptions });
           if (matchingIndex) {
             // Nothing more to do!
             return soFar;

@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 // https://github.com/microsoft/TypeScript/issues/26350
 
-import {intersectionWith, unionWith, uniqBy, uniqWith} from 'lodash';
-import {ObjectId} from 'mongodb';
+import { intersectionWith, unionWith, uniqBy, uniqWith } from 'lodash';
+import { ObjectId } from 'mongodb';
 
 export const includesObjectId = (arrayOfObjectIds: ObjectId[], targetObjectId: ObjectId): boolean =>
   arrayOfObjectIds.some((objectId) => objectId.equals(targetObjectId));
@@ -20,5 +20,5 @@ export const unionWithObjectIds = (...arraysOfObjectIds: ObjectId[][]): ObjectId
 export const uniqWithObjectIds = (arrayOfObjectIds: ObjectId[]): ObjectId[] =>
   uniqWith(arrayOfObjectIds, (arrVal, othVal) => arrVal.equals(othVal));
 
-export const uniqByObjectId = <T extends {_id: ObjectId}>(arrayOfObjects: T[]): T[] =>
+export const uniqByObjectId = <T extends { _id: ObjectId }>(arrayOfObjects: T[]): T[] =>
   uniqBy(arrayOfObjects, (arrVal) => arrVal._id.toString());

@@ -1,5 +1,5 @@
-import {DefaultSchema, Model} from '@mongozest/core';
-import {has, isString, isUndefined, set} from 'lodash';
+import { DefaultSchema, Model } from '@mongozest/core';
+import { has, isString, isUndefined, set } from 'lodash';
 
 const isInclusiveProjection = (projection: Record<string, string | number | any>) =>
   Object.keys(projection).some((key) => projection[key] === 1);

@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import {IndexOptions, ObjectId, OptionalId} from 'mongodb';
+import { IndexOptions, ObjectId, OptionalId } from 'mongodb';
 
 // @docs https://docs.mongodb.com/manual/reference/operator/query/jsonSchema/
 // @docs https://www.typescriptlang.org/docs/handbook/advanced-types.html
@@ -29,7 +29,7 @@ export type BsonType =
   | 'maxKey';
 
 export type UnknownSchema = Record<string, unknown>;
-export type AnySchema = {[key: string]: any};
+export type AnySchema = { [key: string]: any };
 export interface DefaultSchema extends AnySchema {
   _id?: ObjectId;
 }
@@ -43,7 +43,7 @@ export type Vacated<T extends DefaultSchema> = {
 };
 export type Populated<T extends DefaultSchema> = {
   [K in Exclude<keyof T, '_id'>]: T[K] extends ForeignRef<infer U> | undefined ? U : T[K];
-} & {_id: ObjectId};
+} & { _id: ObjectId };
 // export type WithId<TSchema> = EnhancedOmit<TSchema, '_id'> & { _id: ExtractIdType<TSchema> };
 
 export type Input<T extends DefaultSchema> = Vacated<T>;
@@ -54,7 +54,7 @@ export type PopulatedKeys<T extends DefaultSchema, K extends keyof T> = Omit<T, 
   };
 
 const __hasDefault = Symbol('__hasDefault');
-export type WithDefault<T> = T & {[__hasDefault]: never};
+export type WithDefault<T> = T & { [__hasDefault]: never };
 type ConvertSchema<S extends DefaultSchema> = {
   [k in keyof S]: S[k] extends WithDefault<infer T> ? T | undefined : S[k];
 };
@@ -73,14 +73,14 @@ export interface MongoJsonSchemaProperty<UProp = any, TProp = NonNullable<UProp>
   minimum?: number;
   maximum?: number;
   items?: TProp extends Array<infer UProp>
-    ? MongoJsonSchemaProperty<UProp> | MongoJsonSchemaProperty<UProp>[] | {oneOf: MongoJsonSchemaProperty<UProp>[]}
+    ? MongoJsonSchemaProperty<UProp> | MongoJsonSchemaProperty<UProp>[] | { oneOf: MongoJsonSchemaProperty<UProp>[] }
     : never;
   // items?: MongoJsonSchemaProperty<any>;
   additionalProperties?: boolean;
   // properties?: TProp extends Record<infer KProp, infer UProp> ? {[s in KProp]: MongoJsonSchemaProperty<UProp>} : never;
   properties?: MongoJsonSchemaProperties<any>;
 }
-export type MongoJsonSchemaProperties<TSchema> = {[s in keyof TSchema]: MongoJsonSchemaProperty<TSchema[s]>};
+export type MongoJsonSchemaProperties<TSchema> = { [s in keyof TSchema]: MongoJsonSchemaProperty<TSchema[s]> };
 export interface CollectionCreateOptions {
   $jsonSchema?: MongoJsonSchemaProperty<Record<string, any>>;
 }
@@ -88,14 +88,14 @@ export interface CollectionCreateOptions {
 export interface JsonSchemaProperty<TProp = any>
   extends Omit<MongoJsonSchemaProperty<TProp>, 'items' | 'properties' | 'required'> {
   items?: TProp extends Array<infer UProp>
-    ? JsonSchemaProperty<UProp> | JsonSchemaProperty<UProp>[] | {oneOf: JsonSchemaProperty<UProp>[]}
+    ? JsonSchemaProperty<UProp> | JsonSchemaProperty<UProp>[] | { oneOf: JsonSchemaProperty<UProp>[] }
     : never;
   // items?: JsonSchemaProperty<any>;
   // properties?: TProp extends Record<string, infer UProp> ? JsonSchemaProperties<UProp> : never;
   properties?: JsonSchemaProperties<any>;
   required?: boolean;
 }
-export type JsonSchemaProperties<TSchema> = {[s in keyof TSchema]: JsonSchemaProperty<TSchema[s]>};
+export type JsonSchemaProperties<TSchema> = { [s in keyof TSchema]: JsonSchemaProperty<TSchema[s]> };
 
 // @NOTE Exposed typings-API for model sub-schema object (requ)
 export type JsonSchema<TProp = any> = JsonSchemaProperty<TProp>;

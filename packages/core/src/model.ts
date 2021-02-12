@@ -1,6 +1,6 @@
 import './typings/model';
-import Hooks, {HookCallback} from '@mongozest/hooks';
-import {cloneDeep, intersection, isFunction, isPlainObject, snakeCase, uniq} from 'lodash';
+import Hooks, { HookCallback } from '@mongozest/hooks';
+import { cloneDeep, intersection, isFunction, isPlainObject, snakeCase, uniq } from 'lodash';
 import {
   Collection,
   CollectionAggregationOptions,
@@ -26,11 +26,11 @@ import {
   UpdateOneOptions,
   UpdateQuery,
   UpdateWriteOpResult,
-  WithId
+  WithId,
 } from 'mongodb';
 import pluralize from 'pluralize';
-import {cloneOperationMap, createOperationMap, OperationMap} from './operation';
-import {byIdPlugin, debugPlugin, jsonSchemaPlugin} from './plugins';
+import { cloneOperationMap, createOperationMap, OperationMap } from './operation';
+import { byIdPlugin, debugPlugin, jsonSchemaPlugin } from './plugins';
 import type {
   AggregationPipeline,
   AnySchema,
@@ -40,7 +40,7 @@ import type {
   ModelHookName,
   MongozestPlugin,
   Schema,
-  WriteableUpdateQuery
+  WriteableUpdateQuery,
 } from './typings';
 
 export interface ModelConstructor<TSchema extends AnySchema = DefaultSchema> {
@@ -69,7 +69,7 @@ export class Model<TSchema extends AnySchema = DefaultSchema> {
   private hooks = new Hooks<ModelHookName>();
 
   constructor(public db: MongoDb) {
-    const {name: className, modelName, collectionName, collectionOptions, schema, plugins} = this
+    const { name: className, modelName, collectionName, collectionOptions, schema, plugins } = this
       .constructor as typeof Model;
     this.collectionName = collectionName ? collectionName : snakeCase(pluralize(modelName || className));
     this.collectionOptions = cloneDeep(collectionOptions);
@@ -107,7 +107,7 @@ export class Model<TSchema extends AnySchema = DefaultSchema> {
     return Object.keys(properties).reduce(async (promiseSoFar, key) => {
       const soFar = await promiseSoFar;
       const currentPath = prevPath ? `${prevPath}.${key}` : key;
-      const {bsonType, properties: childProperties, items: childItems} = properties[key as keyof USchema];
+      const { bsonType, properties: childProperties, items: childItems } = properties[key as keyof USchema];
       // Nested object case
       const isNestedObject = bsonType === 'object';
       if (childProperties && isNestedObject) {
@@ -119,7 +119,7 @@ export class Model<TSchema extends AnySchema = DefaultSchema> {
         // const hasNestedArraySchemas = childItems && Array.isArray(childItems);
         if (childItems && Array.isArray(childItems)) {
           childItems.forEach(async (childItem, index: number) => {
-            await this.hooks.execPost('initialize:property', [childItem, `${currentPath}[${index}]`, {isLeaf: true}]);
+            await this.hooks.execPost('initialize:property', [childItem, `${currentPath}[${index}]`, { isLeaf: true }]);
           });
           // isNestedObjectInArray
         } else if (
@@ -130,13 +130,13 @@ export class Model<TSchema extends AnySchema = DefaultSchema> {
           await this.execPostPropertyHooks((childItems as JsonSchemaProperty).properties!, `${currentPath}[]`);
         } else {
           // Special array leaf case
-          await this.hooks.execPost('initialize:property', [childItems, `${currentPath}[]`, {isLeaf: true}]);
+          await this.hooks.execPost('initialize:property', [childItems, `${currentPath}[]`, { isLeaf: true }]);
           return soFar;
         }
       }
       // Generic leaf case
       const isLeaf = !isNestedObject && !hasNestedArrayItems;
-      await this.hooks.execPost('initialize:property', [properties[key as keyof USchema], currentPath, {isLeaf}]);
+      await this.hooks.execPost('initialize:property', [properties[key as keyof USchema], currentPath, { isLeaf }]);
       return soFar;
     }, Promise.resolve());
   }
@@ -144,42 +144,42 @@ export class Model<TSchema extends AnySchema = DefaultSchema> {
   // Collection management
 
   public async hasCollection(): Promise<boolean> {
-    const {collectionName, db} = this;
-    const collections = await db.listCollections({name: collectionName}, {nameOnly: true}).toArray();
+    const { collectionName, db } = this;
+    const collections = await db.listCollections({ name: collectionName }, { nameOnly: true }).toArray();
     return collections.length > 0;
   }
   private async setupCollection(): Promise<Collection<TSchema>> {
-    const {db, collectionName, collectionOptions} = this;
+    const { db, collectionName, collectionOptions } = this;
     const doesExist = await this.hasCollection();
-    await this.hooks.execPre('setup', [collectionOptions, {doesExist}]);
+    await this.hooks.execPre('setup', [collectionOptions, { doesExist }]);
     await (doesExist ? this.updateCollection(collectionOptions) : this.createCollection(collectionOptions));
     return db.collection(collectionName);
   }
   private async createCollection(collectionOptions: CollectionCreateOptions): Promise<Collection<TSchema>> {
-    const {db, collectionName} = this;
+    const { db, collectionName } = this;
     return await db.createCollection(collectionName, collectionOptions);
   }
   private async updateCollection(collectionOptions: CollectionCreateOptions): Promise<unknown> {
-    const {db, collectionName} = this;
+    const { db, collectionName } = this;
     return await db.command({
       collMod: collectionName,
-      ...collectionOptions
+      ...collectionOptions,
     });
   }
   public async getCollectionInfo<T extends Record<string, unknown>>(): Promise<T> {
-    const {collectionName, db} = this;
-    const collections = await db.listCollections({name: collectionName}).toArray();
+    const { collectionName, db } = this;
+    const collections = await db.listCollections({ name: collectionName }).toArray();
     if (collections.length < 1) {
       throw new Error(`Collection "${collectionName}" not found`);
     }
     return collections[0] as T;
   }
   get jsonSchema(): Record<string, unknown> {
-    const {collectionOptions} = this;
+    const { collectionOptions } = this;
     if (!collectionOptions.validator) {
       return {};
     }
-    const validator = collectionOptions.validator as {[s: string]: any};
+    const validator = collectionOptions.validator as { [s: string]: any };
     if (!validator || !validator.$jsonSchema) {
       return {};
     }
@@ -189,8 +189,8 @@ export class Model<TSchema extends AnySchema = DefaultSchema> {
   // Plugins management
 
   private async loadPlugins(this: Model<TSchema>) {
-    const {modelName} = this.constructor as typeof Model;
-    const {plugins} = this;
+    const { modelName } = this.constructor as typeof Model;
+    const { plugins } = this;
     // @ts-expect-error fixme
     const allPlugins: Plugin<TSchema>[] = uniq([...Model.internalPrePlugins, ...plugins, ...Model.internalPostPlugins]);
     allPlugins.forEach((pluginConfig, index) => {
@@ -217,8 +217,8 @@ export class Model<TSchema extends AnySchema = DefaultSchema> {
     Object.keys(staticsMap).forEach((key) => this.statics.set(key, staticsMap[key]));
   }
   addSchemaProperties(additionalProperties: Record<string, unknown>): void {
-    const {modelName} = this.constructor as typeof Model;
-    const {schema} = this;
+    const { modelName } = this.constructor as typeof Model;
+    const { schema } = this;
     const conflictingKeys = intersection(Object.keys(schema), Object.keys(additionalProperties));
     if (conflictingKeys.length) {
       throw new Error(`Conflicting keys=[${conflictingKeys.join(', ')}] on ${modelName} schema`);
@@ -364,10 +364,10 @@ export class Model<TSchema extends AnySchema = DefaultSchema> {
     );
     operation.set('result', result);
     // Execute postHooks
-    const {ops, insertedIds} = result;
+    const { ops, insertedIds } = result;
     const eachPostArgs = documents.reduce<Array<[OperationMap<TSchema>, OptionalId<TSchema>, typeof options]>>(
       (soFar, document, index) => {
-        const documentResult = {...result, ops: [ops[index]], insertedCount: 1, insertedId: insertedIds[index]};
+        const documentResult = { ...result, ops: [ops[index]], insertedCount: 1, insertedId: insertedIds[index] };
         return soFar.concat([[cloneOperationMap(operation, ['result', documentResult]), document, options]]);
       },
       []
@@ -521,7 +521,7 @@ export class Model<TSchema extends AnySchema = DefaultSchema> {
   // @docs http://mongodb.github.io/node-mongodb-native/3.1/api/Collection.html#deleteOne
   async deleteOne(
     filter: FilterQuery<TSchema>,
-    options: CommonOptions & {bypassDocumentValidation?: boolean} = {}
+    options: CommonOptions & { bypassDocumentValidation?: boolean } = {}
   ): Promise<DeleteWriteOpResultObject> {
     // PreHooks handling
     const operation = createOperationMap<TSchema>('deleteOne');

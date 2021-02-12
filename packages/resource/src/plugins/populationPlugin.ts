@@ -1,12 +1,12 @@
-import {DefaultSchema} from '@mongozest/core';
-import {Request} from 'express';
+import { DefaultSchema } from '@mongozest/core';
+import { Request } from 'express';
 import createError from 'http-errors';
 import JSON5 from 'json5';
-import {isString, mapValues, pick} from 'lodash';
+import { isString, mapValues, pick } from 'lodash';
 import 'mongodb';
-import {FilterQuery, FindOneOptions, SchemaMember} from 'mongodb';
-import {OperationMap} from '../operation';
-import {Resource} from '../resource';
+import { FilterQuery, FindOneOptions, SchemaMember } from 'mongodb';
+import { OperationMap } from '../operation';
+import { Resource } from '../resource';
 
 export type Population<T> = SchemaMember<T, number | boolean | any>;
 
@@ -18,7 +18,7 @@ declare module 'mongodb' {
 
 export const populatePlugin = <TSchema extends DefaultSchema = DefaultSchema>(
   resource: Resource<TSchema>,
-  {strictJSON = false, optionName = 'population'} = {}
+  { strictJSON = false, optionName = 'population' } = {}
 ): void => {
   const parseQueryParam = (value: any, key: string) => {
     if (!isString(value) || !/^[\[\{]/.test(value)) {

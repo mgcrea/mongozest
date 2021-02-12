@@ -1,4 +1,4 @@
-import {DefaultSchema, Model} from '@mongozest/core';
+import { DefaultSchema, Model } from '@mongozest/core';
 
 export type LastModifiedPluginSchema = {
   updatedAt?: Date;
@@ -9,8 +9,8 @@ export const lastModifiedPlugin = <TSchema extends DefaultSchema & LastModifiedP
   model: Model<TSchema>
 ): void => {
   model.addSchemaProperties({
-    updatedAt: {bsonType: 'date'},
-    createdAt: {bsonType: 'date'}
+    updatedAt: { bsonType: 'date' },
+    createdAt: { bsonType: 'date' },
   });
   model.pre('insert', (_operation, insert) => {
     const currentDate = new Date();
@@ -20,9 +20,9 @@ export const lastModifiedPlugin = <TSchema extends DefaultSchema & LastModifiedP
   model.pre('update', (_operation, _filter, update) => {
     const currentDate = new Date();
     if (update.$set) {
-      Object.assign(update.$set, {updatedAt: currentDate});
+      Object.assign(update.$set, { updatedAt: currentDate });
     } else {
-      update.$set = {updatedAt: currentDate} as typeof update.$set;
+      update.$set = { updatedAt: currentDate } as typeof update.$set;
     }
   });
 };

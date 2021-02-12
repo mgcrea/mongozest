@@ -2,10 +2,10 @@
 // @docs https://gist.github.com/brennanMKE/ee8ea002d305d4539ef6
 
 import assert from 'assert';
-import {ClientSession, Db as MongoDb, MongoClient, MongoClientOptions, ObjectId, SessionOptions} from 'mongodb';
-import {parse} from 'url';
-import {Model, ModelConstructor} from './model';
-import type {AnySchema, DefaultSchema} from './typings';
+import { ClientSession, Db as MongoDb, MongoClient, MongoClientOptions, ObjectId, SessionOptions } from 'mongodb';
+import { parse } from 'url';
+import { Model, ModelConstructor } from './model';
+import type { AnySchema, DefaultSchema } from './typings';
 
 const DEFAULT_MONGODB_URI = 'mongodb://mongo:27017';
 
@@ -17,7 +17,7 @@ export class MongoInterface {
   static defaultClientOptions: MongoClientOptions = {
     loggerLevel: 'error',
     useUnifiedTopology: true,
-    useNewUrlParser: true
+    useNewUrlParser: true,
   };
   static create(uri: string = MongoInterface.defaultClientUri, options?: MongoClientOptions): MongoInterface {
     // reuse interface if already created for uri
@@ -36,12 +36,12 @@ export class MongoInterface {
   id: ObjectId;
 
   private constructor(uri: string, options?: MongoClientOptions) {
-    const {protocol = 'mongodb:', hostname = '127.0.0.1', port = '27017', pathname} = parse(uri);
+    const { protocol = 'mongodb:', hostname = '127.0.0.1', port = '27017', pathname } = parse(uri);
     this.id = new ObjectId();
     this.dbName = pathname ? String(pathname).slice(1) : 'test';
     this.client = new MongoClient(`${protocol}//${hostname}:${port}`, {
       ...MongoInterface.defaultClientOptions,
-      ...options
+      ...options,
     });
   }
   public async connect(dbName = this.dbName): Promise<MongoDb> {
@@ -82,8 +82,8 @@ export class MongoInterface {
     ModelClass: ModelConstructor<TSchema>,
     skipInitialization?: boolean
   ): Promise<Model<TSchema>> {
-    const {client} = this;
-    const {name: className, modelName: classModelName} = ModelClass;
+    const { client } = this;
+    const { name: className, modelName: classModelName } = ModelClass;
     const modelName = classModelName || className;
     if (this.models.has(modelName)) {
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -109,7 +109,7 @@ export class MongoInterface {
         }
         // Original call
         return name in target ? target[name as keyof typeof target] : undefined;
-      }
+      },
     });
     // Publish model getter for easier traversing
     modelProxy.otherModel = this.model.bind(this);

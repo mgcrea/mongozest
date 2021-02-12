@@ -1,4 +1,4 @@
-import Hooks, {HookCallback, HookMap} from './hooks';
+import Hooks, { HookCallback, HookMap } from './hooks';
 
-export {HookCallback, HookMap};
+export { HookCallback, HookMap };
 export default Hooks;

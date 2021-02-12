@@ -1,27 +1,27 @@
 import chalk from 'chalk';
-import type {ClientSession, CollectionCreateOptions} from 'mongodb';
-import type {Model} from '../model';
-import type {OperationMap} from '../operation';
-import type {DefaultSchema, ModelHookName} from '../typings';
-import {chalkNumber, chalkString, inspect, log} from './../utils/logger';
+import type { ClientSession, CollectionCreateOptions } from 'mongodb';
+import type { Model } from '../model';
+import type { OperationMap } from '../operation';
+import type { DefaultSchema, ModelHookName } from '../typings';
+import { chalkNumber, chalkString, inspect, log } from './../utils/logger';
 
-const {NODE_DEBUG = '0'} = process.env;
+const { NODE_DEBUG = '0' } = process.env;
 const IS_DEBUG = NODE_DEBUG === '1';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const stringifyOptions = <T extends {session?: ClientSession; [s: string]: any}>(
+const stringifyOptions = <T extends { session?: ClientSession; [s: string]: any }>(
   options: T | undefined = {} as T
-): Omit<T, 'session'> & {session?: string} => {
-  const {session, ...otherOptions} = options;
+): Omit<T, 'session'> & { session?: string } => {
+  const { session, ...otherOptions } = options;
   if (session) {
     const id = session.id as Buffer;
-    Object.assign(otherOptions, {session: `[ClientSession: ${id.toString('hex')}]`});
+    Object.assign(otherOptions, { session: `[ClientSession: ${id.toString('hex')}]` });
   }
   return otherOptions;
 };
 
 export const debugPlugin = <TSchema extends DefaultSchema = DefaultSchema>(model: Model<TSchema>): void => {
-  const {collectionName} = model;
+  const { collectionName } = model;
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const logMethodOperation = (method: string, operation: OperationMap<TSchema>, ...args: any[]) => {
@@ -42,11 +42,11 @@ export const debugPlugin = <TSchema extends DefaultSchema = DefaultSchema>(model
   model.post('error', handleMongoError);
 
   if (IS_DEBUG) {
-    model.pre('setup', (options: CollectionCreateOptions, {doesExist}: {doesExist: boolean}) => {
+    model.pre('setup', (options: CollectionCreateOptions, { doesExist }: { doesExist: boolean }) => {
       if (!doesExist) {
         log(`db.createCollection("${collectionName}", ${inspect(stringifyOptions(options))})`);
       } else {
-        log(`db.command(${inspect({collMod: collectionName, ...options})}`);
+        log(`db.command(${inspect({ collMod: collectionName, ...options })}`);
       }
     });
   }
@@ -62,7 +62,7 @@ export const debugPlugin = <TSchema extends DefaultSchema = DefaultSchema>(model
     'findOne',
     'findMany',
     'deleteOne',
-    'deleteMany'
+    'deleteMany',
   ];
   loggedPreHooks.forEach((name) => {
     model.pre(name, (operation: OperationMap<TSchema>, ...args: unknown[]) => {

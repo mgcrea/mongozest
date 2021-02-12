@@ -1,6 +1,6 @@
-export const parseBodyAsUpdate = (body: {[s: string]: any}) =>
+export const parseBodyAsUpdate = (body: { [s: string]: any }) =>
   Object.keys(body).reduce(
-    (soFar: {[s: string]: any}, key: string) => {
+    (soFar: { [s: string]: any }, key: string) => {
       if (!key.startsWith('$')) {
         soFar.$set[key] = body[key];
       } else {
@@ -8,7 +8,7 @@ export const parseBodyAsUpdate = (body: {[s: string]: any}) =>
       }
       return soFar;
     },
-    {$set: {}}
+    { $set: {} }
   );
 
 export const asyncHandler = (wrappedFunction: Function) =>

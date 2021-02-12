@@ -1,6 +1,6 @@
-import {get, has, set} from 'lodash';
-import {OptionalId} from 'mongodb';
-import type {AnySchema, DefaultSchema} from '../typings';
+import { get, has, set } from 'lodash';
+import { OptionalId } from 'mongodb';
+import type { AnySchema, DefaultSchema } from '../typings';
 
 // Check a leaf path (eg. `{foo.bar: {baz: 1}}`)
 export const hasLeafPath = (object: AnySchema, path: string): boolean => {

@@ -1,9 +1,9 @@
-import {DefaultSchema, Model, WriteableUpdateQuery} from '@mongozest/core';
-import Hooks, {HookCallback} from '@mongozest/hooks';
+import { DefaultSchema, Model, WriteableUpdateQuery } from '@mongozest/core';
+import Hooks, { HookCallback } from '@mongozest/hooks';
 import assert from 'assert';
-import {Request, RequestHandler, Response, Router as createRouter, Router} from 'express';
+import { Request, RequestHandler, Response, Router as createRouter, Router } from 'express';
 import createError from 'http-errors';
-import {clone, isFunction, pick, snakeCase, uniq} from 'lodash';
+import { clone, isFunction, pick, snakeCase, uniq } from 'lodash';
 import {
   CollectionInsertOneOptions,
   CommonOptions,
@@ -11,22 +11,22 @@ import {
   FindOneAndUpdateOption,
   FindOneOptions,
   ObjectId,
-  OptionalId
+  OptionalId,
 } from 'mongodb';
 import pluralize from 'pluralize';
-import {createOperationMap} from './operation';
-import {aggregationPlugin, populatePlugin, queryPlugin} from './plugins';
+import { createOperationMap } from './operation';
+import { aggregationPlugin, populatePlugin, queryPlugin } from './plugins';
 import './typings/resource';
-import {ResourceHookName} from './typings';
-import {mongoErrorMiddleware} from './utils/errors';
-import {asyncHandler, parseBodyAsUpdate} from './utils/request';
+import { ResourceHookName } from './typings';
+import { mongoErrorMiddleware } from './utils/errors';
+import { asyncHandler, parseBodyAsUpdate } from './utils/request';
 
 interface ResourceOptions {
   router?: Router;
   paths?: Array<string>;
   plugins?: Array<any>;
   middleware?: RequestHandler;
-  params?: {[s: string]: any};
+  params?: { [s: string]: any };
 }
 
 export type AggregationPipeline = Array<Record<string, any>>;
@@ -54,8 +54,8 @@ export class Resource<TSchema extends DefaultSchema> {
   private ids: Map<RequestParamChecker, RequestParamResolver<TSchema>> = new Map([
     [
       (s: string) => OBJECT_ID_REGEX.test(s),
-      (s: string) => ({_id: ObjectId.createFromHexString(s)} as FilterQuery<TSchema>)
-    ]
+      (s: string) => ({ _id: ObjectId.createFromHexString(s) } as FilterQuery<TSchema>),
+    ],
   ]);
 
   private router: Router;
@@ -68,7 +68,7 @@ export class Resource<TSchema extends DefaultSchema> {
   }
 
   constructor(public modelName: string, options: ResourceOptions = {}) {
-    const {router, middleware, paths, params, plugins} = options;
+    const { router, middleware, paths, params, plugins } = options;
     this.router = router || createRouter();
     this.middleware = middleware || null;
     // const {name: className, collectionName, collectionOptions, schema, plugins} = this.constructor as any;
@@ -85,7 +85,7 @@ export class Resource<TSchema extends DefaultSchema> {
   // Plugins management
 
   private loadPlugins() {
-    const {plugins, modelName} = this;
+    const { plugins, modelName } = this;
     const allPlugins = uniq([...Resource.internalPrePlugins, ...plugins, ...Resource.internalPostPlugins]);
     allPlugins.forEach((pluginConfig, index) => {
       const pluginFn = Array.isArray(pluginConfig) ? pluginConfig[0] : pluginConfig;
@@ -117,15 +117,15 @@ export class Resource<TSchema extends DefaultSchema> {
   // urlParams -> queryFilter
 
   public addIdentifierHandler(check: RequestParamChecker, resolve: RequestParamResolver<TSchema>): void {
-    const {ids} = this;
+    const { ids } = this;
     ids.set(check, resolve);
   }
-  public addParams(paramsMap: {[k: string]: RequestParamResolver<TSchema>}): void {
-    const {params} = this;
+  public addParams(paramsMap: { [k: string]: RequestParamResolver<TSchema> }): void {
+    const { params } = this;
     Object.keys(paramsMap).forEach((key) => params.set(key, paramsMap[key]));
   }
   public getModelFromRequest(req: Request): Model<TSchema> {
-    const {modelName} = this;
+    const { modelName } = this;
     return req.app.locals.mongo.model(modelName);
   }
 
@@ -135,7 +135,7 @@ export class Resource<TSchema extends DefaultSchema> {
   }
 
   buildRouter(): Router {
-    const {router, paths, middleware} = this;
+    const { router, paths, middleware } = this;
     this.hooks.execPreSync('buildRouter', [router, paths]);
     // params
     paths.forEach((path) => {
@@ -167,8 +167,8 @@ export class Resource<TSchema extends DefaultSchema> {
 
   async buildRequestFilter(req: Request): Promise<FilterQuery<TSchema>> {
     const model = this.getModelFromRequest(req);
-    const {ids, params: configParams} = this;
-    const {params: reqParams} = req;
+    const { ids, params: configParams } = this;
+    const { params: reqParams } = req;
     return await Object.keys(reqParams).reduce(async (promiseSoFar, key) => {
       const soFar = await promiseSoFar;
       const value = reqParams[key];
@@ -208,7 +208,7 @@ export class Resource<TSchema extends DefaultSchema> {
       method: 'getCollection',
       scope: 'collection',
       request: req,
-      filter
+      filter,
     });
     // Execute preHooks
     await this.hooks.execPre('filter', [operation, filter]);
@@ -230,12 +230,12 @@ export class Resource<TSchema extends DefaultSchema> {
       method: 'postCollection',
       scope: 'collection',
       request: req,
-      document
+      document,
     });
     // Execute preHooks
     await this.hooks.execManyPre(['insert', 'postCollection'], [operation, document, options]);
     // Actual mongo call
-    const {ops} = await model.insertOne(operation.has('document') ? operation.get('document') : document, options);
+    const { ops } = await model.insertOne(operation.has('document') ? operation.get('document') : document, options);
     operation.set('result', ops[0]);
     // Execute postHooks
     await this.hooks.execPost('postCollection', [operation, document, options]);
@@ -252,7 +252,7 @@ export class Resource<TSchema extends DefaultSchema> {
       method: 'patchCollection',
       scope: 'collection',
       request: req,
-      filter
+      filter,
     });
     // Execute preHooks
     await this.hooks.execPre('filter', [operation, filter]);
@@ -279,7 +279,7 @@ export class Resource<TSchema extends DefaultSchema> {
       method: 'deleteCollection',
       scope: 'collection',
       request: req,
-      filter
+      filter,
     });
     // Execute preHooks
     await this.hooks.execPre('filter', [operation, filter]);
@@ -302,7 +302,7 @@ export class Resource<TSchema extends DefaultSchema> {
       method: 'getDocument',
       scope: 'document',
       request: req,
-      filter
+      filter,
     });
     // Execute preHooks
     await this.hooks.execPre('filter', [operation, filter]);
@@ -324,18 +324,18 @@ export class Resource<TSchema extends DefaultSchema> {
     const filter = await this.buildRequestFilter(req);
     assertScopedFilter(filter);
     const update: WriteableUpdateQuery<TSchema> = parseBodyAsUpdate(req.body);
-    const options: FindOneAndUpdateOption<TSchema> = {returnOriginal: false};
+    const options: FindOneAndUpdateOption<TSchema> = { returnOriginal: false };
     const operation = createOperationMap<TSchema>({
       method: 'patchDocument',
       scope: 'document',
       request: req,
-      filter
+      filter,
     });
     // Execute preHooks
     await this.hooks.execPre('filter', [operation, filter]);
     await this.hooks.execPre('patchDocument', [operation, filter, update, options]);
     // Actual mongo call
-    const {value: result} = await model.findOneAndUpdate(operation.get('filter'), update, options);
+    const { value: result } = await model.findOneAndUpdate(operation.get('filter'), update, options);
     if (!result) {
       throw createError(404);
     }
@@ -350,17 +350,17 @@ export class Resource<TSchema extends DefaultSchema> {
     // Prepare operation params
     const filter = await this.buildRequestFilter(req);
     assertScopedFilter(filter);
-    const options: CommonOptions & {bypassDocumentValidation?: boolean} = {};
+    const options: CommonOptions & { bypassDocumentValidation?: boolean } = {};
     const operation = createOperationMap<TSchema>({
       method: 'deleteDocument',
       scope: 'document',
       request: req,
-      filter
+      filter,
     });
     // Execute preHooks
     await this.hooks.execManyPre(['filter', 'deleteDocument'], [operation, filter, options]);
     // Actual mongo call
-    const {result} = await model.deleteOne(operation.get('filter'), options);
+    const { result } = await model.deleteOne(operation.get('filter'), options);
     if (result.n === 0) {
       throw createError(404);
     }
