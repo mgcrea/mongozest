@@ -16,22 +16,21 @@
     "website": "cd website; GIT_USER=mgcrea CURRENT_BRANCH=master USE_SSH=true yarn run publish-gh-pages; cd -",
     "version": "scripts/setVersion.sh"
   },
-  "dependencies": {},
   "devDependencies": {
-    "@babel/runtime": "^7.12.1",
+    "@babel/runtime": "^7.12.13",
     "@tsconfig/node12": "^1.0.7",
-    "@types/jest": "^26.0.15",
-    "@typescript-eslint/eslint-plugin": "^4.5.0",
-    "@typescript-eslint/parser": "^4.5.0",
-    "eslint": "^7.11.0",
-    "eslint-config-prettier": "^6.13.0",
+    "@types/jest": "^26.0.20",
+    "@typescript-eslint/eslint-plugin": "^4.15.0",
+    "@typescript-eslint/parser": "^4.15.0",
+    "eslint": "^7.19.0",
+    "eslint-config-prettier": "^7.2.0",
     "eslint-plugin-import": "^2.22.1",
-    "eslint-plugin-prettier": "^3.1.4",
-    "jest": "^26.6.0",
+    "eslint-plugin-prettier": "^3.3.1",
+    "jest": "^26.6.3",
     "lodash": "^4.17.20",
-    "prettier": "^2.1.2",
-    "ts-jest": "^26.4.1",
-    "typescript": "^4.0.3"
+    "prettier": "^2.2.1",
+    "ts-jest": "^26.5.1",
+    "typescript": "^4.1.5"
   },
   "workspaces": {
     "packages": [

@@ -13,7 +13,7 @@ export const mongoErrorMiddleware = (err: any, req: Request, res: Response, next
       return;
     }
     // Handle duplicate key errors (check me!)
-    if ([110, 11000].includes(code)) {
+    if ([110, 11000].includes(code as number)) {
       next(createError(409, errorMessage));
       return;
     }

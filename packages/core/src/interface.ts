@@ -2,10 +2,10 @@
 // @docs https://gist.github.com/brennanMKE/ee8ea002d305d4539ef6
 
 import assert from 'assert';
-import {Db as MongoDb, MongoClient, MongoClientOptions, ObjectId} from 'mongodb';
+import {ClientSession, Db as MongoDb, MongoClient, MongoClientOptions, ObjectId, SessionOptions} from 'mongodb';
 import {parse} from 'url';
 import {Model, ModelConstructor} from './model';
-import {AnySchema, DefaultSchema, UnknownSchema} from './schema';
+import type {AnySchema, DefaultSchema} from './typings';
 
 const DEFAULT_MONGODB_URI = 'mongodb://mongo:27017';
 
@@ -86,14 +86,15 @@ export class MongoInterface {
     const {name: className, modelName: classModelName} = ModelClass;
     const modelName = classModelName || className;
     if (this.models.has(modelName)) {
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       return Promise.resolve((this.models.get(modelName)! as unknown) as Model<TSchema>);
     }
     const startSession = client.startSession.bind(client);
     // const model = Model.create();
     assert(this.db, 'Missing db instance, please connect first');
     const model = new ModelClass(this.db as MongoDb);
-    const modelProxy = new Proxy(model, {
-      get: function (target, name, _receiver) {
+    const modelProxy = new Proxy<Model<TSchema>>(model, {
+      get: function (target, name) {
         // Skip proxy's constructor
         if (name === 'constructor') {
           return model.constructor;
@@ -113,8 +114,7 @@ export class MongoInterface {
     // Publish model getter for easier traversing
     modelProxy.otherModel = this.model.bind(this);
     modelProxy.allModels = () => this.models;
-    // @ts-expect-error as Model<AnySchema>
-    this.models.set(modelName, modelProxy);
+    this.models.set(modelName, (modelProxy as unknown) as Model);
     // @TODO add timeout for database stalling
     if (!skipInitialization) {
       await modelProxy.initialize();
@@ -126,5 +126,14 @@ export class MongoInterface {
       throw new Error(`model ${modelName} not loaded`);
     }
     return (this.models.get(modelName) as unknown) as Model<OSchema>;
+  }
+}
+
+declare module './model' {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  interface Model<TSchema extends AnySchema = DefaultSchema> {
+    startSession: (options?: SessionOptions) => ClientSession;
+    otherModel: <OSchema extends DefaultSchema = DefaultSchema>(modelName: string) => Model<OSchema>;
+    allModels: () => Map<string, Model>;
   }
 }

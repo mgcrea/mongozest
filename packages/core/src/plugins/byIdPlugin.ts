@@ -7,9 +7,8 @@ import {
   ReplaceOneOptions,
   UpdateWriteOpResult
 } from 'mongodb';
-import {WriteableUpdateQuery} from '../typings';
-import {Model} from '../model';
-import {DefaultSchema} from '../schema';
+import type {Model} from '../model';
+import type {AnySchema, DefaultSchema, WriteableUpdateQuery} from '../typings';
 
 export const byIdPlugin = <TSchema extends DefaultSchema = DefaultSchema>(model: Model<TSchema>): void => {
   model.addStatics({
@@ -34,3 +33,21 @@ export const byIdPlugin = <TSchema extends DefaultSchema = DefaultSchema>(model:
     }
   });
 };
+
+declare module '../model' {
+  interface Model<TSchema extends AnySchema = DefaultSchema> {
+    findById: <T = TSchema>(
+      id: ObjectId | string,
+      options?: FindOneOptions<T extends TSchema ? TSchema : T>
+    ) => Promise<T | null>;
+    updateById: (
+      id: ObjectId | string,
+      update: WriteableUpdateQuery<TSchema>,
+      options?: ReplaceOneOptions
+    ) => Promise<UpdateWriteOpResult>;
+    deleteById: (
+      id: ObjectId | string,
+      options?: CommonOptions & {bypassDocumentValidation?: boolean}
+    ) => Promise<DeleteWriteOpResultObject>;
+  }
+}

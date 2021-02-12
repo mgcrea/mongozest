@@ -1,7 +1,5 @@
-import createMongo, {Model, Schema} from '@mongozest/core';
-import {jsonSchemaPlugin} from 'src/plugins/jsonSchemaPlugin';
+import createMongo, {Model, Schema} from 'src/index';
 import {getDbName} from 'root/test/utils';
-import {Collection, CollectionCreateOptions, Decimal128} from 'mongodb';
 
 const DB_NAME = getDbName(__filename);
 

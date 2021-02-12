@@ -1,14 +1,7 @@
-import '@mongozest/core';
-import {Model, ModelConstructor, DefaultSchema} from '@mongozest/core';
+import {AnySchema, DefaultSchema, Model, ModelConstructor} from '@mongozest/core';
 import {MongoCountPreferences, OptionalId} from 'mongodb';
 
-declare module '@mongozest/core' {
-  export interface ModelConstructor<TSchema extends OptionalId<DefaultSchema> = DefaultSchema> {
-    defaults?: OptionalId<TSchema>[];
-  }
-}
-
-export const collectionDefaultsPlugin = <TSchema extends DefaultSchema>(
+export const collectionDefaultsPlugin = <TSchema extends AnySchema = DefaultSchema>(
   model: Model<TSchema>,
   {maxTimeMS = 5000}: MongoCountPreferences = {}
 ): void => {
@@ -19,8 +12,15 @@ export const collectionDefaultsPlugin = <TSchema extends DefaultSchema>(
     if (defaults && defaults.length) {
       const count = await model.collection.estimatedDocumentCount({}, {maxTimeMS});
       if (!count) {
-        await model.insertMany(defaults as OptionalId<TSchema>[]); // @NOTE ts bug?
+        // @ts-expect-error typing mismatch
+        await model.insertMany(defaults);
       }
     }
   });
 };
+
+declare module '@mongozest/core' {
+  interface ModelConstructor<TSchema extends AnySchema = DefaultSchema> {
+    defaults?: OptionalId<TSchema>[];
+  }
+}

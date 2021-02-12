@@ -1,12 +1,14 @@
 // @docs https://docs.mongodb.com/manual/reference/operator/query/type/#document-type-available-types
 
-import {BsonType, DefaultSchema, mapPathValues, Model} from '@mongozest/core';
+import {AnySchema, BsonType, mapPathValues, Model} from '@mongozest/core';
 import {isString, toString} from 'lodash';
 import {OptionalId} from 'mongodb';
 
 const TRIMMABLE_TYPES: BsonType[] = ['string'];
 
 // @docs https://docs.mongodb.com/manual/reference/bson-types/
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const trimValueForType = (value: any, type: string): any => {
   switch (type) {
     case 'string':
@@ -21,7 +23,7 @@ export type TrimPluginOptions = {
 };
 
 // Helper recursively parsing schema to find path where values should be casted
-export const trimPlugin = <TSchema extends DefaultSchema>(
+export const trimPlugin = <TSchema extends AnySchema>(
   model: Model<TSchema>,
   {trimmableTypes = TRIMMABLE_TYPES}: TrimPluginOptions = {}
 ): void => {
@@ -46,7 +48,7 @@ export const trimPlugin = <TSchema extends DefaultSchema>(
   // Handle insert
   model.pre('insert', (_operation, document) => {
     trimmableProperties.forEach((bsonType, path) => {
-      mapPathValues(document, path, (value: any) => trimValueForType(value, bsonType));
+      mapPathValues(document, path, (value) => trimValueForType(value, bsonType));
     });
   });
 };

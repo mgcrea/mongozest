@@ -1,8 +1,6 @@
 import chalk from 'chalk';
-import {inspect as defaultInspect} from 'util';
 import {toString} from 'lodash';
-
-export {chalk};
+import {inspect as defaultInspect} from 'util';
 
 export const chalkString = (s: unknown): string => chalk.green(`'${s}'`);
 export const chalkStringArray = (a: Array<unknown>): string => `[ ${a.map(chalkString).join(', ')} ]`;

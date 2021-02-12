@@ -1,15 +1,14 @@
-import '@mongozest/core';
-import {DefaultSchema, inspect, log, Model} from '@mongozest/core';
+import {AnySchema, DefaultSchema, inspect, log, Model} from '@mongozest/core';
 import {find, isString, isUndefined} from 'lodash';
-import {IndexOptions, OptionalId, SchemaMember} from 'mongodb';
+import {IndexOptions, SchemaMember} from 'mongodb';
 
 export type SchemaIndexesConfig<TSchema> = [SchemaMember<TSchema, number | boolean>, IndexOptions][];
 
 declare module '@mongozest/core' {
-  export interface ModelConstructor<TSchema extends OptionalId<DefaultSchema> = DefaultSchema> {
+  interface ModelConstructor<TSchema extends AnySchema = DefaultSchema> {
     indexes?: SchemaIndexesConfig<TSchema>;
   }
-  export interface JsonSchemaProperty<TProp = any> {
+  interface JsonSchemaProperty<TProp = any> {
     index?: IndexOptions;
   }
 }
@@ -24,7 +23,7 @@ export const schemaIndexesPlugin = <TSchema extends DefaultSchema>(
 ): void => {
   const {collectionName} = model;
   const propsWithIndexes: Map<string, IndexOptions> = new Map();
-  model.post('initialize:property', (prop: {[s: string]: any} | string, path: string) => {
+  model.post('initialize:property', (prop, path) => {
     if (isString(prop) || isUndefined(prop.index)) {
       return;
     }

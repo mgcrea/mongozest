@@ -1,7 +1,7 @@
 // @docs https://docs.mongodb.com/manual/reference/operator/query/type/#document-type-available-types
 
 import {DefaultSchema, Model} from '@mongozest/core';
-import {difference, get, has, isFunction, isString, isUndefined} from 'lodash';
+import {get, isFunction, isString, isUndefined} from 'lodash';
 import {MongoError} from 'mongodb';
 
 type ValidationErrors = Array<{error: string; path: string; message?: string}>;
@@ -28,8 +28,8 @@ const formatValidationErrors = (errors: ValidationErrors) => {
 // Handle schema defaults
 export const schemaValidationPlugin = <TSchema extends DefaultSchema>(model: Model<TSchema>): void => {
   const propsWithValidation: Map<string, any> = new Map();
-  const propsWithPattern: Map<string, any> = new Map();
-  model.post('initialize:property', (prop: {[s: string]: any} | string, path: string) => {
+  // const propsWithPattern: Map<string, any> = new Map();
+  model.post('initialize:property', (prop, path) => {
     if (isString(prop)) {
       return;
     }

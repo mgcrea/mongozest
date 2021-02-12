@@ -2,16 +2,16 @@
   "extends": "@tsconfig/node12/tsconfig.json",
   "references": [
     {
-      "path": "packages/core"
+      "path": "packages/core/src"
     },
     {
-      "path": "packages/hooks"
+      "path": "packages/hooks/src"
     },
     {
-      "path": "packages/resource"
+      "path": "packages/resource/src"
     },
     {
-      "path": "packages/plugins"
+      "path": "packages/plugins/src"
     }
   ],
   "include": []

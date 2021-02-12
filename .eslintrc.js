@@ -12,14 +12,14 @@ module.exports = {
   },
   rules: {
     // typescript
-    '@typescript-eslint/no-explicit-any': 'off',
-    '@typescript-eslint/no-unused-vars': 'off',
-    '@typescript-eslint/explicit-function-return-type': 'off',
-    '@typescript-eslint/prefer-interface': 'off',
-    '@typescript-eslint/array-type': 'off',
-    '@typescript-eslint/no-use-before-define': 'off',
-    '@typescript-eslint/no-non-null-assertion': 'off',
-    '@typescript-eslint/explicit-member-accessibility': 'off',
+    // '@typescript-eslint/no-explicit-any': 'off',
+    // '@typescript-eslint/no-unused-vars': 'off',
+    // '@typescript-eslint/explicit-function-return-type': 'off',
+    // '@typescript-eslint/prefer-interface': 'off',
+    // '@typescript-eslint/array-type': 'off',
+    // '@typescript-eslint/no-use-before-define': 'off',
+    // '@typescript-eslint/no-non-null-assertion': 'off',
+    // '@typescript-eslint/explicit-member-accessibility': 'off',
     '@typescript-eslint/no-inferrable-types': ['error', {ignoreParameters: true}],
     '@typescript-eslint/ban-types': ['error', {types: {Function: false}}],
     // airbnb

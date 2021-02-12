@@ -1,20 +1,21 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 // @docs https://docs.mongodb.com/manual/reference/operator/query/jsonSchema/
 
-import {cloneDeep, get, isNumber, isPlainObject, isString, isUndefined, omit, pick, set, unset} from 'lodash';
+import {cloneDeep, get, isPlainObject, isString, isUndefined, omit, pick, set, unset} from 'lodash';
 import {CollectionCreateOptions, Decimal128, Double, FilterQuery, Int32, MongoError, ObjectId} from 'mongodb';
-import {
+import type {Model} from '../model';
+import type {
   AnySchema,
   BsonType,
+  DefaultSchema,
   JsonSchema,
   JsonSchemaProperties,
   JsonSchemaProperty,
   MongoJsonSchemaProperty,
   UnknownSchema
-} from '../schema';
-import {DefaultSchema} from '../schema';
-import {Model} from '../model';
-import {AssertionError} from 'assert';
-import {chalkString, chalkJson} from './../utils';
+} from '../typings';
+import {chalkJson, chalkString} from './../utils';
 
 const JSON_SCHEMA_VALID_KEYS = [
   'bsonType', // Accepts same string aliases used for the $type operator
@@ -200,7 +201,7 @@ const applyUpdate = (object: AnySchema, update: FilterQuery<AnySchema>) => {
   return res;
 };
 
-const isValidBsonType = (type: BsonType, value: any): boolean => {
+const isValidBsonType = (type: BsonType, value: unknown): boolean => {
   switch (type) {
     case 'bool':
       return typeof value === 'boolean';
@@ -246,7 +247,7 @@ const createValidationMultipleError = (errors: Error[]) => {
   return createValidationError(`JsonSchema validation failed with ${errors.length} errors:\n${messages}`);
 };
 
-const createRuleValidationError = (rule: {[s: string]: any}, value: any, path: string) => {
+const createRuleValidationError = (rule: {[s: string]: any}, value: unknown, path: string) => {
   const ruleName = Object.keys(rule)[0];
   return createValidationError(
     `Failed validation of jsonSchema rule=${chalkString(ruleName)} at path=${chalkString(
@@ -268,8 +269,8 @@ const validateSchema = (value: any, schema: JsonSchema, path: string = '', error
     minLength,
     maxLength,
     items,
-    additionalProperties,
-    ...otherProps
+    additionalProperties
+    // ...otherProps
   } = schema;
 
   if (isDefined(bsonType)) {

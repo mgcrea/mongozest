@@ -1,4 +1,4 @@
-import {DefaultSchema, Model, WriteableUpdateQuery} from '@mongozest/core';
+import {DefaultSchema, Model, ObjectId, WriteableUpdateQuery} from '@mongozest/core';
 import {memoize} from 'lodash';
 import {FilterQuery, FindOneOptions, ReplaceOneOptions, UpdateWriteOpResult} from 'mongodb';
 import shortid from 'shortid';
@@ -76,8 +76,20 @@ export const shortIdPlugin = <TSchema extends DefaultSchema & ShortIdPluginSchem
   }
 };
 
-// declare module '@mongozest/core' {
-//   interface DefaultSchema {
-//     _sid?: string;
-//   }
-// }
+declare module '@mongozest/core' {
+  interface Model<TSchema> {
+    findBySid: <T = TSchema>(
+      sid: string,
+      options?: FindOneOptions<T extends TSchema ? TSchema : T>
+    ) => Promise<T | null>;
+    updateBySid: (
+      sid: string,
+      update: WriteableUpdateQuery<TSchema>,
+      options?: ReplaceOneOptions
+    ) => Promise<UpdateWriteOpResult>;
+    lazyIdFromSid: (sid: string) => Promise<ObjectId | null>;
+  }
+  interface DefaultSchema {
+    _sid?: string;
+  }
+}

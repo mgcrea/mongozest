@@ -1,6 +1,7 @@
 import {DefaultSchema} from '@mongozest/core';
+import {ResourceHookName} from '../typings';
 import {OperationMap} from '../operation';
-import {Resource, ResourceHookName} from '../resource';
+import {Resource} from '../resource';
 import {inspect, log} from '../utils/logger';
 
 export const debugPlugin = <TSchema extends DefaultSchema = DefaultSchema>(resource: Resource<TSchema>): void => {

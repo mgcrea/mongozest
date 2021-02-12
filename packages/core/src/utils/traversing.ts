@@ -1,6 +1,6 @@
 import {get, has, set} from 'lodash';
 import {OptionalId} from 'mongodb';
-import {AnySchema, DefaultSchema} from '../schema';
+import type {AnySchema, DefaultSchema} from '../typings';
 
 // Check a leaf path (eg. `{foo.bar: {baz: 1}}`)
 export const hasLeafPath = (object: AnySchema, path: string): boolean => {
@@ -110,7 +110,7 @@ export const defaultPathValues = <TSchema extends DefaultSchema>(
     if (!remainingPath) {
       return;
     }
-    valueAtPath.forEach((itemValue) => {
+    valueAtPath.forEach((itemValue: OptionalId<TSchema> | TSchema) => {
       defaultPathValues(itemValue, remainingPath, callback);
     });
   }

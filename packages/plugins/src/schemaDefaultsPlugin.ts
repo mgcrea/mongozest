@@ -34,7 +34,7 @@ const getDefault = <TSchema extends DefaultSchema>(defaultOption: any, doc: Opti
 // Handle schema defaults
 export const schemaDefaultsPlugin = <TSchema extends DefaultSchema>(model: Model<TSchema>): void => {
   const propsWithDefaults: Map<string, any> = new Map();
-  model.post('initialize:property', (prop: {[s: string]: any} | string, path: string) => {
+  model.post('initialize:property', (prop, path) => {
     if (isString(prop) || isUndefined(prop.default)) {
       return;
     }

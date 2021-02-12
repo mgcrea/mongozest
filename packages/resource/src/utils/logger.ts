@@ -1,1 +1,1 @@
-export {inspect, log, chalk} from '@mongozest/core';
+export {inspect, log} from '@mongozest/core';

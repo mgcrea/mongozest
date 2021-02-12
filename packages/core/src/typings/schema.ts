@@ -1,5 +1,7 @@
-/* eslint-disable @typescript-eslint/no-empty-interface */
-import {IndexOptions, ObjectId, OptionalId, WithId} from 'mongodb';
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
+import {IndexOptions, ObjectId, OptionalId} from 'mongodb';
 
 // @docs https://docs.mongodb.com/manual/reference/operator/query/jsonSchema/
 // @docs https://www.typescriptlang.org/docs/handbook/advanced-types.html

@@ -1,0 +1,22 @@
+{
+  "extends": "@tsconfig/node12/tsconfig.json",
+  "compilerOptions": {
+    "composite": true,
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "declaration": true,
+    "rootDir": ".",
+    "outDir": "../lib/",
+    "baseUrl": "./",
+    "paths": {
+      "src/*": ["./*"],
+      "test/*": ["./../test/*"],
+      "@mongozest/core": ["./../../core/src"]
+    }
+  },
+  "references": [
+    {
+      "path": "../../core/src"
+    }
+  ]
+}

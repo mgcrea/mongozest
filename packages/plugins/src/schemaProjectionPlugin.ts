@@ -6,7 +6,7 @@ const isInclusiveProjection = (projection: Record<string, string | number | any>
 
 export const schemaProjectionPlugin = <TSchema extends DefaultSchema>(model: Model<TSchema>): void => {
   const propsWithProjection: Map<string, number> = new Map();
-  model.post('initialize:property', (prop: {[s: string]: any} | string, path: string) => {
+  model.post('initialize:property', (prop, path) => {
     if (isString(prop) || isUndefined(prop.select)) {
       return;
     }

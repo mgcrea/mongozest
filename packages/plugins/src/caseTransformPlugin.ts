@@ -1,15 +1,8 @@
 // @docs https://docs.mongodb.com/manual/reference/operator/query/type/#document-type-available-types
-import '@mongozest/core';
 import {DefaultSchema, mapPathValues, Model} from '@mongozest/core';
 import {isString, isUndefined, lowerCase, startCase, toString, upperFirst} from 'lodash';
 
 type CaseTransformOperation = 'toString' | 'lowerCase' | 'upperFirst' | 'startCase';
-
-declare module '@mongozest/core' {
-  interface JsonSchemaProperty<TProp = any> {
-    caseTransform?: CaseTransformOperation[];
-  }
-}
 
 const transformCase = (value: unknown, caseTransformConfig: CaseTransformOperation[]): any => {
   return caseTransformConfig.reduce<string>((valueSoFar, caseTransform) => {
@@ -54,3 +47,9 @@ export const caseTransformPlugin = <TSchema extends DefaultSchema>(model: Model<
     });
   });
 };
+
+declare module '@mongozest/core' {
+  interface JsonSchemaProperty<TProp> {
+    caseTransform?: CaseTransformOperation[];
+  }
+}

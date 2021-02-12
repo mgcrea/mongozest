@@ -1,7 +1,6 @@
 export * from './operation';
 export * from './plugins';
 export * from './model';
-export * from './schema';
 export * from './typings';
 export * from './utils';
 export * from './model';

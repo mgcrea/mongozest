@@ -1,7 +1,7 @@
+import './typings/model';
 import Hooks, {HookCallback} from '@mongozest/hooks';
-import {add, cloneDeep, intersection, isFunction, isPlainObject, snakeCase, uniq} from 'lodash';
+import {cloneDeep, intersection, isFunction, isPlainObject, snakeCase, uniq} from 'lodash';
 import {
-  ClientSession,
   Collection,
   CollectionAggregationOptions,
   CollectionCreateOptions,
@@ -22,7 +22,6 @@ import {
   OptionalId,
   ReplaceOneOptions,
   ReplaceWriteOpResult,
-  SessionOptions,
   UpdateManyOptions,
   UpdateOneOptions,
   UpdateQuery,
@@ -30,10 +29,19 @@ import {
   WithId
 } from 'mongodb';
 import pluralize from 'pluralize';
-import {byIdPlugin, debugPlugin, jsonSchemaPlugin} from './plugins';
-import {AnySchema, DefaultSchema, JsonSchemaProperties, JsonSchemaProperty, Schema} from './schema';
-import type {AggregationPipeline, Plugin, UnwrapPromise, WriteableUpdateQuery} from './typings';
 import {cloneOperationMap, createOperationMap, OperationMap} from './operation';
+import {byIdPlugin, debugPlugin, jsonSchemaPlugin} from './plugins';
+import type {
+  AggregationPipeline,
+  AnySchema,
+  DefaultSchema,
+  JsonSchemaProperties,
+  JsonSchemaProperty,
+  ModelHookName,
+  MongozestPlugin,
+  Schema,
+  WriteableUpdateQuery
+} from './typings';
 
 export interface ModelConstructor<TSchema extends AnySchema = DefaultSchema> {
   new (db: MongoDb): Model<TSchema>;
@@ -41,19 +49,19 @@ export interface ModelConstructor<TSchema extends AnySchema = DefaultSchema> {
 }
 
 export class Model<TSchema extends AnySchema = DefaultSchema> {
-  static internalPrePlugins: Plugin[] = [byIdPlugin];
-  static internalPostPlugins: Plugin[] = [jsonSchemaPlugin, debugPlugin];
+  static internalPrePlugins: MongozestPlugin[] = [byIdPlugin];
+  static internalPostPlugins: MongozestPlugin[] = [jsonSchemaPlugin, debugPlugin];
 
   static readonly schema: Schema;
   static readonly modelName: string;
   static readonly collectionName: string | null = null;
   static readonly collectionOptions: CollectionCreateOptions = {};
-  static readonly plugins: Array<any> = [];
+  static readonly plugins: Array<MongozestPlugin> = [];
 
   public collectionName: string;
   public collectionOptions: CollectionCreateOptions = {};
   public schema: Schema<TSchema>;
-  private plugins: Plugin<TSchema>[];
+  private plugins: MongozestPlugin<TSchema>[];
   private initPromise: Promise<void> | null = null;
   public statics: Map<string | number | symbol, Function> = new Map();
 
@@ -66,7 +74,7 @@ export class Model<TSchema extends AnySchema = DefaultSchema> {
     this.collectionName = collectionName ? collectionName : snakeCase(pluralize(modelName || className));
     this.collectionOptions = cloneDeep(collectionOptions);
     this.schema = cloneDeep(schema) as Schema<TSchema>;
-    this.plugins = plugins;
+    this.plugins = (plugins as unknown) as MongozestPlugin<TSchema>[];
   }
 
   // Initialization
@@ -151,7 +159,7 @@ export class Model<TSchema extends AnySchema = DefaultSchema> {
     const {db, collectionName} = this;
     return await db.createCollection(collectionName, collectionOptions);
   }
-  private async updateCollection(collectionOptions: CollectionCreateOptions): Promise<any> {
+  private async updateCollection(collectionOptions: CollectionCreateOptions): Promise<unknown> {
     const {db, collectionName} = this;
     return await db.command({
       collMod: collectionName,
@@ -538,177 +546,4 @@ export class Model<TSchema extends AnySchema = DefaultSchema> {
     await this.hooks.execManyPost(['delete', 'deleteMany'], [operation, result, filter, options]);
     return operation.get('result');
   }
-}
-
-export type ModelHookName =
-  | 'aggregate'
-  | 'countDocuments'
-  | 'delete'
-  | 'deleteMany'
-  | 'deleteOne'
-  | 'distinct'
-  | 'error'
-  | 'find'
-  | 'findMany'
-  | 'findOne'
-  | 'findOneAndUpdate'
-  | 'findOneAndUpdateError'
-  | 'initialize:property'
-  | 'initialize'
-  | 'insert'
-  | 'insertError'
-  | 'insertMany'
-  | 'insertOne'
-  | 'insertOneError'
-  | 'replaceOne'
-  | 'setup'
-  | 'update'
-  | 'updateError'
-  | 'updateMany'
-  | 'updateOne'
-  | 'updateOneError'
-  | 'validate';
-
-// @TODO investigate namespacing to properly perform cross-file declaration merging
-
-// Proxy
-export interface Model<TSchema extends AnySchema = DefaultSchema> {
-  startSession: (options?: SessionOptions) => ClientSession;
-  otherModel: <OSchema extends DefaultSchema = DefaultSchema>(modelName: string) => Model<OSchema>;
-  allModels: () => Map<string, Model>;
-}
-
-// findByIdPlugin
-export interface Model<TSchema extends AnySchema = DefaultSchema> {
-  findById: <T = TSchema>(
-    id: ObjectId | string,
-    options?: FindOneOptions<T extends TSchema ? TSchema : T>
-  ) => Promise<T | null>;
-  updateById: (
-    id: ObjectId | string,
-    update: WriteableUpdateQuery<TSchema>,
-    options?: ReplaceOneOptions
-  ) => Promise<UpdateWriteOpResult>;
-  deleteById: (
-    id: ObjectId | string,
-    options?: CommonOptions & {bypassDocumentValidation?: boolean}
-  ) => Promise<DeleteWriteOpResultObject>;
-}
-
-// shortIdPlugin
-export interface Model<TSchema extends AnySchema = DefaultSchema> {
-  findBySid: <T = TSchema>(sid: string, options?: FindOneOptions<T extends TSchema ? TSchema : T>) => Promise<T | null>;
-  updateBySid: (
-    sid: string,
-    update: WriteableUpdateQuery<TSchema>,
-    options?: ReplaceOneOptions
-  ) => Promise<UpdateWriteOpResult>;
-  lazyIdFromSid: (sid: string) => Promise<ObjectId | null>;
-}
-
-// @NOTE fixme
-// interface Model<TSchema extends OptionalId<DefaultSchema> = DefaultSchema> {
-//   fakeOne: (document: OptionalId<TSchema>) => OptionalId<TSchema>;
-// }
-
-export interface Model<TSchema extends AnySchema = DefaultSchema> {
-  // pre
-  pre(
-    hookName: 'aggregate',
-    callback: (operation: OperationMap<TSchema>, ...args: Parameters<Model<TSchema>['aggregate']>) => void
-  ): void;
-  pre(
-    hookName: 'find' | 'findOne',
-    callback: (operation: OperationMap<TSchema>, ...args: Parameters<Model<TSchema>['findOne']>) => void
-  ): void;
-  pre(
-    hookName: 'findMany',
-    callback: (operation: OperationMap<TSchema>, ...args: Parameters<Model<TSchema>['findOne']>) => void
-  ): void;
-  pre(
-    hookName: 'findOneAndUpdate',
-    callback: (operation: OperationMap<TSchema>, ...args: Parameters<Model<TSchema>['findOneAndUpdate']>) => void
-  ): void;
-  pre(
-    hookName: 'update' | 'updateOne',
-    callback: (operation: OperationMap<TSchema>, ...args: Parameters<Model<TSchema>['updateOne']>) => void
-  ): void;
-  pre(
-    hookName: 'updateMany',
-    callback: (operation: OperationMap<TSchema>, ...args: Parameters<Model<TSchema>['updateMany']>) => void
-  ): void;
-  pre(
-    hookName: 'insert' | 'insertOne',
-    callback: (operation: OperationMap<TSchema>, ...args: Parameters<Model<TSchema>['insertOne']>) => void
-  ): void;
-  pre(
-    hookName: 'replaceOne',
-    callback: (operation: OperationMap<TSchema>, ...args: Parameters<Model<TSchema>['replaceOne']>) => void
-  ): void;
-  pre(
-    hookName: 'insertMany',
-    callback: (operation: OperationMap<TSchema>, ...args: Parameters<Model<TSchema>['insertMany']>) => void
-  ): void;
-  pre(
-    hookName: 'delete' | 'deleteOne',
-    callback: (operation: OperationMap<TSchema>, ...args: Parameters<Model<TSchema>['deleteOne']>) => void
-  ): void;
-  pre(
-    hookName: 'deleteMany',
-    callback: (operation: OperationMap<TSchema>, ...args: Parameters<Model<TSchema>['deleteMany']>) => void
-  ): void;
-  pre(
-    hookName: 'validate',
-    callback: (operation: OperationMap<TSchema>, ...args: Parameters<Model<TSchema>['insertOne']>) => void
-  ): void;
-  // post
-  post(
-    hookName: 'aggregate',
-    callback: (operation: OperationMap<TSchema, TSchema[]>, ...args: Parameters<Model<TSchema>['aggregate']>) => void
-  ): void;
-  post(
-    hookName: 'find' | 'findOne',
-    callback: (operation: OperationMap<TSchema, TSchema | null>, ...args: Parameters<Model<TSchema>['findOne']>) => void
-  ): void;
-  post(
-    hookName: 'findMany',
-    callback: (operation: OperationMap<TSchema, TSchema[]>, ...args: Parameters<Model<TSchema>['findOne']>) => void
-  ): void;
-  post(
-    hookName: 'insert' | 'insertOne',
-    callback: (
-      operation: OperationMap<TSchema, UnwrapPromise<ReturnType<Model<TSchema>['insertOne']>>>,
-      ...args: Parameters<Model<TSchema>['insertOne']>
-    ) => void
-  ): void;
-  post(
-    hookName: 'update' | 'updateOne',
-    callback: (
-      operation: OperationMap<TSchema, UnwrapPromise<ReturnType<Model<TSchema>['updateOne']>>>,
-      ...args: Parameters<Model<TSchema>['updateOne']>
-    ) => void
-  ): void;
-  post(
-    hookName: 'delete' | 'deleteOne',
-    callback: (
-      operation: OperationMap<TSchema, UnwrapPromise<ReturnType<Model<TSchema>['deleteOne']>>>,
-      ...args: Parameters<Model<TSchema>['deleteOne']>
-    ) => void
-  ): void;
-  post(
-    hookName: 'deleteMany',
-    callback: (
-      operation: OperationMap<TSchema, UnwrapPromise<ReturnType<Model<TSchema>['deleteMany']>>>,
-      ...args: Parameters<Model<TSchema>['deleteMany']>
-    ) => void
-  ): void;
-  post(
-    hookName: 'findOneAndUpdate',
-    callback: (
-      operation: OperationMap<TSchema, FindAndModifyWriteOpResultObject<TSchema>>,
-      ...args: Parameters<Model<TSchema>['findOneAndUpdate']>
-    ) => void
-  ): void;
-  post(hookName: 'initialize', callback: () => void): void;
-  post(hookName: 'initialize:property', callback: (property: JsonSchemaProperty, path: string) => void): void;
 }

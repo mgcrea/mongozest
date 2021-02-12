@@ -7,7 +7,6 @@ Array [
       "_id": 1,
     },
     "name": "_id_",
-    "ns": "plugins-schema-indexes-plugin-spec.test_models",
     "v": 2,
   },
   Object {
@@ -15,7 +14,6 @@ Array [
       "username": 1,
     },
     "name": "username_",
-    "ns": "plugins-schema-indexes-plugin-spec.test_models",
     "unique": true,
     "v": 2,
   },
@@ -24,7 +22,6 @@ Array [
       "phoneNumber": 1,
     },
     "name": "phoneNumber_1",
-    "ns": "plugins-schema-indexes-plugin-spec.test_models",
     "v": 2,
   },
   Object {
@@ -32,7 +29,6 @@ Array [
       "email": 1,
     },
     "name": "email",
-    "ns": "plugins-schema-indexes-plugin-spec.test_models",
     "v": 2,
   },
 ]

@@ -5,12 +5,6 @@ import {ObjectId, SchemaMember} from 'mongodb';
 
 export type Population<T> = SchemaMember<T, number | boolean | any>;
 
-declare module 'mongodb' {
-  interface FindOneOptions<T> {
-    population?: Population<T>;
-  }
-}
-
 // @NOTE hybrid projection is allowed with _id field
 const isExcludingProjection = (projection: {[s: string]: any}) =>
   Object.keys(projection).some((key) => key !== '_id' && !projection[key]);
@@ -123,3 +117,9 @@ export const populationPlugin = <TSchema extends DefaultSchema>(model: Model<TSc
     }, Promise.resolve());
   });
 };
+
+declare module 'mongodb' {
+  interface FindOneOptions<T> {
+    population?: Population<T>;
+  }
+}

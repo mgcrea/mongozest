@@ -1,5 +1,4 @@
-import createMongo, {Model, Schema} from '@mongozest/core';
-import {jsonSchemaPlugin} from 'src/plugins/jsonSchemaPlugin';
+import createMongo, {Model, Schema, jsonSchemaPlugin} from 'src/index';
 import {getDbName} from 'root/test/utils';
 import {CollectionCreateOptions, Decimal128} from 'mongodb';
 

@@ -1,25 +1,11 @@
-import '@mongozest/core';
-import {isUndefined, get, set, isString, shuffle} from 'lodash';
+import {AnySchema, JsonSchemaProperty, Model} from '@mongozest/core';
 import faker from 'faker';
+import {get, isString, isUndefined, set, shuffle} from 'lodash';
 import {CollectionInsertOneOptions, InsertOneWriteOpResult, OptionalId, WithId} from 'mongodb';
-import {AnySchema, DefaultSchema, JsonSchemaProperty, Model} from '@mongozest/core';
 
 faker.locale = 'fr';
 
-declare module '@mongozest/core' {
-  interface Model<TSchema extends AnySchema = DefaultSchema> {
-    fakeOne: (document: OptionalId<TSchema>) => OptionalId<TSchema>;
-    insertFakeOne: (
-      document: OptionalId<TSchema>,
-      options?: CollectionInsertOneOptions
-    ) => Promise<InsertOneWriteOpResult<WithId<TSchema>>>;
-  }
-  interface JsonSchemaProperty<TProp = any> {
-    faker?: string;
-  }
-}
-
-export const schemaFakerPlugin = <TSchema extends DefaultSchema>(model: Model<TSchema>): void => {
+export const schemaFakerPlugin = <TSchema extends AnySchema>(model: Model<TSchema>): void => {
   const propsWithFaker: Map<string, any> = new Map();
   model.post('initialize:property', (prop: JsonSchemaProperty, path: string) => {
     if (isString(prop) || isUndefined(prop.faker)) {
@@ -46,8 +32,21 @@ export const schemaFakerPlugin = <TSchema extends DefaultSchema>(model: Model<TS
       document: OptionalId<TSchema>,
       options?: CollectionInsertOneOptions
     ): Promise<InsertOneWriteOpResult<WithId<TSchema>>> => {
-      const fake = model.fakeOne(document);
-      return await model.insertOne(fake as OptionalId<TSchema>, options);
+      const fake = model.fakeOne(document) as OptionalId<TSchema>;
+      return await model.insertOne(fake, options);
     }
   });
 };
+
+declare module '@mongozest/core' {
+  interface Model<TSchema extends AnySchema = DefaultSchema> {
+    fakeOne: (document: OptionalId<TSchema>) => OptionalId<TSchema>;
+    insertFakeOne: (
+      document: OptionalId<TSchema>,
+      options?: CollectionInsertOneOptions
+    ) => Promise<InsertOneWriteOpResult<WithId<TSchema>>>;
+  }
+  interface JsonSchemaProperty<TProp> {
+    faker?: string;
+  }
+}

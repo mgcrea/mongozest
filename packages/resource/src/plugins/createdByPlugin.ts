@@ -1,5 +1,4 @@
 import {DefaultSchema} from '@mongozest/core';
-import {Request} from 'express';
 import {ObjectId} from 'mongodb';
 import {Resource} from '../resource';
 

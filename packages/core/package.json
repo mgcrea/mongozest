@@ -6,7 +6,7 @@
   "types": "lib/index.d.ts",
   "module": "src/index.ts",
   "scripts": {
-    "build": "NODE_ENV=production tsc --build --verbose",
+    "build": "NODE_ENV=production tsc --build --verbose src/",
     "typecheck": "tsc --pretty --noEmit",
     "test": "CI=true jest --runInBand --colors"
   },
