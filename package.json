@@ -13,7 +13,7 @@
     "build": "NODE_ENV=production tsc --build --verbose",
     "build:sources": "NODE_ENV=production bash scripts/runPackages.sh \"yarn build:sources\"",
     "publish": "scripts/runPackages.sh \"npm publish --non-interactive --access public\"",
-    "website": "cd website; GIT_USER=mgcrea CURRENT_BRANCH=master USE_SSH=true yarn run publish-gh-pages; cd -",
+    "website": "cd website; GIT_USER=mgcrea CURRENT_BRANCH=master USE_SSH=true npm run deploy; cd -",
     "version": "scripts/setVersion.sh"
   },
   "devDependencies": {

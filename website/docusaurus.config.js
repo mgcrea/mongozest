@@ -1,8 +1,8 @@
 module.exports = {
   title: 'MongoZest',
   tagline: 'Lightweight MongoDB object modeling',
-  url: 'https://your-mongozest-test-site.com',
-  baseUrl: '/',
+  url: 'https://mgcrea.github.io',
+  baseUrl: '/mongozest/',
   onBrokenLinks: 'throw',
   onBrokenMarkdownLinks: 'warn',
   favicon: 'img/favicon.ico',
@@ -59,17 +59,17 @@ module.exports = {
             },
             {
               label: 'Twitter',
-              href: 'https://twitter.com/mongozest',
+              href: 'https://twitter.com/mgcrea',
             },
           ],
         },
         {
           title: 'More',
           items: [
-            {
-              label: 'Blog',
-              to: 'blog',
-            },
+            // {
+            //   label: 'Blog',
+            //   to: 'blog',
+            // },
             {
               label: 'GitHub',
               href: 'https://github.com/mgcrea/mongozest',
