@@ -1,6 +1,6 @@
 module.exports = {
   parser: '@typescript-eslint/parser',
-  extends: ['plugin:@typescript-eslint/recommended', 'prettier', 'prettier/@typescript-eslint'],
+  extends: ['plugin:@typescript-eslint/recommended', 'prettier'],
   plugins: ['@typescript-eslint', 'prettier'],
   // parserOptions: {
   //   project: './tsconfig.json',
@@ -8,7 +8,7 @@ module.exports = {
   // },
   env: {
     es6: true,
-    node: true
+    node: true,
   },
   rules: {
     // typescript
@@ -20,8 +20,8 @@ module.exports = {
     // '@typescript-eslint/no-use-before-define': 'off',
     // '@typescript-eslint/no-non-null-assertion': 'off',
     // '@typescript-eslint/explicit-member-accessibility': 'off',
-    '@typescript-eslint/no-inferrable-types': ['error', {ignoreParameters: true}],
-    '@typescript-eslint/ban-types': ['error', {types: {Function: false}}],
+    '@typescript-eslint/no-inferrable-types': ['error', { ignoreParameters: true }],
+    '@typescript-eslint/ban-types': ['error', { types: { Function: false } }],
     // airbnb
     'no-unused-expressions': 'off',
     'no-use-before-define': 'off',
@@ -30,18 +30,18 @@ module.exports = {
     'import/prefer-default-export': 'off',
     'jsx-a11y/accessible-emoji': 'off',
     // prettier
-    'prettier/prettier': 'error'
+    'prettier/prettier': 'error',
   },
   globals: {
-    __DEV__: false
+    __DEV__: false,
   },
   overrides: [
     {
       files: '*.spec.{ts,tsx}',
       env: {
         mocha: true,
-        jest: true
-      }
-    }
-  ]
+        jest: true,
+      },
+    },
+  ],
 };
