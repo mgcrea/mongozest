@@ -1,4 +1,4 @@
-import { AnySchema, JsonSchemaProperty, Model } from '@mongozest/core';
+import { AnySchema, JsonSchemaProperty, DefaultSchema, Model } from '@mongozest/core';
 import faker from 'faker';
 import { get, isString, isUndefined, set, shuffle } from 'lodash';
 import { CollectionInsertOneOptions, InsertOneWriteOpResult, OptionalId, WithId } from 'mongodb';
@@ -39,7 +39,7 @@ export const schemaFakerPlugin = <TSchema extends AnySchema>(model: Model<TSchem
 };
 
 declare module '@mongozest/core' {
-  interface Model<TSchema> {
+  interface Model<TSchema extends AnySchema = DefaultSchema> {
     fakeOne: (document: OptionalId<TSchema>) => OptionalId<TSchema>;
     insertFakeOne: (
       document: OptionalId<TSchema>,
