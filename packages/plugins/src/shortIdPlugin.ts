@@ -35,7 +35,13 @@ export const shortIdPlugin = <TSchema extends DefaultSchema & ShortIdPluginSchem
     ): Promise<UpdateWriteOpResult> => {
       return model.updateOne({ [sidKey as '_sid']: sid } as FilterQuery<TSchema>, update, options);
     },
-    lazyIdFromSid: memoize(async (sid: ShortId) => {
+    lazyIdFromSid: memoize(async (sid: ObjectId | ShortId | string) => {
+      if (sid instanceof ObjectId) {
+        return sid;
+      }
+      if (ObjectId.isValid(sid)) {
+        return ObjectId.createFromHexString(sid);
+      }
       const doc = await model.findOne({ [sidKey as '_sid']: sid } as FilterQuery<TSchema>, { projection: { _id: 1 } });
       return doc ? doc._id : null;
     }),
