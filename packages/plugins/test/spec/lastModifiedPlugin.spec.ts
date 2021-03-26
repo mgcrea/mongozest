@@ -1,6 +1,6 @@
-import createMongo, {Schema, Model} from '@mongozest/core';
-import {getDbName} from 'root/test/utils';
-import {lastModifiedPlugin, LastModifiedPluginSchema} from '@mongozest/plugins';
+import createMongo, { Schema, Model } from '@mongozest/core';
+import { getDbName } from 'root/test/utils';
+import { lastModifiedPlugin, LastModifiedPluginSchema } from '@mongozest/plugins';
 
 const DB_NAME = getDbName(__filename);
 
@@ -12,7 +12,7 @@ type Test = LastModifiedPluginSchema & {
 
 class TestModel extends Model<Test> {
   static schema: Schema<Test> = {
-    name: {bsonType: 'string', required: true}
+    name: { bsonType: 'string', required: true },
   };
   static plugins = [lastModifiedPlugin];
 }
@@ -33,7 +33,7 @@ describe('lastModifiedPlugin', () => {
     expect(testModel instanceof Model).toBeTruthy();
   });
   it('should properly add `createdAt` and `updatedAt` on insertOne', async () => {
-    const {ops, insertedId} = await testModel.insertOne({name: 'insertOne'});
+    const { ops, insertedId } = await testModel.insertOne({ name: 'insertOne' });
     // Check op result
     const insertedDoc = ops[0];
     expect(Object.keys(insertedDoc)).toMatchObject(['name', 'createdAt', 'updatedAt', '_id']);
@@ -41,16 +41,16 @@ describe('lastModifiedPlugin', () => {
     expect(insertedDoc.updatedAt instanceof Date).toBeTruthy();
     expect(insertedDoc.updatedAt).toEqual(insertedDoc.createdAt);
     // Check findOne result
-    const foundDoc = (await testModel.findOne({_id: insertedId})) as Test;
+    const foundDoc = (await testModel.findOne({ _id: insertedId })) as Test;
     expect(foundDoc.createdAt instanceof Date).toBeTruthy();
     expect(foundDoc.updatedAt instanceof Date).toBeTruthy();
     expect(foundDoc.updatedAt).toEqual(foundDoc.createdAt);
   });
   it('should properly update `updatedAt` on updateOne', async () => {
-    const {insertedId} = await testModel.insertOne({name: 'insertOne'});
-    const {result} = await testModel.updateOne({_id: insertedId}, {$set: {name: 'updateOne'}});
-    expect(result).toMatchObject({n: 1, nModified: 1, ok: 1});
-    const foundDoc = (await testModel.findOne({_id: insertedId})) as Test;
+    const { insertedId } = await testModel.insertOne({ name: 'insertOne' });
+    const { result } = await testModel.updateOne({ _id: insertedId }, { $set: { name: 'updateOne' } });
+    expect(result).toMatchObject({ n: 1, nModified: 1, ok: 1 });
+    const foundDoc = (await testModel.findOne({ _id: insertedId })) as Test;
     expect(foundDoc.createdAt instanceof Date).toBeTruthy();
     expect(foundDoc.updatedAt instanceof Date).toBeTruthy();
     expect(foundDoc.updatedAt! > foundDoc.createdAt!).toBeTruthy();

@@ -10,5 +10,5 @@
     }
   },
   "include": ["spec/", "../src/typings"],
-  "references": [{"path": "../"}]
+  "references": [{ "path": "../" }]
 }

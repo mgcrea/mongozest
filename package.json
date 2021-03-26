@@ -6,7 +6,8 @@
   "scripts": {
     "test": "jest",
     "typecheck": "tsc --noEmit",
-    "prettycheck": "prettier --check 'packages/*/{src,test}/*.{ts,tsx}'",
+    "pretty": "prettier --write 'packages/'",
+    "prettycheck": "prettier --check 'packages/'",
     "lint": "eslint --ext .ts,.tsx packages/*/src",
     "clean": "scripts/runPackages.sh --eval \"rm -rf *.tsbuildinfo lib/\"",
     "clean:modules": "rm -rf node_modules; scripts/runPackages.sh --eval \"rm -rf node_modules\"",

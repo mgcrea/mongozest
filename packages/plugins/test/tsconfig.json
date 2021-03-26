@@ -9,5 +9,5 @@
     }
   },
   "include": ["spec/"],
-  "references": [{"path": "../"}]
+  "references": [{ "path": "../" }]
 }

@@ -1,5 +1,5 @@
-import createMongo, {Model, Schema} from 'src/index';
-import {getDbName} from 'root/test/utils';
+import createMongo, { Model, Schema } from 'src/index';
+import { getDbName } from 'root/test/utils';
 
 const DB_NAME = getDbName(__filename);
 
@@ -23,8 +23,8 @@ describe('jsonSchemaPlugin', () => {
     class TestModel extends Model<Test> {
       static collectionName = 'test';
       static schema: Schema<Test> = {
-        firstName: {bsonType: 'string', required: true},
-        lastName: {bsonType: 'string', required: true}
+        firstName: { bsonType: 'string', required: true },
+        lastName: { bsonType: 'string', required: true },
       };
       static plugins = [];
     }

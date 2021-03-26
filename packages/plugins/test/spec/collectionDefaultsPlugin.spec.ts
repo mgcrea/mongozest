@@ -1,6 +1,6 @@
-import createMongo, {Schema, Model} from '@mongozest/core';
-import {getDbName} from 'root/test/utils';
-import {collectionDefaultsPlugin} from '@mongozest/plugins';
+import createMongo, { Schema, Model } from '@mongozest/core';
+import { getDbName } from 'root/test/utils';
+import { collectionDefaultsPlugin } from '@mongozest/plugins';
 
 const DB_NAME = getDbName(__filename);
 
@@ -12,9 +12,9 @@ type Test = {
 
 class TestModel extends Model<Test> {
   static schema: Schema<Test> = {
-    name: {bsonType: 'string', required: true}
+    name: { bsonType: 'string', required: true },
   };
-  static defaults = [{name: 'workers'}, {name: 'clients'}, {name: 'admins'}];
+  static defaults = [{ name: 'workers' }, { name: 'clients' }, { name: 'admins' }];
   static plugins = [collectionDefaultsPlugin];
 }
 

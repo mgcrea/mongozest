@@ -1,9 +1,9 @@
-import createMongo, {Model} from '@mongozest/core';
+import createMongo, { Model } from '@mongozest/core';
 import assert from 'assert';
-import express, {Application, ErrorRequestHandler} from 'express';
-import type {Express} from 'express-serve-static-core';
-import {camelCase, cloneDeep, upperFirst} from 'lodash';
-import {inspect} from 'util';
+import express, { Application, ErrorRequestHandler } from 'express';
+import type { Express } from 'express-serve-static-core';
+import { camelCase, cloneDeep, upperFirst } from 'lodash';
+import { inspect } from 'util';
 import * as fixtures from './fixtures';
 
 interface TestAppOptions {
@@ -13,13 +13,13 @@ interface TestAppOptions {
 
 export const breakdownMiddleware: ErrorRequestHandler = (err, _req, res, _next) => {
   if (!err.status || err.status === 500) {
-    console.log(inspect(err, {compact: true, colors: true, depth: Infinity, breakLength: Infinity}));
+    console.log(inspect(err, { compact: true, colors: true, depth: Infinity, breakLength: Infinity }));
   }
   if (err.name === 'MongoError' && err.code === 121) {
     res.status(422).end();
     return;
   }
-  res.status(err.status || 500).json({error: err.message || 'Internal Error'});
+  res.status(err.status || 500).json({ error: err.message || 'Internal Error' });
 };
 
 export const getFixture = (name: string, payload = {}): Record<string, unknown> => {
@@ -35,7 +35,7 @@ type TestExpress = Express & {
   close: () => Promise<void>;
 };
 
-export const createTestApp = ({config, routers = []}: TestAppOptions): TestExpress => {
+export const createTestApp = ({ config, routers = [] }: TestAppOptions): TestExpress => {
   const app = express();
   // generic middlewares
   app.use(express.json());
@@ -71,13 +71,13 @@ export const createTestApp = ({config, routers = []}: TestAppOptions): TestExpre
     const [model, fixture] = name.split('.');
     const modelName = upperFirst(camelCase(model));
     const Model = mongo.model(modelName) as Model;
-    const operation = await Model.insertOne({...app.locals.getFixture(name), ...payload});
+    const operation = await Model.insertOne({ ...app.locals.getFixture(name), ...payload });
     return operation.ops[0];
   };
 
   return Object.assign(app, {
     close: async () => {
       await Promise.all([/*redis.quit(), */ mongo.disconnect()]);
-    }
+    },
   });
 };

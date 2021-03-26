@@ -1,6 +1,6 @@
-import createMongo, {Schema, jsonSchemaPlugin, Model} from '@mongozest/core';
-import {getDbName} from 'root/test/utils';
-import {schemaIndexesPlugin} from '@mongozest/plugins';
+import createMongo, { Schema, jsonSchemaPlugin, Model } from '@mongozest/core';
+import { getDbName } from 'root/test/utils';
+import { schemaIndexesPlugin } from '@mongozest/plugins';
 
 const DB_NAME = getDbName(__filename);
 
@@ -13,9 +13,9 @@ type Test = {
 };
 class TestModel extends Model<Test> {
   static schema: Schema<Test> = {
-    username: {bsonType: 'string', index: {unique: true}},
-    phoneNumber: {bsonType: 'string', index: {unique: false, name: undefined}},
-    email: {bsonType: 'string', index: {unique: false, name: 'email'}}
+    username: { bsonType: 'string', index: { unique: true } },
+    phoneNumber: { bsonType: 'string', index: { unique: false, name: undefined } },
+    email: { bsonType: 'string', index: { unique: false, name: 'email' } },
   };
   static plugins = [jsonSchemaPlugin, schemaIndexesPlugin];
 }

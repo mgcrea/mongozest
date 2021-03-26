@@ -1,15 +1,15 @@
-import {Model, ObjectId, Schema} from '@mongozest/core';
-import createResource, {Resource} from '@mongozest/resource';
-import {isObject, omit} from 'lodash';
-import {getDbName} from 'root/test/utils';
-import {makeFetch} from 'supertest-fetch';
-import {URLSearchParams} from 'url';
-import {breakdownMiddleware, createTestApp, fixtures} from '../utils/';
+import { Model, ObjectId, Schema } from '@mongozest/core';
+import createResource, { Resource } from '@mongozest/resource';
+import { isObject, omit } from 'lodash';
+import { getDbName } from 'root/test/utils';
+import { makeFetch } from 'supertest-fetch';
+import { URLSearchParams } from 'url';
+import { breakdownMiddleware, createTestApp, fixtures } from '../utils/';
 
 const DB_NAME = getDbName(__filename);
 
-const app = createTestApp({routers: []});
-const {mongo, insertFixture} = app.locals;
+const app = createTestApp({ routers: [] });
+const { mongo, insertFixture } = app.locals;
 app.locals.fixtures = fixtures;
 const fetch = makeFetch(app);
 
@@ -24,11 +24,11 @@ type User = {
 class UserModel extends Model<User> {
   static modelName = 'User';
   static schema: Schema<User> = {
-    firstName: {bsonType: 'string'},
-    lastName: {bsonType: 'string'},
-    email: {bsonType: 'string', required: true},
-    nationality: {bsonType: 'string'},
-    device: {bsonType: 'objectId'}
+    firstName: { bsonType: 'string' },
+    lastName: { bsonType: 'string' },
+    email: { bsonType: 'string', required: true },
+    nationality: { bsonType: 'string' },
+    device: { bsonType: 'objectId' },
   };
 }
 
@@ -59,10 +59,10 @@ describe('Resource', () => {
   describe('collection', () => {
     describe('GET /users', () => {
       it('should return 200', async () => {
-        const {insertedId} = await insertFixture('User.mongozest');
+        const { insertedId } = await insertFixture('User.mongozest');
         const res = await fetch(`/users`, {
           method: 'get',
-          headers: {'Content-Type': 'application/json'}
+          headers: { 'Content-Type': 'application/json' },
         })
           .expect(200)
           .expect('content-type', /^application\/json/);
@@ -72,12 +72,12 @@ describe('Resource', () => {
         expect(omit(resBody[0], '_id')).toMatchSnapshot();
       });
       it('should support query', async () => {
-        const {_id: firstId} = await insertFixture('User.mongozest');
-        const {_id: secondId} = await insertFixture('User.mongozest_2');
-        const url = `/users?${new URLSearchParams({filter: JSON.stringify({_id: secondId})})}`;
+        const { _id: firstId } = await insertFixture('User.mongozest');
+        const { _id: secondId } = await insertFixture('User.mongozest_2');
+        const url = `/users?${new URLSearchParams({ filter: JSON.stringify({ _id: secondId }) })}`;
         const res = await fetch(url, {
           method: 'get',
-          headers: {'Content-Type': 'application/json'}
+          headers: { 'Content-Type': 'application/json' },
         })
           .expect(200)
           .expect('content-type', /^application\/json/);
@@ -92,12 +92,12 @@ describe('Resource', () => {
         const reqBody = {
           firstName: 'John',
           lastName: 'Doe',
-          email: 'john.doe@gmail.com'
+          email: 'john.doe@gmail.com',
         };
         const res = await fetch('/users', {
           method: 'post',
           body: JSON.stringify(reqBody),
-          headers: {'Content-Type': 'application/json'}
+          headers: { 'Content-Type': 'application/json' },
         })
           .expect(200)
           .expect('content-type', /^application\/json/);
@@ -108,12 +108,12 @@ describe('Resource', () => {
       it('should return 400 when payload is invalid', async () => {
         const reqBody = {
           firstName: 'John',
-          lastName: 'Doe'
+          lastName: 'Doe',
         };
         const res = await fetch('/users', {
           method: 'post',
           body: JSON.stringify(reqBody),
-          headers: {'Content-Type': 'application/json'}
+          headers: { 'Content-Type': 'application/json' },
         })
           .expect(422)
           .expect('content-type', /^application\/json/);
@@ -124,14 +124,14 @@ describe('Resource', () => {
     });
     describe('PATCH /users', () => {
       it('should return 200', async () => {
-        const {insertedId} = await insertFixture('User.mongozest');
+        const { insertedId } = await insertFixture('User.mongozest');
         const reqBody = {
-          firstName: 'Alex'
+          firstName: 'Alex',
         };
         const res = await fetch(`/users`, {
           method: 'patch',
           body: JSON.stringify(reqBody),
-          headers: {'Content-Type': 'application/json'}
+          headers: { 'Content-Type': 'application/json' },
         })
           .expect(200)
           .expect('content-type', /^application\/json/);
@@ -146,7 +146,7 @@ describe('Resource', () => {
         await insertFixture('User.mongozest');
         const res = await fetch(`/users`, {
           method: 'delete',
-          headers: {'Content-Type': 'application/json'}
+          headers: { 'Content-Type': 'application/json' },
         })
           .expect(200)
           .expect('content-type', /^application\/json/);
@@ -160,10 +160,10 @@ describe('Resource', () => {
   describe('document', () => {
     describe('GET /users/:_id', () => {
       it('should return 200', async () => {
-        const {_id: insertedId} = await insertFixture('User.mongozest');
+        const { _id: insertedId } = await insertFixture('User.mongozest');
         const res = await fetch(`/users/${insertedId}`, {
           method: 'get',
-          headers: {'Content-Type': 'application/json'}
+          headers: { 'Content-Type': 'application/json' },
         })
           .expect(200)
           .expect('content-type', /^application\/json/);
@@ -175,14 +175,14 @@ describe('Resource', () => {
     });
     describe('PATCH /users/:_id', () => {
       it('should return 200', async () => {
-        const {_id: insertedId} = await insertFixture('User.mongozest');
+        const { _id: insertedId } = await insertFixture('User.mongozest');
         const reqBody = {
-          firstName: 'Laura'
+          firstName: 'Laura',
         };
         const res = await fetch(`/users/${insertedId}`, {
           method: 'patch',
           body: JSON.stringify(reqBody),
-          headers: {'Content-Type': 'application/json'}
+          headers: { 'Content-Type': 'application/json' },
         })
           .expect(200)
           .expect('content-type', /^application\/json/);
@@ -194,10 +194,10 @@ describe('Resource', () => {
     });
     describe('DELETE /users/:_id', () => {
       it('should return 200', async () => {
-        const {_id: insertedId} = await insertFixture('User.mongozest');
+        const { _id: insertedId } = await insertFixture('User.mongozest');
         const res = await fetch(`/users/${insertedId}`, {
           method: 'delete',
-          headers: {'Content-Type': 'application/json'}
+          headers: { 'Content-Type': 'application/json' },
         })
           .expect(200)
           .expect('content-type', /^application\/json/);
@@ -218,9 +218,9 @@ describe('resource with nested paths', () => {
       paths: [PATH],
       params: {
         device: (_id: string) => {
-          return {device: ObjectId.createFromHexString(_id)};
-        }
-      }
+          return { device: ObjectId.createFromHexString(_id) };
+        },
+      },
     });
     expect(resource instanceof Resource).toBeTruthy();
   });
