@@ -1,6 +1,6 @@
 {
   "name": "@mongozest/plugins",
-  "version": "0.9.4",
+  "version": "0.9.5",
   "description": "",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
@@ -13,7 +13,7 @@
   "author": "Olivier Louvignes <olivier@mgcrea.io>",
   "license": "MIT",
   "dependencies": {
-    "@mongozest/core": "0.9.4",
+    "@mongozest/core": "0.9.5",
     "chalk": "^4.1.0",
     "faker": "^5.5.0",
     "lodash": "^4.17.21",
