@@ -22,7 +22,7 @@ export const lastModifiedPlugin = <TSchema extends DefaultSchema & LastModifiedP
     if (update.$set) {
       Object.assign(update.$set, { updatedAt: currentDate });
     } else {
-      update.$set = { updatedAt: currentDate } as typeof update.$set;
+      update.$set = { updatedAt: currentDate } as TSchema;
     }
   });
 };

@@ -39,7 +39,7 @@ export const schemaFakerPlugin = <TSchema extends AnySchema>(model: Model<TSchem
 };
 
 declare module '@mongozest/core' {
-  interface Model<TSchema extends AnySchema = DefaultSchema> {
+  interface Model<TSchema> {
     fakeOne: (document: OptionalId<TSchema>) => OptionalId<TSchema>;
     insertFakeOne: (
       document: OptionalId<TSchema>,
