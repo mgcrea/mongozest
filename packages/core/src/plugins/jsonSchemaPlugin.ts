@@ -144,7 +144,6 @@ export const jsonSchemaPlugin = <USchema extends DefaultSchema = DefaultSchema>(
     }
     const { validator } = model.collectionOptions as CollectionCreateOptions;
     const document = operation.get('document') || originalDocument;
-    // @ts-expect-error mongodb typing
     const errors = validateSchema(document, validator!.$jsonSchema as JsonSchema);
     if (errors.length > 1) {
       throw createValidationMultipleError(errors);
@@ -165,7 +164,6 @@ export const jsonSchemaPlugin = <USchema extends DefaultSchema = DefaultSchema>(
       return;
     }
     const nextDoc = applyUpdate(prevDoc, update);
-    // @ts-expect-error mongodb typing
     const errors = validateSchema(nextDoc, validator!.$jsonSchema as JsonSchema);
     if (errors.length > 1) {
       throw createValidationMultipleError(errors);
