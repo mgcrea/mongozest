@@ -36,10 +36,10 @@ export class MongoInterface {
   id: ObjectId;
 
   private constructor(uri: string, options?: MongoClientOptions) {
-    const { protocol = 'mongodb:', hostname = '127.0.0.1', port = '27017', pathname } = parse(uri);
+    const { pathname } = parse(uri);
     this.id = new ObjectId();
     this.dbName = pathname ? String(pathname).slice(1) : 'test';
-    this.client = new MongoClient(`${protocol}//${hostname}:${port}`, {
+    this.client = new MongoClient(uri, {
       ...MongoInterface.defaultClientOptions,
       ...options,
     });

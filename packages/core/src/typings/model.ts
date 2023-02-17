@@ -30,6 +30,7 @@ export type ModelHookName =
   | 'updateMany'
   | 'updateOne'
   | 'updateOneError'
+  | 'count'
   | 'validate';
 
 declare module '../model' {
