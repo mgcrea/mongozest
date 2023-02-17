@@ -144,7 +144,7 @@ export const jsonSchemaPlugin = <USchema extends DefaultSchema = DefaultSchema>(
     }
     const { validator } = model.collectionOptions as CollectionCreateOptions;
     const document = operation.get('document') || originalDocument;
-    const errors = validateSchema(document, validator!.$jsonSchema as JsonSchema);
+    const errors = validateSchema(document, (validator as any).$jsonSchema as JsonSchema);
     if (errors.length > 1) {
       throw createValidationMultipleError(errors);
     } else if (errors.length === 1) {
@@ -164,7 +164,7 @@ export const jsonSchemaPlugin = <USchema extends DefaultSchema = DefaultSchema>(
       return;
     }
     const nextDoc = applyUpdate(prevDoc, update);
-    const errors = validateSchema(nextDoc, validator!.$jsonSchema as JsonSchema);
+    const errors = validateSchema(nextDoc, (validator as any).$jsonSchema as JsonSchema);
     if (errors.length > 1) {
       throw createValidationMultipleError(errors);
     } else if (errors.length === 1) {
